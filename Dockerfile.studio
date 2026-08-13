@@ -1,0 +1,25 @@
+FROM node:22-slim
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+COPY packages/shared/package.json packages/shared/
+COPY packages/studio/package.json packages/studio/
+
+# Install pnpm and dependencies
+RUN corepack enable && pnpm install --frozen-lockfile 2>/dev/null || pnpm install
+
+# Copy source
+COPY packages/shared/ packages/shared/
+COPY packages/studio/ packages/studio/
+
+# Build shared types
+RUN cd packages/shared && pnpm build
+
+# Build studio
+RUN cd packages/studio && pnpm build
+
+EXPOSE 3000
+
+CMD ["npx", "serve", "packages/studio/dist", "-l", "3000"]

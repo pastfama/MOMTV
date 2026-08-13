@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/azure.yaml.json
+# MOMTV - Azure Developer CLI Configuration
+
+name: momtv
+metadata:
+  template: momtv@0.1.0
+
+services:
+  backend:
+    project: packages/backend
+    language: ts
+    host: containerapp
+    image:
+      registry: azdcr
+    docker:
+      path: ../../Dockerfile.backend
+      context: ../../
+
+  studio:
+    project: packages/studio
+    language: ts
+    host: staticweb
