@@ -29,17 +29,21 @@ export async function initAuth(): Promise<string | null> {
 
   try {
     await msalInstance.initialize();
+    console.log("[Auth] MSAL initialized, checking for redirect response...");
 
-    // Handle redirect response (after login)
+    // Handle redirect response (after login redirect)
     const response = await msalInstance.handleRedirectPromise();
     if (response) {
       currentToken = response.accessToken;
-      console.log("[Auth] Login successful, token acquired");
+      console.log("[Auth] Redirect login successful, token acquired");
       return currentToken;
+    } else {
+      console.log("[Auth] No redirect response found");
     }
 
     // Check for existing session
     const accounts = msalInstance.getAllAccounts();
+    console.log(`[Auth] Found ${accounts.length} cached account(s)`);
     if (accounts.length > 0) {
       msalInstance.setActiveAccount(accounts[0]);
       try {
@@ -50,13 +54,13 @@ export async function initAuth(): Promise<string | null> {
         currentToken = tokenResponse.accessToken;
         console.log("[Auth] Token refreshed silently");
         return currentToken;
-      } catch {
-        // Silent token acquisition failed, need interactive login
-        console.log("[Auth] Silent token failed, login required");
+      } catch (err) {
+        console.log("[Auth] Silent token failed, login required:", err);
         return null;
       }
     }
 
+    console.log("[Auth] No accounts found — user needs to sign in");
     return null;
   } catch (err) {
     console.error("[Auth] MSAL initialization failed:", err);
@@ -71,12 +75,14 @@ export async function login(): Promise<string | null> {
   }
 
   try {
-    const response = await msalInstance.loginPopup({
+    console.log("[Auth] Initiating login redirect...");
+    // Use redirect flow — more reliable on deployed sites
+    // The response will be handled by handleRedirectPromise() on page reload
+    await msalInstance.loginRedirect({
       scopes: SCOPES,
     });
-    currentToken = response.accessToken;
-    console.log("[Auth] Login successful");
-    return currentToken;
+    // loginRedirect navigates away — this line won't execute
+    return null;
   } catch (err) {
     console.error("[Auth] Login failed:", err);
     return null;

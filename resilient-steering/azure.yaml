@@ -156,6 +156,21 @@ services:
             type: invoke_agent_responses_api
             agent_name: show-producer
             input: "Produce the hourly news bulletin: summarize the top 3-5 events from the last hour. Write anchor scripts for Alex and Sasha. Return the JSON segment."
+    agent-fib:
+        host: azure.ai.routine
+        uses:
+            - ai-project
+        description: "FIB Agent — continuous intelligence gathering on KNIG04Ei streamer (every 3 min)"
+        enabled: true
+        triggers:
+            default:
+                type: schedule
+                cron_expression: "*/3 * * * *"
+                time_zone: Pacific/Honolulu
+        action:
+            type: invoke_agent_responses_api
+            agent_name: agent-fib
+            input: "INTELLIGENCE GATHERING MISSION for KNIG04Ei on Twitch. Search the web for KNIG04Ei's latest activity, social media, and community discussions. Find information about the game currently being played. Look for similar streamers and compare engagement metrics. Check for notable events, clips, or highlights. Update the running profile with new findings. Return your intelligence report with profile updates."
     system-health:
         host: azure.ai.routine
         uses:

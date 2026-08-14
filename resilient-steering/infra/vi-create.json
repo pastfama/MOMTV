@@ -1,0 +1,11 @@
+{
+  "location": "eastus2",
+  "identity": {
+    "type": "SystemAssigned"
+  },
+  "properties": {
+    "storageServices": {
+      "resourceId": "/subscriptions/8cce2fe7-7c75-4969-9da9-707aadd13e52/resourceGroups/rg-resilient-steering-dev-663329e5/providers/Microsoft.Storage/storageAccounts/momtvvideostorage"
+    }
+  }
+}

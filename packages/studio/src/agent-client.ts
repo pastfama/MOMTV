@@ -5,6 +5,8 @@
 // Streams real-time analysis from each agent.
 // ============================================================
 
+import { getToken } from "./auth.js";
+
 export interface AgentConfig {
   name: string;
   displayName: string;
@@ -19,50 +21,64 @@ export interface AgentResponse {
 
 export type AgentResponseHandler = (response: AgentResponse) => void;
 
-const PROJECT_ENDPOINT = "https://cog-cdwzd6d3oc77y.services.ai.azure.com/api/projects/resilient-steering-dev";
+// Use the Azure Function proxy to avoid CORS issues with the Foundry endpoint.
+// The proxy runs at /api/agents/{agentName} on the same origin.
+const PROXY_BASE = "/api/agents";
 
 export const AGENTS: Record<string, AgentConfig> = {
   "stream-monitor": {
     name: "stream-monitor",
     displayName: "Stream Monitor",
-    endpoint: `${PROJECT_ENDPOINT}/agents/stream-monitor/endpoint/protocols/openai/responses?api-version=v1`,
+    endpoint: `${PROXY_BASE}/stream-monitor?api-version=v1`,
   },
   "content-analyzer": {
     name: "content-analyzer",
     displayName: "Content Analyzer",
-    endpoint: `${PROJECT_ENDPOINT}/agents/content-analyzer/endpoint/protocols/openai/responses?api-version=v1`,
+    endpoint: `${PROXY_BASE}/content-analyzer?api-version=v1`,
   },
   "chat-pulse": {
     name: "chat-pulse",
     displayName: "Chat Pulse",
-    endpoint: `${PROJECT_ENDPOINT}/agents/chat-pulse/endpoint/protocols/openai/responses?api-version=v1`,
+    endpoint: `${PROXY_BASE}/chat-pulse?api-version=v1`,
   },
   "show-producer": {
     name: "show-producer",
     displayName: "Show Producer",
-    endpoint: `${PROJECT_ENDPOINT}/agents/show-producer/endpoint/protocols/openai/responses?api-version=v1`,
+    endpoint: `${PROXY_BASE}/show-producer?api-version=v1`,
   },
   "art-director": {
     name: "art-director",
     displayName: "Art Director",
-    endpoint: `${PROJECT_ENDPOINT}/agents/art-director/endpoint/protocols/openai/responses?api-version=v1`,
+    endpoint: `${PROXY_BASE}/art-director?api-version=v1`,
   },
   "meta-agent": {
     name: "meta-agent",
     displayName: "Meta-Agent",
-    endpoint: `${PROJECT_ENDPOINT}/agents/meta-agent/endpoint/protocols/openai/responses?api-version=v1`,
+    endpoint: `${PROXY_BASE}/meta-agent?api-version=v1`,
   },
   "director": {
     name: "director",
     displayName: "Director",
-    endpoint: `${PROJECT_ENDPOINT}/agents/director/endpoint/protocols/openai/responses?api-version=v1`,
+    endpoint: `${PROXY_BASE}/director?api-version=v1`,
+  },
+  "agent-fib": {
+    name: "agent-fib",
+    displayName: "Agent FIB",
+    endpoint: `${PROXY_BASE}/agent-fib?api-version=v1`,
+  },
+  "stream-watcher": {
+    name: "stream-watcher",
+    displayName: "Stream Watcher",
+    // Not a Foundry agent — this is a local client-side agent.
+    // Endpoint is unused; the StreamWatcher class handles communication directly.
+    endpoint: "",
   },
 };
 
 export class AgentClient {
   private handlers: AgentResponseHandler[] = [];
   private activeSessions: Map<string, string> = new Map(); // agent -> response_id
-  // API key — set via environment or leave empty for Entra auth
+  // API key no longer needed in frontend — handled by the Azure Function proxy
   private apiKey: string = "";
 
   onResponse(handler: AgentResponseHandler): void {
@@ -85,7 +101,6 @@ export class AgentClient {
     const previousResponseId = this.activeSessions.get(agentName);
 
     const body: Record<string, unknown> = {
-      model: "agent",
       input: message,
       store: true,
       background: true,
@@ -101,7 +116,10 @@ export class AgentClient {
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
       };
-      if (this.apiKey) {
+      const token = getToken();
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      } else if (this.apiKey) {
         headers["api-key"] = this.apiKey;
       }
 
@@ -123,8 +141,17 @@ export class AgentClient {
       if (data.id) {
         this.activeSessions.set(agentName, data.id);
         console.log(`[AgentClient] ${agent.displayName} response ID: ${data.id}`);
-        // Poll for the background response
-        await this.pollResponse(agentName, data.id);
+
+        // If the proxy returned a completed response (server-side polling), use it directly
+        if (data.status === "completed" || data.status === "succeeded") {
+          const text = this.extractText(data.output as Array<{ type: string; content?: Array<{ type: string; text?: string }> }>);
+          if (text) {
+            this.emitResponse(agentName, text);
+          }
+        } else {
+          // Poll for the background response
+          await this.pollResponse(agentName, data.id);
+        }
       } else if (data.output) {
         // Response came back immediately (not background)
         const text = this.extractText(data.output as Array<{ type: string; content?: Array<{ type: string; text?: string }> }>);
@@ -154,7 +181,10 @@ export class AgentClient {
 
       try {
         const pollHeaders: Record<string, string> = {};
-        if (this.apiKey) {
+        const pollToken = getToken();
+        if (pollToken) {
+          pollHeaders["Authorization"] = `Bearer ${pollToken}`;
+        } else if (this.apiKey) {
           pollHeaders["api-key"] = this.apiKey;
         }
         const response = await fetch(pollUrl, { headers: pollHeaders });

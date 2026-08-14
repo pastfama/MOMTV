@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOM TV — 24/7 AI Stream Show</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    html, body {
+      width: 100%; height: 100%;
+      background: #0a0a14;
+      font-family: 'Inter', sans-serif;
+      color: #e0e0e0;
+      overflow: hidden;
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: 48px 1fr 36px;
+      grid-template-columns: 1fr 320px;
+      width: 100%; height: 100%;
+    }
+
+    /* Header */
+    .header {
+      grid-column: 1 / -1;
+      background: linear-gradient(180deg, #141428, #0f0f20);
+      border-bottom: 1px solid #2a2a4a;
+      display: flex; align-items: center;
+      padding: 0 20px; gap: 16px;
+    }
+    .header .brand { font-weight: 900; font-size: 20px; color: #e8794b; letter-spacing: 2px; }
+    .header .live-dot { width: 10px; height: 10px; border-radius: 50%; background: #ef4444; animation: pulse 1.5s infinite; }
+    .header .live-text { font-size: 12px; font-weight: 700; color: #ef4444; text-transform: uppercase; letter-spacing: 2px; }
+    .header .channel { font-size: 13px; font-weight: 600; color: #888; }
+    .header .clock { margin-left: auto; font-size: 14px; font-weight: 700; color: #e8794b; font-variant-numeric: tabular-nums; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    /* Main Stage */
+    .stage {
+      position: relative;
+      background: radial-gradient(ellipse at 50% 80%, #1a1a35, #0a0a14 70%);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 20px;
+    }
+
+    /* TV Screen */
+    .tv-screen {
+      width: 80%; max-width: 900px;
+      aspect-ratio: 16/9;
+      border-radius: 12px; overflow: hidden;
+      box-shadow: 0 0 0 3px #2a2a4a, 0 0 40px rgba(232,121,75,0.15);
+      position: relative;
+    }
+    .tv-screen iframe { width: 100%; height: 100%; border: none; }
+    .tv-screen .live-badge {
+      position: absolute; top: 10px; left: 10px;
+      background: #ef4444; color: #fff;
+      padding: 3px 10px; border-radius: 4px;
+      font-size: 10px; font-weight: 800; letter-spacing: 2px;
+    }
+    .tv-screen .viewer-count {
+      position: absolute; top: 10px; right: 10px;
+      background: rgba(0,0,0,0.7); color: #fff;
+      padding: 3px 8px; border-radius: 4px;
+      font-size: 11px; font-weight: 600;
+    }
+
+    /* Anchor Cards */
+    .anchors {
+      display: flex; gap: 20px; margin-top: 20px;
+      width: 80%; max-width: 900px;
+    }
+    .anchor-card {
+      flex: 1;
+      background: rgba(20,20,40,0.95);
+      border: 1px solid #2a2a4a;
+      border-radius: 12px;
+      padding: 16px;
+      transition: border-color 0.3s;
+    }
+    .anchor-card.speaking { border-color: #e8794b; }
+    .anchor-card .name {
+      font-size: 14px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+    .anchor-card.alex .name { color: #3b82f6; }
+    .anchor-card.sasha .name { color: #ef4444; }
+    .anchor-card .text {
+      font-size: 13px; line-height: 1.6; color: #ccc;
+      min-height: 60px;
+    }
+    .anchor-card .emotion {
+      font-size: 11px; color: #666;
+      margin-top: 8px; text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Scene Banner */
+    .scene-banner {
+      position: absolute; bottom: 20px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(232,121,75,0.9);
+      color: #0a0a14;
+      padding: 8px 24px;
+      border-radius: 6px;
+      font-size: 12px; font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .scene-banner.visible { opacity: 1; }
+
+    /* Sidebar */
+    .sidebar {
+      background: #0f0f20;
+      border-left: 1px solid #2a2a4a;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .sidebar-header {
+      padding: 10px 14px;
+      border-bottom: 1px solid #2a2a4a;
+    }
+    .sidebar-header h3 {
+      font-size: 11px; font-weight: 700;
+      color: #e8794b; text-transform: uppercase; letter-spacing: 1px;
+    }
+
+    /* Analysis Feed */
+    .feed { flex: 1; overflow-y: auto; padding: 8px 10px; }
+    .feed-item {
+      margin-bottom: 10px; padding-bottom: 10px;
+      border-bottom: 1px solid #1a1a30;
+    }
+    .feed-item .tag {
+      font-size: 8px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      color: #e8794b; margin-bottom: 2px;
+    }
+    .feed-item .text { font-size: 11px; line-height: 1.4; color: #bbb; }
+    .feed-item .time { font-size: 8px; color: #444; margin-top: 2px; }
+
+    /* Insights Panel */
+    .insights {
+      padding: 8px 12px;
+      border-top: 1px solid #2a2a4a;
+    }
+    .insights .label {
+      font-size: 8px; font-weight: 700; color: #555;
+      text-transform: uppercase; letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    .insights .stat {
+      font-size: 11px; color: #888;
+      display: flex; justify-content: space-between;
+      margin-bottom: 2px;
+    }
+    .insights .stat .value { color: #e0e0e0; font-weight: 600; }
+
+    /* Ticker */
+    .ticker {
+      grid-column: 1 / -1;
+      background: #0f0f20;
+      border-top: 1px solid #2a2a4a;
+      display: flex; align-items: center;
+      padding: 0 16px; overflow: hidden;
+    }
+    .ticker .brand { font-size: 10px; font-weight: 800; color: #e8794b; margin-right: 16px; white-space: nowrap; text-transform: uppercase; letter-spacing: 1px; }
+    .ticker .text { font-size: 11px; font-weight: 600; color: #888; white-space: nowrap; }
+
+    .feed::-webkit-scrollbar { width: 3px; }
+    .feed::-webkit-scrollbar-track { background: transparent; }
+    .feed::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <span class="brand">MOM TV</span>
+      <div class="live-dot"></div>
+      <span class="live-text">LIVE</span>
+      <span class="channel">KNIG04Ei — Twitch</span>
+      <span class="clock" id="clock">--:--:--</span>
+    </div>
+
+    <div class="stage">
+      <div class="tv-screen" id="tv-screen">
+        <div class="live-badge">● LIVE</div>
+        <div class="viewer-count" id="viewer-count">-- viewers</div>
+      </div>
+
+      <div class="anchors">
+        <div class="anchor-card alex" id="card-alex">
+          <div class="name">🧑‍💼 Alex — Anchor</div>
+          <div class="text" id="text-alex">Waiting for analysis...</div>
+          <div class="emotion" id="emotion-alex"></div>
+        </div>
+        <div class="anchor-card sasha" id="card-sasha">
+          <div class="name">👩‍💻 Sasha — Analyst</div>
+          <div class="text" id="text-sasha">Waiting for analysis...</div>
+          <div class="emotion" id="emotion-sasha"></div>
+        </div>
+      </div>
+
+      <div class="scene-banner" id="scene-banner"></div>
+    </div>
+
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h3>📊 Analysis Feed</h3>
+      </div>
+      <div class="feed" id="feed"></div>
+      <div class="insights">
+        <div class="label">Video Indexer Insights</div>
+        <div class="stat"><span>Transcript</span><span class="value" id="stat-transcript">0 lines</span></div>
+        <div class="stat"><span>OCR Text</span><span class="value" id="stat-ocr">0 items</span></div>
+        <div class="stat"><span>Scenes</span><span class="value" id="stat-scenes">0</span></div>
+        <div class="stat"><span>Topics</span><span class="value" id="stat-topics">0</span></div>
+      </div>
+    </div>
+
+    <div class="ticker">
+      <span class="brand">MOM TV</span>
+      <span class="text" id="ticker">MOM TV — 24/7 AI-Powered Stream Show — Powered by Azure Video Indexer + Foundry</span>
+    </div>
+  </div>
+
+  <script>
+    // ── Clock ──
+    function updateClock() {
+      const el = document.getElementById('clock');
+      if (el) el.textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // ── Embed Twitch Stream ──
+    function embedStream() {
+      const screen = document.getElementById('tv-screen');
+      const hostname = window.location.hostname || 'localhost';
+      const src = `https://player.twitch.tv/?channel=KNIG04Ei&parent=${hostname}&autoplay=true&muted=true`;
+      const iframe = document.createElement('iframe');
+      iframe.src = src;
+      iframe.allowFullscreen = true;
+      screen.insertBefore(iframe, screen.firstChild);
+    }
+    embedStream();
+
+    // ── Poll for show segments ──
+    let lastTimestamp = 0;
+
+    async function pollShowSegments() {
+      try {
+        const response = await fetch('/api/latest-segment');
+        if (!response.ok) return;
+        const segment = await response.json();
+        
+        if (segment.timestamp > lastTimestamp) {
+          lastTimestamp = segment.timestamp;
+          updateUI(segment);
+        }
+      } catch {
+        // Server not running yet
+      }
+    }
+
+    function updateUI(segment) {
+      // Update anchor cards
+      if (segment.agentOutput) {
+        try {
+          const script = JSON.parse(segment.agentOutput.content);
+          
+          if (script.alex) {
+            document.getElementById('text-alex').textContent = script.alex.text || '';
+            document.getElementById('emotion-alex').textContent = script.alex.emotion || '';
+            document.getElementById('card-alex').classList.add('speaking');
+            setTimeout(() => document.getElementById('card-alex').classList.remove('speaking'), 8000);
+          }
+          
+          if (script.sasha) {
+            setTimeout(() => {
+              document.getElementById('text-sasha').textContent = script.sasha.text || '';
+              document.getElementById('emotion-sasha').textContent = script.sasha.emotion || '';
+              document.getElementById('card-sasha').classList.add('speaking');
+              setTimeout(() => document.getElementById('card-sasha').classList.remove('speaking'), 8000);
+            }, 2000);
+          }
+          
+          if (script.ticker) {
+            document.getElementById('ticker').textContent = `MOM TV | ${script.ticker}`;
+          }
+          
+          if (script.scene) {
+            const banner = document.getElementById('scene-banner');
+            banner.textContent = script.scene.title || script.scene.type;
+            banner.classList.add('visible');
+            setTimeout(() => banner.classList.remove('visible'), 10000);
+          }
+        } catch {}
+      }
+
+      // Update insights
+      const va = segment.videoAnalysis;
+      if (va) {
+        document.getElementById('stat-transcript').textContent = `${va.transcript?.length || 0} lines`;
+        document.getElementById('stat-ocr').textContent = `${va.ocr?.length || 0} items`;
+        document.getElementById('stat-scenes').textContent = `${va.scenes?.length || 0}`;
+        document.getElementById('stat-topics').textContent = `${va.topics?.length || 0}`;
+      }
+
+      // Add to feed
+      const feed = document.getElementById('feed');
+      const item = document.createElement('div');
+      item.className = 'feed-item';
+      const time = new Date(segment.timestamp).toLocaleTimeString();
+      const transcriptPreview = va?.transcript?.slice(0, 3).map(t => t.text).join(' ') || 'No transcript';
+      item.innerHTML = `
+        <div class="tag">SEGMENT</div>
+        <div class="text">${transcriptPreview.slice(0, 150)}...</div>
+        <div class="time">${time}</div>
+      `;
+      feed.appendChild(item);
+      while (feed.children.length > 50) feed.removeChild(feed.firstChild);
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    // Poll every 15 seconds
+    setInterval(pollShowSegments, 15000);
+    pollShowSegments();
+  </script>
+</body>
+</html>

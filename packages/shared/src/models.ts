@@ -296,6 +296,64 @@ export interface AnchorScript {
   visual_notes?: string;
 }
 
+// --- Stream Watcher (Real-time) ---
+
+export type AlertLevel = "normal" | "elevated" | "breaking";
+
+export type StreamEventType =
+  | "stream_live"
+  | "stream_offline"
+  | "viewer_spike"
+  | "viewer_drop"
+  | "chat_surge"
+  | "raid"
+  | "hype_train"
+  | "game_change"
+  | "title_change"
+  | "clip_moment";
+
+export interface StreamEvent {
+  type: StreamEventType;
+  timestamp: number;
+  description: string;
+  severity: number; // 0-1
+  metadata?: Record<string, unknown>;
+}
+
+export interface ChatRateMetrics {
+  messagesPerMinute: number;
+  uniqueChatters: number;
+  topEmotes: string[];
+  sentiment: "positive" | "negative" | "neutral" | "mixed";
+  trendingKeywords: string[];
+}
+
+export interface WatcherReport {
+  alert_level: AlertLevel;
+  summary: string;
+  notable_events: string[];
+  viewer_engagement: string;
+  streamer_behavior: string;
+  // Stream metadata
+  game_detected?: string;
+  mood?: string;
+  scene_description?: string;
+  production_quality?: string;
+  viewer_count?: number;
+  is_live?: boolean;
+  chat_metrics?: ChatRateMetrics;
+}
+
+export interface VideoIndexerInsights {
+  timestamp: number;
+  segmentId: string;
+  transcript: string[];
+  ocrText: string[];
+  scenes: number;
+  topics: string[];
+  summary?: string;
+}
+
 // --- Studio Rendering ---
 
 export type SceneType =

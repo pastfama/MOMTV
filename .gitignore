@@ -19,7 +19,7 @@ test_body.json
 .azure/
 
 # IDE
-.vscode/
+
 .idea/
 
 # OS

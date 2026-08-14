@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MOM TV — 24/7 AI Stream Monitor</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <title>MOM TV — 24/7 AI Stream Network</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -12,296 +12,283 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #0a0a14;
-      font-family: 'Inter', sans-serif;
-      color: #e0e0e0;
+      background: #0c0a08;
+      font-family: 'DM Sans', sans-serif;
+      color: #f5e6d0;
     }
 
+    /* ── Subtle scanlines ── */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px);
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ═══════════════════════════════════════════
+       LAYOUT: 3-row, 2-column dashboard
+       ═══════════════════════════════════════════ */
     .app {
       display: grid;
       grid-template-rows: 48px 1fr 36px;
-      grid-template-columns: 1fr 300px;
+      grid-template-columns: 1fr 340px;
       width: 100%;
       height: 100%;
+      background: #0c0a08;
     }
 
-    /* ── Header ── */
+    /* ═══════════════════════════════════════════
+       HEADER — Slim broadcast bar
+       ═══════════════════════════════════════════ */
     .header {
       grid-column: 1 / -1;
-      background: linear-gradient(180deg, #141428 0%, #0f0f20 100%);
-      border-bottom: 1px solid #2a2a4a;
+      background: #111010;
+      border-bottom: 1px solid rgba(212,101,47,0.3);
       display: flex;
       align-items: center;
       padding: 0 20px;
       gap: 16px;
     }
 
-    .header .brand {
+    .brand {
+      font-family: 'Playfair Display', serif;
       font-weight: 900;
-      font-size: 20px;
+      font-size: 18px;
       color: #e8794b;
-      letter-spacing: 2px;
+      letter-spacing: 3px;
     }
+    .brand-dot { color: #d4a843; }
 
-    .header .live-dot {
-      width: 10px; height: 10px; border-radius: 50%;
+    .on-air {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.4);
+      border-radius: 4px;
+      padding: 2px 10px;
+    }
+    .on-air-dot {
+      width: 6px; height: 6px; border-radius: 50%;
       background: #ef4444;
-      animation: pulse 1.5s infinite;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .on-air-text {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px; font-weight: 700; color: #ef4444;
+      letter-spacing: 2px; text-transform: uppercase;
     }
 
-    .header .live-text {
-      font-size: 12px; font-weight: 700; color: #ef4444;
-      text-transform: uppercase; letter-spacing: 2px;
+    .channel-info {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px; color: #8b7355; letter-spacing: 1px;
     }
-
-    .header .channel-info {
-      font-size: 13px; font-weight: 600; color: #888;
+    .stream-title {
+      font-size: 12px; color: #d4a843; font-weight: 500;
+      max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-
-    .header .clock {
-      margin-left: auto;
-      font-size: 14px; font-weight: 700; color: #e8794b;
+    .header-right {
+      margin-left: auto; display: flex; align-items: center; gap: 12px;
+    }
+    .clock {
+      font-family: 'Space Mono', monospace;
+      font-size: 13px; font-weight: 700; color: #d4a843;
       font-variant-numeric: tabular-nums;
     }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
+    .viewer-badge {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px; color: #8b7355;
+      background: rgba(255,255,255,0.04);
+      padding: 2px 8px; border-radius: 3px;
+      border: 1px solid rgba(255,255,255,0.06);
     }
 
-    /* ── Studio (main area) ── */
-    .studio {
-      position: relative;
-      background: radial-gradient(ellipse at 50% 80%, #1a1a35 0%, #0a0a14 70%);
-      overflow: hidden;
+    /* ═══════════════════════════════════════════
+       MAIN AREA — Video + Anchors + Analysis
+       ═══════════════════════════════════════════ */
+    .main {
       display: flex;
       flex-direction: column;
-      align-items: center;
-    }
-
-    /* ── TV Screen (embedded stream) ── */
-    .tv-screen {
-      position: relative;
-      width: 75%;
-      max-width: 900px;
-      aspect-ratio: 16 / 9;
-      margin-top: 12px;
-      border-radius: 12px;
       overflow: hidden;
-      box-shadow:
-        0 0 0 3px #2a2a4a,
-        0 0 0 6px #1a1a30,
-        0 0 40px rgba(232, 121, 75, 0.15),
-        0 8px 32px rgba(0,0,0,0.5);
+      background: #0c0a08;
     }
 
-    .tv-screen iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
+    /* Video container */
+    .video-container {
+      flex: 1;
+      position: relative;
+      min-height: 0;
+      background: #000;
+      margin: 8px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 30px rgba(0,0,0,0.5);
     }
-
-    .tv-screen .screen-overlay {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
+    .video-container iframe {
+      width: 100%; height: 100%; border: none;
+      filter: saturate(1.05) contrast(1.02);
+    }
+    .video-overlay {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
       pointer-events: none;
-      background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 30%);
-      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, transparent 15%, transparent 85%, rgba(0,0,0,0.3) 100%);
+    }
+    .live-badge {
+      position: absolute; top: 12px; left: 12px;
+      background: #c0392b; color: #fff;
+      padding: 2px 8px; border-radius: 3px;
+      font-family: 'Space Mono', monospace; font-size: 9px; font-weight: 700;
+      letter-spacing: 2px; z-index: 10;
+      box-shadow: 0 0 8px rgba(192,57,43,0.4);
+    }
+    .news-overlay {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(12,10,8,0.95));
+      padding: 40px 16px 12px;
+      display: none; z-index: 10;
+    }
+    .news-overlay.visible { display: block; }
+    .news-overlay h4 {
+      font-family: 'Playfair Display', serif;
+      font-size: 10px; color: #e8794b;
+      text-transform: uppercase; letter-spacing: 3px; margin-bottom: 3px;
+    }
+    .news-overlay p { font-size: 12px; line-height: 1.4; color: #f5e6d0; }
+
+    /* Bottom bar: Anchors + Quick Analysis */
+    .bottom-bar {
+      display: flex;
+      align-items: stretch;
+      height: 100px;
+      padding: 0 8px 8px;
+      gap: 8px;
     }
 
-    .tv-screen .live-badge {
-      position: absolute;
-      top: 10px; left: 10px;
-      background: #ef4444;
-      color: #fff;
-      padding: 3px 10px;
-      border-radius: 4px;
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 2px;
-      z-index: 10;
+    /* Anchors strip */
+    .anchors-strip {
+      display: flex;
+      gap: 8px;
+      flex: 1;
     }
-
-    .tv-screen .viewer-count {
-      position: absolute;
-      top: 10px; right: 10px;
-      background: rgba(0,0,0,0.7);
-      color: #fff;
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 600;
-      z-index: 10;
-    }
-
-    .tv-screen .news-overlay {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      background: linear-gradient(transparent, rgba(0,0,0,0.9));
-      padding: 30px 16px 12px;
-      display: none;
-      z-index: 10;
-    }
-
-    .tv-screen .news-overlay.visible { display: block; }
-
-    .tv-screen .news-overlay h4 {
-      font-size: 10px;
-      color: #e8794b;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      margin-bottom: 4px;
-    }
-
-    .tv-screen .news-overlay p {
-      font-size: 12px;
-      line-height: 1.4;
-      color: #ddd;
-    }
-
-    /* ── News Desk ── */
-    .desk {
-      position: relative;
-      width: 85%;
-      max-width: 1000px;
-      height: 80px;
-      margin-top: -10px;
-      background: linear-gradient(180deg, #2a1a10 0%, #1a1008 100%);
-      border-radius: 8px 8px 0 0;
-      border-top: 2px solid #e8794b;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    .anchor-card {
+      flex: 1;
+      background: #141210;
+      border: 1px solid rgba(212,101,47,0.15);
+      border-radius: 8px;
+      padding: 8px 12px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 40px;
-      z-index: 5;
-    }
-
-    .desk .name-plate {
-      background: linear-gradient(135deg, #e8794b, #c0603a);
-      color: #1a1a2e;
-      padding: 6px 20px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      text-align: center;
-    }
-
-    .desk .name-plate .role {
-      font-size: 8px;
-      font-weight: 600;
-      opacity: 0.7;
-      letter-spacing: 1px;
-    }
-
-    /* ── Anchors ── */
-    .anchors {
+      gap: 10px;
       position: relative;
-      width: 85%;
-      max-width: 1000px;
-      height: 180px;
-      display: flex;
-      justify-content: space-around;
-      align-items: flex-end;
-      z-index: 5;
+      overflow: hidden;
+      transition: border-color 0.3s;
     }
-
-    .anchor {
-      position: relative;
-      width: 140px;
-      height: 170px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    .anchor-card.speaking {
+      border-color: #d4652f;
+      box-shadow: 0 0 12px rgba(212,101,47,0.15);
     }
+    .anchor-avatar {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      background: rgba(42,31,21,0.6);
+      border: 2px solid rgba(212,101,47,0.2);
+      flex-shrink: 0;
+    }
+    .anchor-card.speaking .anchor-avatar {
+      border-color: #d4652f;
+      animation: bob 0.3s ease-in-out infinite alternate;
+    }
+    @keyframes bob { from{transform:translateY(0)} to{transform:translateY(-2px)} }
+    .anchor-info { flex: 1; min-width: 0; }
+    .anchor-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 13px; font-weight: 700; color: #e8794b;
+    }
+    .anchor-role {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px; color: #6b5c4a; text-transform: uppercase; letter-spacing: 1px;
+    }
+    .anchor-speech {
+      font-size: 11px; line-height: 1.4; color: #a89880;
+      margin-top: 4px;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .anchor-card.speaking .anchor-speech { opacity: 1; }
 
-    .anchor .character {
-      width: 120px;
-      height: 140px;
+    /* Chat panel */
+    .chat-panel {
+      width: 280px;
+      background: #141210;
+      border: 1px solid rgba(255,255,255,0.06);
       border-radius: 8px;
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chat-header {
+      padding: 6px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .chat-header-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px; color: #6b5c4a; text-transform: uppercase; letter-spacing: 2px;
+    }
+    .chat-header-count {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px; color: #6b8e4e;
+      margin-left: auto;
+    }
+    .chat-messages {
+      flex: 1; overflow-y: auto; padding: 4px 8px;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .chat-msg {
+      font-size: 11px; line-height: 1.3;
+    }
+    .chat-user {
+      font-weight: 700; margin-right: 4px;
+    }
+    .chat-text {
+      color: #a89880;
+    }
+    .chat-messages::-webkit-scrollbar { width: 2px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages::-webkit-scrollbar-thumb { background: #2a1f15; border-radius: 1px; }
+
+    /* Quick analysis panel */
+    .quick-analysis {
+      width: 200px;
+      background: #141210;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
       justify-content: center;
-      font-size: 48px;
-      transition: transform 0.3s ease;
+      gap: 4px;
     }
-
-    .anchor.speaking .character {
-      animation: talk-bob 0.3s ease-in-out infinite alternate;
+    .qa-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 7px; color: #6b5c4a; text-transform: uppercase; letter-spacing: 2px;
+      margin-bottom: 2px;
     }
-
-    @keyframes talk-bob {
-      from { transform: translateY(0); }
-      to { transform: translateY(-4px); }
+    .qa-row {
+      display: flex; justify-content: space-between; align-items: center;
     }
+    .qa-label { font-family: 'Space Mono', monospace; font-size: 9px; color: #6b5c4a; }
+    .qa-value { font-family: 'Space Mono', monospace; font-size: 9px; color: #d4a843; font-weight: 700; }
 
-    .anchor .anchor-name {
-      font-size: 12px;
-      font-weight: 700;
-      color: #e8794b;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-top: 4px;
-    }
-
-    .anchor .anchor-role {
-      font-size: 9px;
-      color: #666;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    /* ── Speech Bubbles ── */
-    .speech-bubble {
-      position: absolute;
-      bottom: 180px;
-      width: 260px;
-      background: rgba(20, 20, 40, 0.95);
-      border: 1px solid #e8794b;
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-size: 12px;
-      line-height: 1.5;
-      color: #ddd;
-      opacity: 0;
-      transform: translateY(10px);
-      transition: opacity 0.3s, transform 0.3s;
-      pointer-events: none;
-      z-index: 20;
-    }
-
-    .speech-bubble.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .speech-bubble::after {
-      content: '';
-      position: absolute;
-      bottom: -8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0; height: 0;
-      border-left: 8px solid transparent;
-      border-right: 8px solid transparent;
-      border-top: 8px solid #e8794b;
-    }
-
-    .speech-bubble .bubble-agent {
-      font-size: 9px;
-      font-weight: 700;
-      color: #e8794b;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 4px;
-    }
-
-    /* ── Sidebar ── */
+    /* ═══════════════════════════════════════════
+       SIDEBAR — Agents + Feed + Sentiment
+       ═══════════════════════════════════════════ */
     .sidebar {
-      background: #0f0f20;
-      border-left: 1px solid #2a2a4a;
+      background: #0e0d0b;
+      border-left: 1px solid rgba(255,255,255,0.04);
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -309,236 +296,342 @@
 
     .sidebar-header {
       padding: 10px 14px;
-      border-bottom: 1px solid #2a2a4a;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .sidebar-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px; font-weight: 700; color: #d4a843;
+      letter-spacing: 2px; text-transform: uppercase;
+    }
+    .sidebar-badge {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px; color: #6b8e4e;
+      background: rgba(107,142,78,0.1);
+      padding: 2px 6px; border-radius: 3px;
+      border: 1px solid rgba(107,142,78,0.2);
     }
 
-    .sidebar-header h3 {
-      font-size: 11px;
-      font-weight: 700;
-      color: #e8794b;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
+    /* Agent Grid */
     .agent-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(4, 1fr);
       gap: 1px;
-      background: #2a2a4a;
-      border-bottom: 1px solid #2a2a4a;
-    }
-
-    .agent-cell {
-      background: #0f0f20;
-      padding: 6px 8px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .agent-cell .dot {
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: #22c55e;
-      flex-shrink: 0;
-    }
-
-    .agent-cell .name {
-      font-size: 9px; font-weight: 600; color: #aaa;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-
-    /* Feed */
-    .feed {
-      flex: 1;
-      overflow-y: auto;
-      padding: 8px 10px;
-    }
-
-    .feed-item {
-      margin-bottom: 10px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #1a1a30;
-    }
-
-    .feed-item .agent-tag {
-      font-size: 8px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 1px;
-      margin-bottom: 2px;
-    }
-
-    .feed-item .agent-tag.director { color: #e8794b; }
-    .feed-item .agent-tag.stream-monitor { color: #3b82f6; }
-    .feed-item .agent-tag.chat-pulse { color: #ef4444; }
-    .feed-item .agent-tag.show-producer { color: #22c55e; }
-    .feed-item .agent-tag.system { color: #666; }
-
-    .feed-item .text {
-      font-size: 11px; line-height: 1.4; color: #bbb;
-    }
-
-    .feed-item .time {
-      font-size: 8px; color: #444; margin-top: 2px;
-    }
-
-    /* Sentiment */
-    .sentiment {
-      padding: 8px 12px;
-      border-top: 1px solid #2a2a4a;
-    }
-
-    .sentiment .label {
-      font-size: 8px; font-weight: 700; color: #555;
-      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px;
-    }
-
-    .sentiment .bar {
-      height: 3px; background: #2a2a4a;
-      border-radius: 2px; overflow: hidden; margin-bottom: 3px;
-    }
-
-    .sentiment .fill {
-      height: 100%; border-radius: 2px;
-      transition: width 0.5s ease, background 0.5s ease;
-      background: #888; width: 50%;
-    }
-
-    .sentiment .value {
-      font-size: 8px; color: #555;
-    }
-
-    /* ── Ticker ── */
-    .ticker {
-      grid-column: 1 / -1;
-      background: #0f0f20;
-      border-top: 1px solid #2a2a4a;
-      display: flex;
-      align-items: center;
-      padding: 0 16px;
+      background: rgba(255,255,255,0.03);
+      padding: 1px;
+      margin: 8px;
+      border-radius: 6px;
       overflow: hidden;
     }
+    .agent-cell {
+      background: #0e0d0b;
+      padding: 6px 4px;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 3px;
+      transition: background 0.2s;
+    }
+    .agent-cell:hover { background: #141210; }
+    .agent-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: #6b8e4e;
+      box-shadow: 0 0 4px rgba(107,142,78,0.3);
+    }
+    .agent-dot.active { background: #6b8e4e; box-shadow: 0 0 6px rgba(107,142,78,0.5); }
+    .agent-dot.thinking { background: #d4a843; animation: pulse 1s ease-in-out infinite; }
+    .agent-dot.error { background: #c0392b; }
+    .agent-name {
+      font-family: 'Space Mono', monospace;
+      font-size: 7px; font-weight: 700; color: #8b7355;
+      text-align: center; letter-spacing: 0.3px;
+    }
 
-    .ticker .brand-ticker {
-      font-size: 10px; font-weight: 800; color: #e8794b;
-      margin-right: 16px;
+    /* Commentary Feed */
+    .feed {
+      flex: 1; overflow-y: auto;
+      padding: 4px 12px;
+    }
+    .feed-item {
+      margin-bottom: 6px; padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .feed-header {
+      display: flex; align-items: center; gap: 6px; margin-bottom: 2px;
+    }
+    .feed-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 7px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      padding: 1px 4px; border-radius: 2px;
+      background: rgba(255,255,255,0.04);
+    }
+    .feed-tag.director { color: #e8794b; background: rgba(232,121,75,0.1); }
+    .feed-tag.stream-monitor { color: #6b8e4e; background: rgba(107,142,78,0.1); }
+    .feed-tag.chat-pulse { color: #d4a843; background: rgba(212,168,67,0.1); }
+    .feed-tag.show-producer { color: #3b82f6; background: rgba(59,130,246,0.1); }
+    .feed-tag.content-analyzer { color: #8b5cf6; background: rgba(139,92,246,0.1); }
+    .feed-tag.stream-watcher { color: #d4a843; background: rgba(212,168,67,0.1); }
+    .feed-tag.system { color: #6b5c4a; }
+    .feed-time {
+      font-family: 'Space Mono', monospace;
+      font-size: 7px; color: #3a3020; margin-left: auto;
+    }
+    .feed-text {
+      font-size: 11px; line-height: 1.35; color: #8b7355;
+    }
+
+    /* Sentiment Bar */
+    .sentiment-bar {
+      padding: 8px 14px;
+      border-top: 1px solid rgba(255,255,255,0.04);
+      background: rgba(255,255,255,0.02);
+    }
+    .sentiment-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 4px;
+    }
+    .sentiment-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 7px; color: #6b5c4a; text-transform: uppercase; letter-spacing: 2px;
+    }
+    .sentiment-value {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px; color: #8b7355;
+    }
+    .vu-track {
+      height: 6px; background: #1a1410; border-radius: 3px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+    .vu-fill {
+      height: 100%; border-radius: 2px;
+      transition: width 0.8s ease, background 0.8s ease;
+      background: #6b8e4e; width: 50%;
+    }
+
+    /* ═══════════════════════════════════════════
+       TICKER — Bottom bar
+       ═══════════════════════════════════════════ */
+    .ticker {
+      grid-column: 1 / -1;
+      background: #080706;
+      border-top: 1px solid rgba(255,255,255,0.04);
+      display: flex; align-items: center;
+      padding: 0 16px; overflow: hidden;
+    }
+    .ticker-brand {
+      font-family: 'Playfair Display', serif;
+      font-size: 9px; font-weight: 900; color: #d4652f;
+      margin-right: 12px; white-space: nowrap;
+      text-transform: uppercase; letter-spacing: 2px; flex-shrink: 0;
+    }
+    .ticker-divider {
+      width: 1px; height: 16px; background: rgba(255,255,255,0.06);
+      margin-right: 12px; flex-shrink: 0;
+    }
+    .ticker-text {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px; color: #d4a843;
       white-space: nowrap;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+      animation: scroll 60s linear infinite; letter-spacing: 0.5px;
     }
+    @keyframes scroll { from{transform:translateX(100%)} to{transform:translateX(-300%)} }
 
-    .ticker .text {
-      font-size: 11px; font-weight: 600; color: #888;
-      white-space: nowrap;
-      animation: scroll 45s linear infinite;
-    }
-
-    @keyframes scroll {
-      from { transform: translateX(100%); }
-      to { transform: translateX(-200%); }
-    }
-
-    /* ── Scrollbar ── */
+    /* ═══════════════════════════════════════════
+       SCROLLBAR
+       ═══════════════════════════════════════════ */
     .feed::-webkit-scrollbar { width: 3px; }
     .feed::-webkit-scrollbar-track { background: transparent; }
-    .feed::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+    .feed::-webkit-scrollbar-thumb { background: #2a1f15; border-radius: 2px; }
   </style>
 </head>
 <body>
   <div class="app">
-    <!-- Header -->
+    <!-- ═══ Header ═══ -->
     <div class="header">
-      <span class="brand">MOM TV</span>
-      <div class="live-dot"></div>
-      <span class="live-text">LIVE</span>
-      <span class="channel-info" id="channel-info">KNIG04Ei — Twitch</span>
-      <span class="clock" id="clock">--:--:--</span>
+      <span class="brand">MOM<span class="brand-dot">TV</span></span>
+      <div class="on-air">
+        <div class="on-air-dot"></div>
+        <span class="on-air-text">Live</span>
+      </div>
+      <span class="channel-info" id="channel-info">KNIG04Ei</span>
+      <span class="stream-title" id="stream-title">Loading...</span>
+      <div class="header-right">
+        <span class="viewer-badge" id="viewer-count">-- viewers</span>
+        <span class="clock" id="clock">--:--:--</span>
+      </div>
     </div>
 
-    <!-- Studio -->
-    <div class="studio" id="studio-container">
-      <!-- TV Screen with embedded stream -->
-      <div class="tv-screen" id="tv-screen">
-        <div class="screen-overlay"></div>
+    <!-- ═══ Main Area ═══ -->
+    <div class="main">
+      <!-- Video -->
+      <div class="video-container">
+        <div id="tv-screen"></div>
+        <div class="video-overlay"></div>
         <div class="live-badge">● LIVE</div>
-        <div class="viewer-count" id="viewer-count">-- viewers</div>
         <div class="news-overlay" id="news-overlay">
-          <h4>📰 Breaking News</h4>
+          <h4>Breaking News</h4>
           <p id="news-content">Loading...</p>
         </div>
       </div>
 
-      <!-- News Desk -->
-      <div class="desk">
-        <div class="name-plate">
-          <div>ALEX</div>
-          <div class="role">ANCHOR</div>
+      <!-- Bottom: Anchors + Quick Analysis -->
+      <div class="bottom-bar">
+        <div class="anchors-strip">
+          <!-- Alex -->
+          <div class="anchor-card" id="anchor-alex">
+            <div class="anchor-avatar">🧑‍💼</div>
+            <div class="anchor-info">
+              <div class="anchor-name">Alex</div>
+              <div class="anchor-role">Anchor</div>
+              <div class="anchor-speech" id="bubble-alex-text">Connecting...</div>
+            </div>
+          </div>
+          <!-- Sasha -->
+          <div class="anchor-card" id="anchor-sasha">
+            <div class="anchor-avatar">👩‍💻</div>
+            <div class="anchor-info">
+              <div class="anchor-name">Sasha</div>
+              <div class="anchor-role">Analyst</div>
+              <div class="anchor-speech" id="bubble-sasha-text">Connecting...</div>
+            </div>
+          </div>
         </div>
-        <div class="name-plate" style="background: linear-gradient(135deg, #ef4444, #b91c1c);">
-          <div>SASHA</div>
-          <div class="role">ANALYST</div>
+        <!-- Chat Panel -->
+        <div class="chat-panel">
+          <div class="chat-header">
+            <span class="chat-header-title">Live Chat</span>
+            <span class="chat-header-count" id="chat-count">0 msgs</span>
+          </div>
+          <div class="chat-messages" id="chat-messages">
+            <div class="chat-msg"><span class="chat-text" style="color:#6b5c4a">Connecting to chat...</span></div>
+          </div>
         </div>
-      </div>
 
-      <!-- Anchors -->
-      <div class="anchors">
-        <div class="anchor" id="anchor-alex">
-          <div class="speech-bubble" id="bubble-alex">
-            <div class="bubble-agent">ALEX — Anchor</div>
-            <div class="bubble-text" id="bubble-alex-text">Connecting...</div>
+        <!-- Quick Analysis -->
+        <div class="quick-analysis">
+          <div class="qa-title">Visual Analysis</div>
+          <div class="qa-row">
+            <span class="qa-label">Game</span>
+            <span class="qa-value" id="va-game">—</span>
           </div>
-          <div class="character" style="background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3);">🧑‍💼</div>
-          <div class="anchor-name">Alex</div>
-          <div class="anchor-role">Anchor</div>
-        </div>
-        <div class="anchor" id="anchor-sasha">
-          <div class="speech-bubble" id="bubble-sasha">
-            <div class="bubble-agent">SASHA — Analyst</div>
-            <div class="bubble-text" id="bubble-sasha-text">Connecting...</div>
+          <div class="qa-row">
+            <span class="qa-label">Mood</span>
+            <span class="qa-value" id="va-mood">—</span>
           </div>
-          <div class="character" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3);">👩‍💻</div>
-          <div class="anchor-name">Sasha</div>
-          <div class="anchor-role">Analyst</div>
+          <div class="qa-row">
+            <span class="qa-label">Quality</span>
+            <span class="qa-value" id="va-quality">—</span>
+          </div>
+          <div class="qa-row">
+            <span class="qa-label">Scene</span>
+            <span class="qa-value" id="va-scene" style="max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Sidebar -->
+    <!-- ═══ Sidebar ═══ -->
     <div class="sidebar">
       <div class="sidebar-header">
-        <h3>🤖 Agents</h3>
+        <span class="sidebar-title">Agents</span>
+        <span class="sidebar-badge" id="agent-count">8 ACTIVE</span>
       </div>
 
+      <!-- Agent Grid (4 columns) -->
       <div class="agent-grid">
-        <div class="agent-cell"><div class="dot"></div><span class="name">Director</span></div>
-        <div class="agent-cell"><div class="dot"></div><span class="name">Stream Mon</span></div>
-        <div class="agent-cell"><div class="dot"></div><span class="name">Chat Pulse</span></div>
-        <div class="agent-cell"><div class="dot"></div><span class="name">Content</span></div>
+        <div class="agent-cell"><div class="agent-dot active"></div><span class="agent-name">Director</span></div>
+        <div class="agent-cell"><div class="agent-dot active"></div><span class="agent-name">Stream</span></div>
+        <div class="agent-cell"><div class="agent-dot active"></div><span class="agent-name">ChatPulse</span></div>
+        <div class="agent-cell"><div class="agent-dot active"></div><span class="agent-name">Content</span></div>
+        <div class="agent-cell"><div class="agent-dot active"></div><span class="agent-name">ShowProd</span></div>
+        <div class="agent-cell"><div class="agent-dot active"></div><span class="agent-name">ArtDir</span></div>
+        <div class="agent-cell"><div class="agent-dot active"></div><span class="agent-name">Meta</span></div>
+        <div class="agent-cell"><div class="agent-dot active"></div><span class="agent-name" style="color:#d4a843">Watcher</span></div>
       </div>
 
+      <!-- Commentary Feed -->
       <div class="feed" id="commentary-feed">
         <div class="feed-item">
-          <div class="agent-tag system">SYSTEM</div>
-          <div class="text">MOM TV initializing... Connecting to AI agents.</div>
-          <div class="time">--:--</div>
+          <div class="feed-header">
+            <span class="feed-tag system">System</span>
+            <span class="feed-time">--:--</span>
+          </div>
+          <div class="feed-text">MOM TV initializing... Connecting to AI agents.</div>
         </div>
       </div>
 
-      <div class="sentiment">
-        <div class="label">Chat Sentiment</div>
-        <div class="bar"><div class="fill" id="sentiment-fill"></div></div>
-        <div class="value" id="sentiment-text">Waiting for data...</div>
+      <!-- Sentiment Bar -->
+      <div class="sentiment-bar">
+        <div class="sentiment-header">
+          <span class="sentiment-label">Chat Sentiment</span>
+          <span class="sentiment-value" id="sentiment-text">—</span>
+        </div>
+        <div class="vu-track">
+          <div class="vu-fill" id="sentiment-fill"></div>
+        </div>
+      </div>
+
+      <!-- Analytics Stats -->
+      <div style="padding:8px 12px;border-top:1px solid rgba(255,255,255,0.04);">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+          <span style="font-family:'Space Mono',monospace;font-size:8px;font-weight:700;color:#6b8e4e;text-transform:uppercase;letter-spacing:1px;">📈 Analytics</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+          <div style="display:flex;justify-content:space-between;font-size:9px;">
+            <span style="color:#666;">Buffered</span>
+            <span style="color:#ccc;font-weight:600;" id="an-buffered">0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;">
+            <span style="color:#666;">Sent</span>
+            <span style="color:#6b8e4e;font-weight:600;" id="an-sent">0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;">
+            <span style="color:#666;">Failed</span>
+            <span style="color:#c0392b;font-weight:600;" id="an-failed">0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;">
+            <span style="color:#666;">Storage</span>
+            <span style="color:#d4a843;font-weight:600;" id="an-storage">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Video Indexer Insights -->
+      <div class="vi-panel" style="padding:8px 12px;border-top:1px solid rgba(255,255,255,0.04);">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+          <span style="font-family:'Space Mono',monospace;font-size:8px;font-weight:700;color:#8b5cf6;text-transform:uppercase;letter-spacing:1px;">📊 Video Indexer</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+          <div style="display:flex;justify-content:space-between;font-size:9px;">
+            <span style="color:#666;">Transcript</span>
+            <span style="color:#ccc;font-weight:600;" id="vi-transcript">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;">
+            <span style="color:#666;">OCR</span>
+            <span style="color:#ccc;font-weight:600;" id="vi-ocr">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;">
+            <span style="color:#666;">Scenes</span>
+            <span style="color:#ccc;font-weight:600;" id="vi-scenes">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;">
+            <span style="color:#666;">Topics</span>
+            <span style="color:#ccc;font-weight:600;max-width:80px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="vi-topics">—</span>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Ticker -->
+    <!-- ═══ Ticker ═══ -->
     <div class="ticker">
-      <span class="brand-ticker">MOM TV</span>
-      <span class="text" id="ticker-content">MOM TV — 24/7 AI-Powered Stream Monitor — Powered by Azure AI Foundry</span>
+      <span class="ticker-brand">MOM TV</span>
+      <div class="ticker-divider"></div>
+      <span class="ticker-text" id="ticker-content">MOM TV — 24/7 AI-Powered Stream Network — Powered by Azure AI Foundry — Live from Twitch</span>
     </div>
   </div>
+
+  <!-- Speech bubble containers (hidden, shown dynamically) -->
+  <div id="bubble-alex" class="speech-bubble" style="display:none"></div>
+  <div id="bubble-sasha" class="speech-bubble" style="display:none"></div>
 
   <script src="https://player.twitch.tv/js/embed/v1.js"></script>
   <script type="module" src="/src/main.ts"></script>

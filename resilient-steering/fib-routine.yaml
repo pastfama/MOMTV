@@ -1,0 +1,35 @@
+# Agent FIB — Scheduled Intelligence Gathering Routine
+# Runs every 3 minutes to scrape the internet and build profile on KNIG04Ei
+
+fib-intelligence:
+    host: azure.ai.routine
+    uses:
+        - ai-project
+    description: "FIB Agent: Continuous intelligence gathering on KNIG04Ei streamer"
+    enabled: true
+    triggers:
+        default:
+            type: schedule
+            cron_expression: "*/3 * * * *"
+            time_zone: Pacific/Honolulu
+    action:
+        type: invoke_agent_responses_api
+        agent_name: agent-fib
+        input: |
+            INTELLIGENCE GATHERING MISSION for KNIG04Ei on Twitch.
+            
+            Tasks:
+            1. Search the web for KNIG04Ei's latest activity, social media, and community discussions
+            2. Find information about the game currently being played
+            3. Look for similar streamers and compare engagement metrics
+            4. Check for any notable events, clips, or highlights
+            5. Update the running profile with new findings
+            
+            Focus areas:
+            - Games played and preferences
+            - Streaming schedule patterns
+            - Viewer growth trajectory
+            - Community sentiment
+            - Content quality trends
+            
+            Return your intelligence report with profile updates.
