@@ -1,0 +1,1 @@
+Compress-Archive -Path "c:\Tools\MOMTV\MOMTV\resilient-steering\*" -DestinationPath "c:\Tools\MOMTV\MOMTV\momtv-server.zip" -Force
