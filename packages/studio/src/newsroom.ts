@@ -240,21 +240,26 @@ export class Newsroom {
     console.log(`[Newsroom] 🎬 Running show: ${showType} at ${time}`);
 
     switch (showType) {
-      case "quick-news":
+      case "quick-news": {
         // Director generates a quick 2-exchange anchor dialogue
+        const context = this.isLive
+          ? `Generate a QUICK NEWS UPDATE for KNIG04Ei on Twitch.`
+          : `Generate a QUICK NEWS UPDATE. KNIG04Ei is offline — the studio is showing a GTA5 RP VOD replay. Comment on the VOD content and the game.`;
         this.agentClient.sendCommand("director",
-          `Generate a QUICK NEWS UPDATE for KNIG04Ei on Twitch. ` +
-          `Write a 2-exchange dialogue between Alex and Sasha. ` +
+          context + ` Write a 2-exchange dialogue between Alex and Sasha. ` +
           `Alex starts with a brief headline, Sasha responds with analysis. ` +
           `Keep each line 1-2 sentences. Make it feel like breaking into a live broadcast.`
         );
         break;
+      }
 
-      case "full-news":
+      case "full-news": {
         // Director + Show Producer for a full segment
+        const newsContext = this.isLive
+          ? `Produce a FULL NEWS SEGMENT for KNIG04Ei on Twitch.`
+          : `Produce a FULL NEWS SEGMENT. KNIG04Ei is offline showing a GTA5 RP VOD. Discuss the game, the streamer's content, and what's happening in the VOD.`;
         this.agentClient.sendCommand("show-producer",
-          `Produce a FULL NEWS SEGMENT for KNIG04Ei on Twitch. ` +
-          `Write a 4-exchange dialogue between Alex (anchor) and Sasha (analyst): ` +
+          newsContext + ` Write a 4-exchange dialogue between Alex (anchor) and Sasha (analyst): ` +
           `1. Alex opens with the main story ` +
           `2. Sasha provides analysis/context ` +
           `3. Alex asks a follow-up question ` +
@@ -262,6 +267,7 @@ export class Newsroom {
           `Make it engaging like a real TV news broadcast. Include a ticker.`
         );
         break;
+      }
 
       case "deep-analysis":
         // All agents collaborate
@@ -431,9 +437,39 @@ export class Newsroom {
         const vodToPlay = gtaVod || vodEdges[0];
 
         if (vodToPlay) {
-          this.embedVod(vodToPlay.node.id);
-          const titleEl = document.getElementById("stream-title");
-          if (titleEl) titleEl.textContent = `VOD: ${vodToPlay.node.title || "GTA5 Replay"}`;
+          const vodId = vodToPlay.node.id;
+          const vodTitle = vodToPlay.node.title || "GTA5 Replay";
+          const vodGame = vodToPlay.node.game?.displayName || "Grand Theft Auto V";
+
+          // Only embed if not already playing this VOD
+          if (this.currentVodId !== vodId) {
+            this.embedVod(vodId);
+
+            // Update title
+            const titleEl = document.getElementById("stream-title");
+            if (titleEl) titleEl.textContent = `VOD: ${vodTitle}`;
+
+            // Feed VOD context to agents for analysis
+            this.agentClient.sendCommand("content-analyzer",
+              `You are now analyzing a VOD replay by KNIG04Ei on Twitch. ` +
+              `VOD Title: "${vodTitle}" | Game: ${vodGame} | VOD ID: ${vodId} ` +
+              `Analyze the game being played, discuss the streamer's typical content style, ` +
+              `and provide insights about ${vodGame} gameplay. Return JSON analysis.`
+            );
+
+            this.agentClient.sendCommand("director",
+              `KNIG04Ei is currently OFFLINE. The studio is showing a VOD replay: ` +
+              `"${vodTitle}" — Game: ${vodGame}. ` +
+              `Write anchor commentary for Alex and Sasha about this VOD replay. ` +
+              `Discuss the game, the streamer's style, and what viewers can expect when they go live. ` +
+              `Make it feel like a TV network showing a replay with commentary.`
+            );
+
+            // Add news entry for VOD
+            this.addNewsEntry("stream-watcher", "normal",
+              `KNIG04Ei offline — showing VOD: ${vodTitle} (${vodGame})`
+            );
+          }
         } else {
           // No VOD found — hardcoded fallback GTA5 VOD for KNIG04Ei
           this.embedVod("2845796121");
