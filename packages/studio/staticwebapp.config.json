@@ -1,28 +1,9 @@
 {
-  "routes": [
-    {
-      "route": "/api/*",
-      "allowedRoles": ["anonymous"]
-    },
-    {
-      "route": "/ws/*",
-      "allowedRoles": ["anonymous"]
-    }
-  ],
-  "rewrites": [
-    {
-      "route": "/ws",
-      "backend": "https://BACKEND_URL/ws"
-    },
-    {
-      "route": "/api/*",
-      "backend": "https://BACKEND_URL/api/*"
-    }
-  ],
+  "routes": [],
   "responseOverrides": {},
   "globalHeaders": {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
-    "Content-Security-Policy": "default-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' wss://*:* ws://*:* https://*; img-src 'self' data: blob:; font-src 'self' https://fonts.gstatic.com;"
+    "Content-Security-Policy": "default-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' wss://*:* ws://*:* https://*; img-src 'self' data: blob:; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.twitch.tv https://*.twitchcdn.net https://player.twitch.tv; frame-src 'self' https://*.twitch.tv https://player.twitch.tv;"
   }
 }

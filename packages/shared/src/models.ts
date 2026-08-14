@@ -19,34 +19,19 @@ export interface LanguageConfig {
   chatPatterns: RegExp[];
 }
 
+const _lang: LanguageConfig = { code: "en", name: "", nameEn: "", whisperLanguage: "", ttsVoiceIds: { male: "", female: "" }, uiFont: "", chatPatterns: [] };
+
 export const SUPPORTED_LANGUAGES: Record<LanguageCode, LanguageConfig> = {
-  en: {
-    code: "en",
-    name: "English",
-    nameEn: "English",
-    whisperLanguage: "en",
-    ttsVoiceIds: { male: "en-US-GuyNeural", female: "en-US-JennyNeural" },
-    uiFont: "Noto Sans",
-    chatPatterns: [/breaking/i, /omg/, /lol/, /hype/],
-  },
-  ru: {
-    code: "ru",
-    name: "Русский",
-    nameEn: "Russian",
-    whisperLanguage: "ru",
-    ttsVoiceIds: { male: "ru-RU-DmitryNeural", female: "ru-RU-SvetlanaNeural" },
-    uiFont: "Noto Sans",
-    chatPatterns: [/срочно/i, /ого/, /лол/, /хайп/],
-  },
-  uk: {
-    code: "uk",
-    name: "Українська",
-    nameEn: "Ukrainian",
-    whisperLanguage: "uk",
-    ttsVoiceIds: { male: "uk-UA-PavloNeural", female: "uk-UA-PolinaNeural" },
-    uiFont: "Noto Sans",
-    chatPatterns: [/терміново/i, /ого/, /лол/],
-  },
+  en: { code: "en", name: "English", nameEn: "English", whisperLanguage: "en", ttsVoiceIds: { male: "en-US-GuyNeural", female: "en-US-JennyNeural" }, uiFont: "Noto Sans", chatPatterns: [/breaking/i, /omg/, /lol/, /hype/] },
+  ru: { code: "ru", name: "Русский", nameEn: "Russian", whisperLanguage: "ru", ttsVoiceIds: { male: "ru-RU-DmitryNeural", female: "ru-RU-SvetlanaNeural" }, uiFont: "Noto Sans", chatPatterns: [/срочно/i, /ого/, /лол/, /хайп/] },
+  uk: { code: "uk", name: "Українська", nameEn: "Ukrainian", whisperLanguage: "uk", ttsVoiceIds: { male: "uk-UA-PavloNeural", female: "uk-UA-PolinaNeural" }, uiFont: "Noto Sans", chatPatterns: [/терміново/i, /ого/, /лол/] },
+  de: { ..._lang, code: "de", name: "Deutsch", nameEn: "German", whisperLanguage: "de", ttsVoiceIds: { male: "de-DE-ConradNeural", female: "de-DE-KatjaNeural" } },
+  fr: { ..._lang, code: "fr", name: "Français", nameEn: "French", whisperLanguage: "fr", ttsVoiceIds: { male: "fr-FR-HenriNeural", female: "fr-FR-DeniseNeural" } },
+  es: { ..._lang, code: "es", name: "Español", nameEn: "Spanish", whisperLanguage: "es", ttsVoiceIds: { male: "es-ES-AlvaroNeural", female: "es-ES-ElviraNeural" } },
+  pt: { ..._lang, code: "pt", name: "Português", nameEn: "Portuguese", whisperLanguage: "pt", ttsVoiceIds: { male: "pt-BR-AntonioNeural", female: "pt-BR-FranciscaNeural" } },
+  ja: { ..._lang, code: "ja", name: "日本語", nameEn: "Japanese", whisperLanguage: "ja", ttsVoiceIds: { male: "ja-JP-KeitaNeural", female: "ja-JP-NanamiNeural" } },
+  ko: { ..._lang, code: "ko", name: "한국어", nameEn: "Korean", whisperLanguage: "ko", ttsVoiceIds: { male: "ko-KR-InJoonNeural", female: "ko-KR-SunHiNeural" } },
+  zh: { ..._lang, code: "zh", name: "中文", nameEn: "Chinese", whisperLanguage: "zh", ttsVoiceIds: { male: "zh-CN-YunxiNeural", female: "zh-CN-XiaoxiaoNeural" } },
 };
 
 // --- Agent System ---
@@ -65,7 +50,7 @@ export interface AgentPersonality {
   tone: AgentPersonalityTone;
   expertise: string[];
   catchphrases: Partial<Record<LanguageCode, string[]>>;
-  description: Record<LanguageCode, string>;
+  description: Partial<Record<LanguageCode, string>>;
 }
 
 export interface AgentVoiceConfig {
@@ -241,6 +226,74 @@ export interface DialogueExchange {
   topic: string;
   trigger: InterestingEvent;
   totalDuration: number;
+}
+
+// --- Anchor Scripts (from prompt agents) ---
+
+export interface AnchorLine {
+  text: string;
+  emotion: "professional" | "excited" | "serious" | "humorous" | "enthusiastic" | "analytical" | "thoughtful";
+}
+
+export interface AnchorScript {
+  type: "commentary" | "segment" | "news" | "snapshot" | "analysis" | "sentiment" | "visual" | "health";
+  alex?: AnchorLine;
+  sasha?: AnchorLine;
+  ticker?: string;
+  scene?: {
+    type: "live" | "breaking" | "analysis" | "transition";
+    title?: string;
+  };
+  // Agent-specific fields
+  streamer?: string;
+  platform?: string;
+  is_live?: boolean;
+  viewer_count?: number;
+  game?: string;
+  stream_title?: string;
+  chat_sentiment?: string;
+  sentiment_score?: number;
+  trending_moment?: boolean;
+  moment_description?: string;
+  clip_worthy?: boolean;
+  clip_reason?: string;
+  recent_chat?: string[];
+  alerts?: string[];
+  // Show producer fields
+  title?: string;
+  show_type?: string;
+  duration_seconds?: number;
+  key_topics?: string[];
+  // Meta-agent fields
+  agent_health?: Record<string, string>;
+  pipeline_performance?: Record<string, unknown>;
+  improvement_suggestions?: string[];
+  // Director fields
+  agents_called?: string[];
+  analysis_summary?: string;
+  // Content analyzer fields
+  game_detected?: string;
+  game_confidence?: number;
+  on_screen_text?: string[];
+  scene_type?: string;
+  scene_description?: string;
+  production_quality?: string;
+  key_visual_elements?: string[];
+  content_highlights?: string[];
+  quality_score?: number;
+  // Chat pulse fields
+  overall_sentiment?: string;
+  toxicity_level?: string;
+  trending_topics?: string[];
+  hype_moments?: string[];
+  active_users?: string[];
+  emotional_dynamics?: string;
+  message_count?: number;
+  // Art director fields
+  overlay?: { style: string; primary_color: string; secondary_color: string };
+  transition?: string;
+  mood?: string;
+  visual_notes?: string;
 }
 
 // --- Studio Rendering ---

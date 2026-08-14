@@ -2,393 +2,545 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=1920, height=1080" />
-  <title>MOMTV Studio</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MOM TV — 24/7 AI Stream Monitor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet" />
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    body {
-      width: 1920px;
-      height: 1080px;
+    html, body {
+      width: 100%;
+      height: 100%;
       overflow: hidden;
-      background: #0a0a1a;
-      font-family: 'Noto Sans', 'Inter', sans-serif;
+      background: #0a0a14;
+      font-family: 'Inter', sans-serif;
+      color: #e0e0e0;
     }
 
-    #studio-container {
-      position: relative;
-      width: 1920px;
-      height: 1080px;
-    }
-
-    #pixi-canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
+    .app {
+      display: grid;
+      grid-template-rows: 48px 1fr 36px;
+      grid-template-columns: 1fr 300px;
       width: 100%;
       height: 100%;
     }
 
-    /* Overlay UI Layer */
-    #ui-layer {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 10;
-    }
-
-    /* Header Bar */
-    #header-bar {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 70px;
-      background: linear-gradient(180deg, rgba(232, 121, 75, 0.95) 0%, rgba(232, 121, 75, 0.7) 100%);
+    /* ── Header ── */
+    .header {
+      grid-column: 1 / -1;
+      background: linear-gradient(180deg, #141428 0%, #0f0f20 100%);
+      border-bottom: 1px solid #2a2a4a;
       display: flex;
       align-items: center;
-      padding: 0 30px;
-      z-index: 20;
+      padding: 0 20px;
+      gap: 16px;
     }
 
-    #header-bar .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    #header-bar .logo-icon {
-      font-size: 28px;
-    }
-
-    #header-bar .logo-text {
-      font-size: 28px;
+    .header .brand {
       font-weight: 900;
-      color: #1a1a2e;
+      font-size: 20px;
+      color: #e8794b;
       letter-spacing: 2px;
     }
 
-    #header-bar .live-badge {
-      position: absolute;
-      right: 30px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: #1a1a2e;
-      color: #fff;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: 600;
+    .header .live-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #ef4444;
+      animation: pulse 1.5s infinite;
     }
 
-    #header-bar .live-dot {
-      width: 10px;
-      height: 10px;
-      background: #ef4444;
-      border-radius: 50%;
-      animation: pulse 1.5s infinite;
+    .header .live-text {
+      font-size: 12px; font-weight: 700; color: #ef4444;
+      text-transform: uppercase; letter-spacing: 2px;
+    }
+
+    .header .channel-info {
+      font-size: 13px; font-weight: 600; color: #888;
+    }
+
+    .header .clock {
+      margin-left: auto;
+      font-size: 14px; font-weight: 700; color: #e8794b;
+      font-variant-numeric: tabular-nums;
     }
 
     @keyframes pulse {
       0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
+      50% { opacity: 0.3; }
     }
 
-    /* Breaking News Banner */
-    #breaking-banner {
-      position: absolute;
-      top: 100px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      color: #fff;
-      padding: 12px 40px;
-      font-size: 28px;
-      font-weight: 900;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      border-radius: 4px;
-      box-shadow: 0 4px 20px rgba(239, 68, 68, 0.5);
-      display: none;
-      z-index: 25;
+    /* ── Studio (main area) ── */
+    .studio {
+      position: relative;
+      background: radial-gradient(ellipse at 50% 80%, #1a1a35 0%, #0a0a14 70%);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
-    #breaking-banner.visible {
-      display: block;
-      animation: slideDown 0.3s ease-out;
-    }
-
-    @keyframes slideDown {
-      from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
-      to { transform: translateX(-50%) translateY(0); opacity: 1; }
-    }
-
-    /* Agent Sidebar */
-    #agent-sidebar {
-      position: absolute;
-      top: 80px;
-      left: 20px;
-      background: rgba(26, 26, 46, 0.9);
+    /* ── TV Screen (embedded stream) ── */
+    .tv-screen {
+      position: relative;
+      width: 75%;
+      max-width: 900px;
+      aspect-ratio: 16 / 9;
+      margin-top: 12px;
       border-radius: 12px;
-      padding: 16px;
-      width: 180px;
-      z-index: 20;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 3px #2a2a4a,
+        0 0 0 6px #1a1a30,
+        0 0 40px rgba(232, 121, 75, 0.15),
+        0 8px 32px rgba(0,0,0,0.5);
     }
 
-    #agent-sidebar .sidebar-title {
-      font-size: 14px;
-      font-weight: 700;
+    .tv-screen iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .tv-screen .screen-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 30%);
+      border-radius: 12px;
+    }
+
+    .tv-screen .live-badge {
+      position: absolute;
+      top: 10px; left: 10px;
+      background: #ef4444;
+      color: #fff;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      z-index: 10;
+    }
+
+    .tv-screen .viewer-count {
+      position: absolute;
+      top: 10px; right: 10px;
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      z-index: 10;
+    }
+
+    .tv-screen .news-overlay {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.9));
+      padding: 30px 16px 12px;
+      display: none;
+      z-index: 10;
+    }
+
+    .tv-screen .news-overlay.visible { display: block; }
+
+    .tv-screen .news-overlay h4 {
+      font-size: 10px;
       color: #e8794b;
       text-transform: uppercase;
       letter-spacing: 2px;
-      margin-bottom: 12px;
+      margin-bottom: 4px;
+    }
+
+    .tv-screen .news-overlay p {
+      font-size: 12px;
+      line-height: 1.4;
+      color: #ddd;
+    }
+
+    /* ── News Desk ── */
+    .desk {
+      position: relative;
+      width: 85%;
+      max-width: 1000px;
+      height: 80px;
+      margin-top: -10px;
+      background: linear-gradient(180deg, #2a1a10 0%, #1a1008 100%);
+      border-radius: 8px 8px 0 0;
+      border-top: 2px solid #e8794b;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: center;
+      gap: 40px;
+      z-index: 5;
     }
 
-    #agent-sidebar .agent-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 0;
-      color: #fff;
-      font-size: 13px;
-    }
-
-    #agent-sidebar .agent-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-
-    #agent-sidebar .agent-role {
-      color: #888;
+    .desk .name-plate {
+      background: linear-gradient(135deg, #e8794b, #c0603a);
+      color: #1a1a2e;
+      padding: 6px 20px;
+      border-radius: 4px;
       font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-align: center;
     }
 
-    /* Speech Bubble */
+    .desk .name-plate .role {
+      font-size: 8px;
+      font-weight: 600;
+      opacity: 0.7;
+      letter-spacing: 1px;
+    }
+
+    /* ── Anchors ── */
+    .anchors {
+      position: relative;
+      width: 85%;
+      max-width: 1000px;
+      height: 180px;
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-end;
+      z-index: 5;
+    }
+
+    .anchor {
+      position: relative;
+      width: 140px;
+      height: 170px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .anchor .character {
+      width: 120px;
+      height: 140px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      transition: transform 0.3s ease;
+    }
+
+    .anchor.speaking .character {
+      animation: talk-bob 0.3s ease-in-out infinite alternate;
+    }
+
+    @keyframes talk-bob {
+      from { transform: translateY(0); }
+      to { transform: translateY(-4px); }
+    }
+
+    .anchor .anchor-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: #e8794b;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 4px;
+    }
+
+    .anchor .anchor-role {
+      font-size: 9px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* ── Speech Bubbles ── */
     .speech-bubble {
       position: absolute;
-      background: #fff;
-      border-radius: 16px;
-      padding: 16px 20px;
-      max-width: 400px;
-      font-size: 18px;
+      bottom: 180px;
+      width: 260px;
+      background: rgba(20, 20, 40, 0.95);
+      border: 1px solid #e8794b;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 12px;
       line-height: 1.5;
-      color: #1a1a2e;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-      display: none;
-      z-index: 15;
+      color: #ddd;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .speech-bubble.visible {
+      opacity: 1;
+      transform: translateY(0);
     }
 
     .speech-bubble::after {
       content: '';
       position: absolute;
-      bottom: -12px;
-      left: 30px;
-      border-width: 12px 10px 0;
-      border-style: solid;
-      border-color: #fff transparent transparent;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0; height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-top: 8px solid #e8794b;
     }
 
-    .speech-bubble.visible {
-      display: block;
-      animation: fadeIn 0.2s ease-out;
+    .speech-bubble .bubble-agent {
+      font-size: 9px;
+      font-weight: 700;
+      color: #e8794b;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Bottom Ticker */
-    #ticker-bar {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 50px;
-      background: linear-gradient(90deg, rgba(26, 26, 46, 0.95), rgba(26, 26, 46, 0.8));
-      border-top: 3px solid #e8794b;
+    /* ── Sidebar ── */
+    .sidebar {
+      background: #0f0f20;
+      border-left: 1px solid #2a2a4a;
       display: flex;
-      align-items: center;
-      padding: 0 20px;
-      z-index: 20;
+      flex-direction: column;
       overflow: hidden;
     }
 
-    #ticker-content {
-      color: #fff;
-      font-size: 16px;
-      font-weight: 600;
-      white-space: nowrap;
-      animation: ticker-scroll 30s linear infinite;
+    .sidebar-header {
+      padding: 10px 14px;
+      border-bottom: 1px solid #2a2a4a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
-    @keyframes ticker-scroll {
-      from { transform: translateX(100%); }
-      to { transform: translateX(-100%); }
-    }
-
-    /* Agent Name Plates */
-    .name-plate {
-      position: absolute;
-      background: linear-gradient(180deg, rgba(26, 26, 46, 0.9), rgba(26, 26, 46, 0.7));
-      color: #fff;
-      padding: 8px 20px;
-      text-align: center;
-      border-radius: 4px;
-      z-index: 15;
-    }
-
-    .name-plate .agent-name {
-      font-size: 18px;
+    .sidebar-header h3 {
+      font-size: 11px;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-    }
-
-    .name-plate .agent-role {
-      font-size: 12px;
       color: #e8794b;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
 
-    /* Connection Status */
-    #connection-status {
-      position: absolute;
-      top: 80px;
-      right: 20px;
-      background: rgba(26, 26, 46, 0.9);
-      border-radius: 8px;
+    .agent-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: #2a2a4a;
+      border-bottom: 1px solid #2a2a4a;
+    }
+
+    .agent-cell {
+      background: #0f0f20;
+      padding: 6px 8px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .agent-cell .dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: #22c55e;
+      flex-shrink: 0;
+    }
+
+    .agent-cell .name {
+      font-size: 9px; font-weight: 600; color: #aaa;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* Feed */
+    .feed {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 10px;
+    }
+
+    .feed-item {
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #1a1a30;
+    }
+
+    .feed-item .agent-tag {
+      font-size: 8px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      margin-bottom: 2px;
+    }
+
+    .feed-item .agent-tag.director { color: #e8794b; }
+    .feed-item .agent-tag.stream-monitor { color: #3b82f6; }
+    .feed-item .agent-tag.chat-pulse { color: #ef4444; }
+    .feed-item .agent-tag.show-producer { color: #22c55e; }
+    .feed-item .agent-tag.system { color: #666; }
+
+    .feed-item .text {
+      font-size: 11px; line-height: 1.4; color: #bbb;
+    }
+
+    .feed-item .time {
+      font-size: 8px; color: #444; margin-top: 2px;
+    }
+
+    /* Sentiment */
+    .sentiment {
       padding: 8px 12px;
-      font-size: 12px;
-      color: #888;
-      z-index: 20;
+      border-top: 1px solid #2a2a4a;
     }
 
-    #connection-status.connected {
-      color: #22c55e;
+    .sentiment .label {
+      font-size: 8px; font-weight: 700; color: #555;
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px;
     }
 
-    #connection-status.disconnected {
-      color: #ef4444;
+    .sentiment .bar {
+      height: 3px; background: #2a2a4a;
+      border-radius: 2px; overflow: hidden; margin-bottom: 3px;
     }
+
+    .sentiment .fill {
+      height: 100%; border-radius: 2px;
+      transition: width 0.5s ease, background 0.5s ease;
+      background: #888; width: 50%;
+    }
+
+    .sentiment .value {
+      font-size: 8px; color: #555;
+    }
+
+    /* ── Ticker ── */
+    .ticker {
+      grid-column: 1 / -1;
+      background: #0f0f20;
+      border-top: 1px solid #2a2a4a;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      overflow: hidden;
+    }
+
+    .ticker .brand-ticker {
+      font-size: 10px; font-weight: 800; color: #e8794b;
+      margin-right: 16px;
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .ticker .text {
+      font-size: 11px; font-weight: 600; color: #888;
+      white-space: nowrap;
+      animation: scroll 45s linear infinite;
+    }
+
+    @keyframes scroll {
+      from { transform: translateX(100%); }
+      to { transform: translateX(-200%); }
+    }
+
+    /* ── Scrollbar ── */
+    .feed::-webkit-scrollbar { width: 3px; }
+    .feed::-webkit-scrollbar-track { background: transparent; }
+    .feed::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
   </style>
 </head>
 <body>
-  <div id="studio-container">
-    <!-- PixiJS Canvas (rendered here) -->
-    <canvas id="pixi-canvas"></canvas>
+  <div class="app">
+    <!-- Header -->
+    <div class="header">
+      <span class="brand">MOM TV</span>
+      <div class="live-dot"></div>
+      <span class="live-text">LIVE</span>
+      <span class="channel-info" id="channel-info">KNIG04Ei — Twitch</span>
+      <span class="clock" id="clock">--:--:--</span>
+    </div>
 
-    <!-- UI Overlay Layer -->
-    <div id="ui-layer">
-      <!-- Header Bar -->
-      <div id="header-bar">
-        <div class="logo">
-          <span class="logo-icon">📺</span>
-          <span class="logo-text">MOMTV STUDIO</span>
+    <!-- Studio -->
+    <div class="studio" id="studio-container">
+      <!-- TV Screen with embedded stream -->
+      <div class="tv-screen" id="tv-screen">
+        <div class="screen-overlay"></div>
+        <div class="live-badge">● LIVE</div>
+        <div class="viewer-count" id="viewer-count">-- viewers</div>
+        <div class="news-overlay" id="news-overlay">
+          <h4>📰 Breaking News</h4>
+          <p id="news-content">Loading...</p>
         </div>
-        <div class="live-badge">
-          <div class="live-dot"></div>
-          <span>LIVE</span>
-          <span id="agent-count">2 AGENTS</span>
+      </div>
+
+      <!-- News Desk -->
+      <div class="desk">
+        <div class="name-plate">
+          <div>ALEX</div>
+          <div class="role">ANCHOR</div>
+        </div>
+        <div class="name-plate" style="background: linear-gradient(135deg, #ef4444, #b91c1c);">
+          <div>SASHA</div>
+          <div class="role">ANALYST</div>
         </div>
       </div>
 
-      <!-- Breaking News Banner -->
-      <div id="breaking-banner">BREAKING NEWS</div>
-
-      <!-- Agent Sidebar -->
-      <div id="agent-sidebar">
-        <div class="sidebar-title">
-          <span>🤖</span> AGENTS
+      <!-- Anchors -->
+      <div class="anchors">
+        <div class="anchor" id="anchor-alex">
+          <div class="speech-bubble" id="bubble-alex">
+            <div class="bubble-agent">ALEX — Anchor</div>
+            <div class="bubble-text" id="bubble-alex-text">Connecting...</div>
+          </div>
+          <div class="character" style="background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3);">🧑‍💼</div>
+          <div class="anchor-name">Alex</div>
+          <div class="anchor-role">Anchor</div>
         </div>
-        <div id="agent-list"></div>
-      </div>
-
-      <!-- Speech Bubbles (positioned dynamically) -->
-      <div id="speech-bubble-alex" class="speech-bubble" style="left: 200px; top: 300px;"></div>
-      <div id="speech-bubble-sasha" class="speech-bubble" style="left: 900px; top: 300px;"></div>
-
-      <!-- Name Plates -->
-      <div id="nameplate-alex" class="name-plate" style="left: 280px; bottom: 100px;">
-        <div class="agent-name">ALEX</div>
-        <div class="agent-role">ANCHOR</div>
-      </div>
-      <div id="nameplate-sasha" class="name-plate" style="left: 880px; bottom: 100px;">
-        <div class="agent-name">SASHA</div>
-        <div class="agent-role">ANALYST</div>
-      </div>
-
-      <!-- Bottom Ticker -->
-      <div id="ticker-bar">
-        <div id="ticker-content">Welcome to MOMTV Studio! AI-powered cartoon TV commentary...</div>
-      </div>
-
-      <!-- Connection Status -->
-      <div id="connection-status" class="disconnected">⚡ Connecting...</div>
-
-      <!-- Twitch Login Button -->
-      <div id="twitch-login" style="position: absolute; top: 80px; right: 20px; z-index: 20;">
-        <button id="twitch-login-btn" style="
-          background: #9146FF;
-          color: white;
-          border: none;
-          padding: 10px 20px;
-          border-radius: 8px;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          font-family: 'Noto Sans', sans-serif;
-          pointer-events: all;
-        ">🎮 Login with Twitch</button>
-        <div id="twitch-user" style="display: none; color: #fff; font-size: 13px; margin-top: 8px; text-align: center;"></div>
-      </div>
-
-      <!-- Channel Selector -->
-      <div id="channel-selector" style="
-        position: absolute;
-        top: 140px;
-        right: 20px;
-        background: rgba(26, 26, 46, 0.9);
-        border-radius: 12px;
-        padding: 16px;
-        width: 200px;
-        z-index: 20;
-        display: none;
-      ">
-        <div style="font-size: 14px; font-weight: 700; color: #e8794b; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px;">
-          📺 Channels
+        <div class="anchor" id="anchor-sasha">
+          <div class="speech-bubble" id="bubble-sasha">
+            <div class="bubble-agent">SASHA — Analyst</div>
+            <div class="bubble-text" id="bubble-sasha-text">Connecting...</div>
+          </div>
+          <div class="character" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3);">👩‍💻</div>
+          <div class="anchor-name">Sasha</div>
+          <div class="anchor-role">Analyst</div>
         </div>
-        <div id="channel-list"></div>
-        <input id="channel-input" type="text" placeholder="Add channel..." style="
-          width: 100%;
-          padding: 8px;
-          margin-top: 8px;
-          border-radius: 6px;
-          border: 1px solid #444;
-          background: #1a1a2e;
-          color: #fff;
-          font-size: 13px;
-          font-family: 'Noto Sans', sans-serif;
-          pointer-events: all;
-        " />
       </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h3>🤖 Agents</h3>
+      </div>
+
+      <div class="agent-grid">
+        <div class="agent-cell"><div class="dot"></div><span class="name">Director</span></div>
+        <div class="agent-cell"><div class="dot"></div><span class="name">Stream Mon</span></div>
+        <div class="agent-cell"><div class="dot"></div><span class="name">Chat Pulse</span></div>
+        <div class="agent-cell"><div class="dot"></div><span class="name">Content</span></div>
+      </div>
+
+      <div class="feed" id="commentary-feed">
+        <div class="feed-item">
+          <div class="agent-tag system">SYSTEM</div>
+          <div class="text">MOM TV initializing... Connecting to AI agents.</div>
+          <div class="time">--:--</div>
+        </div>
+      </div>
+
+      <div class="sentiment">
+        <div class="label">Chat Sentiment</div>
+        <div class="bar"><div class="fill" id="sentiment-fill"></div></div>
+        <div class="value" id="sentiment-text">Waiting for data...</div>
+      </div>
+    </div>
+
+    <!-- Ticker -->
+    <div class="ticker">
+      <span class="brand-ticker">MOM TV</span>
+      <span class="text" id="ticker-content">MOM TV — 24/7 AI-Powered Stream Monitor — Powered by Azure AI Foundry</span>
     </div>
   </div>
 
+  <script src="https://player.twitch.tv/js/embed/v1.js"></script>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

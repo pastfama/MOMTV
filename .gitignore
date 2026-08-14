@@ -3,6 +3,20 @@ dist/
 .cache/
 .env
 *.log
+*.swp
+*.zip
+
+# Build artifacts
+packages/shared/src/*.js
+packages/shared/src/*.d.ts
+packages/shared/src/*.js.map
+packages/shared/src/*.d.ts.map
+
+# Test files
+test_body.json
+
+# Azure Developer CLI
+.azure/
 
 # IDE
 .vscode/

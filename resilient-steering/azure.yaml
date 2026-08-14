@@ -1,0 +1,176 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+requiredVersions:
+    extensions:
+        azure.ai.agents: '>=1.0.0-beta.4'
+        azure.ai.routines: '>=1.0.0-beta.1'
+        azure.ai.toolboxes: '>=1.0.0-beta.1'
+name: momtv
+services:
+    ai-project:
+        host: azure.ai.project
+        deployments:
+            - model:
+                format: OpenAI
+                name: gpt-5-mini
+                version: "2025-08-07"
+              name: gpt-5-mini
+              sku:
+                capacity: 10
+                name: GlobalStandard
+            - model:
+                format: OpenAI
+                name: gpt-5-nano
+                version: "2025-08-07"
+              name: gpt-5-nano
+              sku:
+                capacity: 10
+                name: GlobalStandard
+            - model:
+                format: OpenAI
+                name: gpt-4o
+                version: "2024-11-20"
+              name: gpt-4o
+              sku:
+                capacity: 10
+                name: GlobalStandard
+
+    # ── Toolbox ──────────────────────────────────────────────────────────
+    # Agents are prompt agents managed via Foundry MCP (agent_update with kind: prompt).
+    # See ROUTINES.md for agent definitions and setup instructions.
+    momtv-tools:
+        host: azure.ai.toolbox
+        description: >
+            MOMTV Agent Toolbox — centralized tools for all MOMTV agents.
+            Provides code interpreter, web search, and A2A connections.
+        tools:
+            - type: code_interpreter
+              name: code-interpreter
+            - type: web_search
+              name: web-search
+            - type: toolbox_search_preview
+
+    # ── Routines (pipeline orchestration) ────────────────────────────────
+    stream-capture:
+        host: azure.ai.routine
+        uses:
+            - ai-project
+        description: "Capture stream snapshot every 5 minutes"
+        enabled: true
+        triggers:
+            default:
+                type: schedule
+                cron_expression: "*/5 * * * *"
+                time_zone: Pacific/Honolulu
+        action:
+            type: invoke_agent_responses_api
+            agent_name: stream-monitor
+            input: "Capture the current stream snapshot for KNIG04Ei on Twitch. Return the JSON snapshot."
+    visual-analysis:
+        host: azure.ai.routine
+        uses:
+            - ai-project
+        description: "Analyze stream visual content every 5 minutes"
+        enabled: true
+        triggers:
+            default:
+                type: schedule
+                cron_expression: "*/5 * * * *"
+                time_zone: Pacific/Honolulu
+        action:
+            type: invoke_agent_responses_api
+            agent_name: content-analyzer
+            input: "Analyze the current visual content of KNIG04Ei on Twitch. Return the JSON analysis."
+    sentiment-pulse:
+        host: azure.ai.routine
+        uses:
+            - ai-project
+        description: "Chat sentiment analysis every 5 minutes"
+        enabled: true
+        triggers:
+            default:
+                type: schedule
+                cron_expression: "*/5 * * * *"
+                time_zone: Pacific/Honolulu
+        action:
+            type: invoke_agent_responses_api
+            agent_name: chat-pulse
+            input: "Analyze the current chat sentiment for KNIG04Ei on Twitch. Return the JSON sentiment."
+    show-production:
+        host: azure.ai.routine
+        uses:
+            - ai-project
+        description: "Generate TV show segments every 10 minutes"
+        enabled: true
+        triggers:
+            default:
+                type: schedule
+                cron_expression: "*/10 * * * *"
+                time_zone: Pacific/Honolulu
+        action:
+            type: invoke_agent_responses_api
+            agent_name: show-producer
+            input: "Produce a TV show segment for the current stream. Write anchor scripts for Alex and Sasha. Return the JSON segment."
+    anchor-commentary:
+        host: azure.ai.routine
+        uses:
+            - ai-project
+        description: "Generate anchor commentary every 5 minutes"
+        enabled: true
+        triggers:
+            default:
+                type: schedule
+                cron_expression: "*/5 * * * *"
+                time_zone: Pacific/Honolulu
+        action:
+            type: invoke_agent_responses_api
+            agent_name: director
+            input: "Generate anchor commentary: what Alex and Sasha say right now. Return the JSON commentary."
+    direct-broadcast:
+        host: azure.ai.routine
+        uses:
+            - ai-project
+        description: "Full director coordination every 10 minutes"
+        enabled: true
+        triggers:
+            default:
+                type: schedule
+                cron_expression: "*/10 * * * *"
+                time_zone: Pacific/Honolulu
+        action:
+            type: invoke_agent_responses_api
+            agent_name: director
+            input: "Full coordination: collect data from all agents, generate comprehensive anchor scripts for Alex and Sasha. Return the JSON commentary."
+    hourly-news:
+        host: azure.ai.routine
+        uses:
+            - ai-project
+        description: "Hourly news bulletin"
+        enabled: true
+        triggers:
+            default:
+                type: schedule
+                cron_expression: "0 * * * *"
+                time_zone: Pacific/Honolulu
+        action:
+            type: invoke_agent_responses_api
+            agent_name: show-producer
+            input: "Produce the hourly news bulletin: summarize the top 3-5 events from the last hour. Write anchor scripts for Alex and Sasha. Return the JSON segment."
+    system-health:
+        host: azure.ai.routine
+        uses:
+            - ai-project
+        description: "System health audit every 30 minutes"
+        enabled: true
+        triggers:
+            default:
+                type: schedule
+                cron_expression: "*/30 * * * *"
+                time_zone: Pacific/Honolulu
+        action:
+            type: invoke_agent_responses_api
+            agent_name: meta-agent
+            input: "Perform a system health audit: check all agents, analyze performance, suggest improvements. Return the JSON health report."
+
+infra:
+    provider: microsoft.foundry

@@ -1,21 +1,23 @@
 // ============================================================
-// MOMTV Studio - Entry Point
+// MOM TV — Entry Point
 // ============================================================
 
-import { Studio } from "./studio.js";
+import { Newsroom } from "./newsroom.js";
 
 async function main() {
   console.log("╔══════════════════════════════════════════╗");
-  console.log("║     🎬 MOMTV Studio - Browser View 🎬    ║");
+  console.log("║     📺 MOM TV — 24/7 Stream Monitor 📺   ║");
+  console.log("║  v3 - API Key Auth (No Login)            ║");
   console.log("╚══════════════════════════════════════════╝");
 
-  const studio = new Studio();
-  await studio.init();
+  const newsroom = new Newsroom();
+  await newsroom.init();
 
   // Expose for debugging
-  (window as Record<string, unknown>)["momtvStudio"] = studio;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).momtvNewsroom = newsroom;
 }
 
 main().catch((err) => {
-  console.error("Failed to initialize studio:", err);
+  console.error("Failed to initialize newsroom:", err);
 });
