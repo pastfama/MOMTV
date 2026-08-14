@@ -165,7 +165,7 @@ services:
         triggers:
             default:
                 type: schedule
-                cron_expression: "*/3 * * * *"
+                cron_expression: "*/5 * * * *"
                 time_zone: Pacific/Honolulu
         action:
             type: invoke_agent_responses_api
