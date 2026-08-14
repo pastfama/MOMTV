@@ -31,7 +31,19 @@ function isAllowedUrl(url) {
   }
 }
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "https://momtv.surge.sh",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
 module.exports = async function (context, req) {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    context.res = { status: 204, headers: CORS_HEADERS };
+    return;
+  }
+
   const action = context.bindingData.action;
 
   try {
@@ -49,7 +61,7 @@ module.exports = async function (context, req) {
       const data = await response.json();
       context.res = {
         status: response.status,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
         body: data,
       };
     } else if (action === "fetch") {
@@ -58,7 +70,7 @@ module.exports = async function (context, req) {
       if (!url || !isAllowedUrl(url)) {
         context.res = {
           status: 400,
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...CORS_HEADERS },
           body: { error: "Invalid or disallowed URL" },
         };
         return;
@@ -73,7 +85,7 @@ module.exports = async function (context, req) {
         const base64 = Buffer.from(buffer).toString("base64");
         context.res = {
           status: response.status,
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...CORS_HEADERS },
           body: { base64, contentType },
         };
       } else {
@@ -81,14 +93,14 @@ module.exports = async function (context, req) {
         const text = await response.text();
         context.res = {
           status: response.status,
-          headers: { "Content-Type": contentType },
+          headers: { "Content-Type": contentType, ...CORS_HEADERS },
           body: text,
         };
       }
     } else {
       context.res = {
         status: 404,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
         body: { error: `Unknown action: ${action}` },
       };
     }
@@ -96,7 +108,7 @@ module.exports = async function (context, req) {
     context.log.error(`[TwitchProxy] Error: ${err.message}`);
     context.res = {
       status: 502,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...CORS_HEADERS },
       body: { error: err.message },
     };
   }

@@ -4,14 +4,26 @@
 const VISION_ENDPOINT = process.env.VISION_ENDPOINT || "https://cog-cdwzd6d3oc77y.cognitiveservices.azure.com";
 const VISION_KEY = process.env.VISION_KEY || process.env.FOUNDRY_API_KEY || "";
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "https://momtv.surge.sh",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
 module.exports = async function (context, req) {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    context.res = { status: 204, headers: CORS_HEADERS };
+    return;
+  }
+
   try {
     const { imageBase64, imageUrl } = req.body || {};
 
     if (!imageBase64 && !imageUrl) {
       context.res = {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
         body: { error: "Provide imageBase64 (data URL) or imageUrl" },
       };
       return;
@@ -70,14 +82,14 @@ module.exports = async function (context, req) {
 
     context.res = {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...CORS_HEADERS },
       body: analysisResult,
     };
   } catch (err) {
     context.log.error(`[VisionProxy] Error: ${err.message}`);
     context.res = {
       status: 502,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...CORS_HEADERS },
       body: { error: err.message },
     };
   }

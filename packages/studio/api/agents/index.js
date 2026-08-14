@@ -4,7 +4,18 @@
 const FOUNDRY_ENDPOINT = "https://cog-cdwzd6d3oc77y.services.ai.azure.com/api/projects/resilient-steering-dev";
 const API_KEY = process.env.FOUNDRY_API_KEY;
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "https://momtv.surge.sh",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, api-key",
+};
+
 module.exports = async function (context, req) {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    context.res = { status: 204, headers: CORS_HEADERS };
+    return;
+  }
   const { agentName } = context.bindingData;
   const subPath = context.bindingData.path || "";
 
@@ -67,7 +78,7 @@ module.exports = async function (context, req) {
           context.log(`[AgentProxy] Response ${body.id} completed with status: ${pollData.status}`);
           context.res = {
             status: 200,
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", ...CORS_HEADERS },
             body: pollData,
           };
           return;
@@ -82,6 +93,7 @@ module.exports = async function (context, req) {
       status,
       headers: {
         "Content-Type": "application/json",
+        ...CORS_HEADERS,
       },
       body,
     };
@@ -89,7 +101,7 @@ module.exports = async function (context, req) {
     context.log.error(`[AgentProxy] Error: ${err.message}`);
     context.res = {
       status: 502,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...CORS_HEADERS },
       body: { error: err.message },
     };
   }
