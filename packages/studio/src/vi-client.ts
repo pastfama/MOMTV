@@ -6,6 +6,7 @@
 // ============================================================
 
 import type { VideoIndexerInsights } from "@momtv/shared";
+import { apiUrl } from "./api-config.js";
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -20,7 +21,7 @@ export class VIClient {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private latestInsights: VideoIndexerInsights | null = null;
 
-  constructor(sseUrl: string = "/api/vi-stream") {
+  constructor(sseUrl: string = apiUrl("/api/vi-stream")) {
     this.sseUrl = sseUrl;
   }
 

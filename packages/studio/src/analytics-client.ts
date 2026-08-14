@@ -6,10 +6,11 @@
 // ============================================================
 
 import type { WatcherReport, StreamEvent, VideoIndexerInsights } from "@momtv/shared";
+import { apiUrl } from "./api-config.js";
 
 // ── Configuration ────────────────────────────────────────────
 
-const API_BASE = "/api/analytics";
+const API_BASE = "/api/analytics"; // relative path, prefixed by apiUrl() in fetch calls
 const FLUSH_INTERVAL_MS = 30_000; // Flush every 30 seconds
 const MAX_BATCH_SIZE = 100; // Force flush at this size
 const LS_KEY = "momtv-analytics-queue"; // localStorage fallback key
@@ -220,7 +221,7 @@ export class AnalyticsClient {
     const records = this.buffer.splice(0);
 
     try {
-      const response = await fetch(`${API_BASE}/record`, {
+      const response = await fetch(apiUrl(`${API_BASE}/record`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(records),
@@ -266,7 +267,7 @@ export class AnalyticsClient {
       const blob = new Blob([JSON.stringify(records)], {
         type: "application/json",
       });
-      navigator.sendBeacon(`${API_BASE}/record`, blob);
+      navigator.sendBeacon(apiUrl(`${API_BASE}/record`), blob);
       this.totalSent += records.length;
     } catch {
       // Save to localStorage as last resort

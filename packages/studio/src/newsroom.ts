@@ -10,6 +10,7 @@ import { StreamAnalyzer, type StreamAnalysis } from "./stream-analyzer.js";
 import { StreamWatcher } from "./stream-watcher.js";
 import { VIClient } from "./vi-client.js";
 import { AnalyticsClient } from "./analytics-client.js";
+import { apiUrl } from "./api-config.js";
 import type { AnchorScript, WatcherReport, VideoIndexerInsights } from "@momtv/shared";
 
 // ── Configuration ────────────────────────────────────────────────
@@ -43,8 +44,8 @@ export class Newsroom {
   async init(): Promise<void> {
     console.log("[Newsroom] Initializing MOM TV 60s Retro Studio...");
 
-    // Embed stream into the TV screen
-    this.embedStream();
+    // Embed GTA5 VOD directly (stream is offline, KNIG04Ei GTA5RP replay)
+    this.embedVod("2845796121");
 
     // Start stream status polling
     this.startStreamStatusPolling();
@@ -100,7 +101,7 @@ export class Newsroom {
 
   private async fetchChat(): Promise<void> {
     try {
-      const response = await fetch("/api/twitch/gql", {
+      const response = await fetch(apiUrl("/api/twitch/gql"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -312,7 +313,7 @@ export class Newsroom {
     const parentParams = parents.map(p => `&parent=${p}`).join("");
     const src = `https://player.twitch.tv/?channel=${TWITCH_CHANNEL}${parentParams}&autoplay=true&muted=true`;
 
-    console.log(`[Newsroom] Embedding stream in CRT TV: ${src}`);
+    console.log(`[Newsroom] Embedding stream: ${src}`);
 
     // Remove existing iframe if any
     const existing = screen.querySelector("iframe");
@@ -321,6 +322,16 @@ export class Newsroom {
     const iframe = document.createElement("iframe");
     iframe.src = src;
     iframe.allowFullscreen = true;
+    iframe.setAttribute("allow", "autoplay; fullscreen; encrypted-media; picture-in-picture");
+    iframe.style.width = "100%";
+    iframe.style.height = "100%";
+    iframe.style.border = "none";
+    iframe.style.position = "absolute";
+    iframe.style.top = "0";
+    iframe.style.left = "0";
+    screen.style.position = "relative";
+    screen.style.width = "100%";
+    screen.style.height = "100%";
     screen.insertBefore(iframe, screen.firstChild);
 
     this.isLive = true;
@@ -344,6 +355,13 @@ export class Newsroom {
     const iframe = document.createElement("iframe");
     iframe.src = src;
     iframe.allowFullscreen = true;
+    iframe.setAttribute("allow", "autoplay; fullscreen; encrypted-media; picture-in-picture");
+    iframe.style.width = "100%";
+    iframe.style.height = "100%";
+    iframe.style.border = "none";
+    iframe.style.position = "absolute";
+    iframe.style.top = "0";
+    iframe.style.left = "0";
     screen.insertBefore(iframe, screen.firstChild);
 
     this.currentVodId = vodId;
@@ -359,7 +377,7 @@ export class Newsroom {
 
   private async checkStreamStatus(): Promise<void> {
     try {
-      const response = await fetch("/api/twitch/gql", {
+      const response = await fetch(apiUrl("/api/twitch/gql"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -368,7 +386,7 @@ export class Newsroom {
           query: `query($login: String!) {
             user(login: $login) {
               stream { type viewersCount game { displayName } title }
-              videos(first: 1) { edges { node { id title } } }
+              videos(first: 10, type: ARCHIVE, sort: TIME) { edges { node { id title game { displayName } } } }
             }
           }`,
           variables: { login: TWITCH_CHANNEL },
@@ -378,7 +396,7 @@ export class Newsroom {
       if (!response.ok) return;
 
       const data = await response.json() as {
-        data?: { user?: { stream?: { type: string; viewersCount?: number; game?: { displayName: string } | null; title?: string } | null; videos?: { edges: Array<{ node: { id: string } }> } } };
+        data?: { user?: { stream?: { type: string; viewersCount?: number; game?: { displayName: string } | null; title?: string } | null; videos?: { edges: Array<{ node: { id: string; title: string; game?: { displayName: string } | null } }> } } };
       };
 
       const user = data.data?.user;
@@ -401,9 +419,26 @@ export class Newsroom {
           titleEl.textContent = user.stream.title;
         }
       } else {
-        const vodEdges = user.videos?.edges;
-        if (vodEdges && vodEdges.length > 0) {
-          this.embedVod(vodEdges[0].node.id);
+        // Stream is offline — find a GTA5 VOD
+        const vodEdges = user.videos?.edges || [];
+
+        // Prefer GTA5 VODs
+        const gtaVod = vodEdges.find(e => {
+          const game = e.node.game?.displayName?.toLowerCase() || "";
+          return game.includes("grand theft auto") || game.includes("gta");
+        });
+
+        const vodToPlay = gtaVod || vodEdges[0];
+
+        if (vodToPlay) {
+          this.embedVod(vodToPlay.node.id);
+          const titleEl = document.getElementById("stream-title");
+          if (titleEl) titleEl.textContent = `VOD: ${vodToPlay.node.title || "GTA5 Replay"}`;
+        } else {
+          // No VOD found — hardcoded fallback GTA5 VOD for KNIG04Ei
+          this.embedVod("2845796121");
+          const titleEl = document.getElementById("stream-title");
+          if (titleEl) titleEl.textContent = "VOD: GTA5 RP Replay";
         }
       }
     } catch (err) {

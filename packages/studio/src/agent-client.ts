@@ -6,6 +6,7 @@
 // ============================================================
 
 import { getToken } from "./auth.js";
+import { apiUrl } from "./api-config.js";
 
 export interface AgentConfig {
   name: string;
@@ -23,54 +24,52 @@ export type AgentResponseHandler = (response: AgentResponse) => void;
 
 // Use the Azure Function proxy to avoid CORS issues with the Foundry endpoint.
 // The proxy runs at /api/agents/{agentName} on the same origin.
-const PROXY_BASE = "/api/agents";
+const PROXY_BASE = "/api/agents"; // relative, will be prefixed by apiUrl()
 
 export const AGENTS: Record<string, AgentConfig> = {
   "stream-monitor": {
     name: "stream-monitor",
     displayName: "Stream Monitor",
-    endpoint: `${PROXY_BASE}/stream-monitor?api-version=v1`,
+    endpoint: apiUrl(`${PROXY_BASE}/stream-monitor?api-version=v1`),
   },
   "content-analyzer": {
     name: "content-analyzer",
     displayName: "Content Analyzer",
-    endpoint: `${PROXY_BASE}/content-analyzer?api-version=v1`,
+    endpoint: apiUrl(`${PROXY_BASE}/content-analyzer?api-version=v1`),
   },
   "chat-pulse": {
     name: "chat-pulse",
     displayName: "Chat Pulse",
-    endpoint: `${PROXY_BASE}/chat-pulse?api-version=v1`,
+    endpoint: apiUrl(`${PROXY_BASE}/chat-pulse?api-version=v1`),
   },
   "show-producer": {
     name: "show-producer",
     displayName: "Show Producer",
-    endpoint: `${PROXY_BASE}/show-producer?api-version=v1`,
+    endpoint: apiUrl(`${PROXY_BASE}/show-producer?api-version=v1`),
   },
   "art-director": {
     name: "art-director",
     displayName: "Art Director",
-    endpoint: `${PROXY_BASE}/art-director?api-version=v1`,
+    endpoint: apiUrl(`${PROXY_BASE}/art-director?api-version=v1`),
   },
   "meta-agent": {
     name: "meta-agent",
     displayName: "Meta-Agent",
-    endpoint: `${PROXY_BASE}/meta-agent?api-version=v1`,
+    endpoint: apiUrl(`${PROXY_BASE}/meta-agent?api-version=v1`),
   },
   "director": {
     name: "director",
     displayName: "Director",
-    endpoint: `${PROXY_BASE}/director?api-version=v1`,
+    endpoint: apiUrl(`${PROXY_BASE}/director?api-version=v1`),
   },
   "agent-fib": {
     name: "agent-fib",
     displayName: "Agent FIB",
-    endpoint: `${PROXY_BASE}/agent-fib?api-version=v1`,
+    endpoint: apiUrl(`${PROXY_BASE}/agent-fib?api-version=v1`),
   },
   "stream-watcher": {
     name: "stream-watcher",
     displayName: "Stream Watcher",
-    // Not a Foundry agent — this is a local client-side agent.
-    // Endpoint is unused; the StreamWatcher class handles communication directly.
     endpoint: "",
   },
 };

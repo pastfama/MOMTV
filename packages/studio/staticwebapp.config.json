@@ -1,9 +1,23 @@
 {
-  "routes": [],
-  "responseOverrides": {},
   "globalHeaders": {
-    "X-Content-Type-Options": "nosniff",
-    "X-Frame-Options": "DENY",
-    "Content-Security-Policy": "default-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' wss://*:* ws://*:* https://*; img-src 'self' data: blob:; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.twitch.tv https://*.twitchcdn.net https://player.twitch.tv; frame-src 'self' https://*.twitch.tv https://player.twitch.tv;"
+    "Access-Control-Allow-Origin": "https://momtv.surge.sh",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, api-key"
+  },
+  "routes": [
+    {
+      "route": "/api/*",
+      "headers": {
+        "Access-Control-Allow-Origin": "https://momtv.surge.sh",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, api-key"
+      }
+    }
+  ],
+  "responseOverrides": {
+    "401": {
+      "redirect": "/.auth/login/aad",
+      "statusCode": 302
+    }
   }
 }

@@ -7,10 +7,11 @@
 // ============================================================
 
 import { fetchLatestSegment } from "./twitch-hls.js";
+import { apiUrl } from "./api-config.js";
 
 // Use the Azure Function proxy to avoid CORS issues
-const AGENT_ENDPOINT = "/api/agents/content-analyzer?api-version=v1";
-const VISION_ENDPOINT = "/api/vision/analyze";
+const AGENT_ENDPOINT = apiUrl("/api/agents/content-analyzer?api-version=v1");
+const VISION_ENDPOINT = apiUrl("/api/vision/analyze");
 
 const TWITCH_CHANNEL = "KNIG04Ei";
 
@@ -93,7 +94,7 @@ export class StreamAnalyzer {
     try {
       // 1. Fetch the Twitch stream preview thumbnail via proxy (bypasses CORS)
       const thumbnailRawUrl = `https://static-cdn.jtvnw.net/previews-ttv/live_user_${TWITCH_CHANNEL}-1920x1080.jpg?_t=${Date.now()}`;
-      const proxyUrl = `/api/twitch/fetch?url=${encodeURIComponent(thumbnailRawUrl)}`;
+      const proxyUrl = apiUrl(`/api/twitch/fetch?url=${encodeURIComponent(thumbnailRawUrl)}`);
       const thumbResp = await fetch(proxyUrl);
       if (!thumbResp.ok) {
         throw new Error(`Thumbnail proxy returned ${thumbResp.status}`);
