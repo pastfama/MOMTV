@@ -416,16 +416,12 @@ export class Newsroom {
   private handleVisualAnalysis(analysis: StreamAnalysis): void {
     console.log(`[Newsroom] Visual analysis: ${analysis.game_detected} (${analysis.mood})`);
 
-    // Update visual analysis panel
-    const gameEl = document.getElementById("va-game");
-    const moodEl = document.getElementById("va-mood");
-    const qualityEl = document.getElementById("va-quality");
-    const sceneEl = document.getElementById("va-scene");
-
-    if (gameEl) gameEl.textContent = analysis.game_detected;
-    if (moodEl) moodEl.textContent = analysis.mood;
-    if (qualityEl) qualityEl.textContent = analysis.production_quality;
-    if (sceneEl) sceneEl.textContent = analysis.scene_description;
+    // Add to news table
+    this.addNewsEntry(
+      "content-analyzer",
+      "normal",
+      `${analysis.game_detected} — ${analysis.scene_description} (${analysis.mood}, ${analysis.production_quality})`
+    );
 
     // Update ticker with visual analysis
     this.updateTicker(`🎬 ${analysis.game_detected} | ${analysis.mood} | ${analysis.scene_description}`);
@@ -460,14 +456,18 @@ export class Newsroom {
     const item = document.createElement("div");
     item.className = "feed-item";
     item.innerHTML = `
-      <div class="feed-header">
-        <span class="feed-tag ${tagClass}">${response.agent.toUpperCase()}</span>
-        <span class="feed-time">${time}</span>
-      </div>
-      <div class="feed-text">${this.escapeHtml(displayText)}</div>
+      <span class="feed-tag ${tagClass}">${response.agent.toUpperCase()}</span>
+      <div class="feed-body"><div class="feed-text">${this.escapeHtml(displayText)}</div></div>
+      <span class="feed-time">${time}</span>
     `;
 
     feed.appendChild(item);
+
+    // Also add to news table for important agents
+    if (["director", "show-producer", "chat-pulse"].includes(response.agent) && script) {
+      const severity = script.scene?.type === "breaking" ? "breaking" : "normal";
+      this.addNewsEntry(response.agent, severity, displayText);
+    }
 
     // Keep only last 50 items
     while (feed.children.length > 50) {
@@ -601,8 +601,13 @@ export class Newsroom {
       }
     });
 
-    // Handle individual stream events — add to commentary feed
+    // Handle individual stream events — add to news table + commentary feed
     this.streamWatcher.onEvent((event) => {
+      // Add to news table
+      const severity = event.severity > 0.7 ? "breaking" : event.severity > 0.4 ? "elevated" : "normal";
+      this.addNewsEntry("stream-watcher", severity, event.description);
+
+      // Add to commentary feed
       const feed = document.getElementById("commentary-feed");
       if (!feed) return;
 
@@ -612,11 +617,9 @@ export class Newsroom {
       const item = document.createElement("div");
       item.className = "feed-item";
       item.innerHTML = `
-        <div class="feed-header">
-          <span class="feed-tag stream-watcher">STREAM WATCHER</span>
-          <span class="feed-time">${time}</span>
-        </div>
-        <div class="feed-text">${severityIcon} ${this.escapeHtml(event.description)}</div>
+        <span class="feed-tag stream-watcher">WATCHER</span>
+        <div class="feed-body"><div class="feed-text">${severityIcon} ${this.escapeHtml(event.description)}</div></div>
+        <span class="feed-time">${time}</span>
       `;
 
       feed.appendChild(item);
@@ -641,22 +644,29 @@ export class Newsroom {
   }
 
   private handleVIInsights(insights: VideoIndexerInsights): void {
-    // Update the Video Indexer panel in the UI
-    const transcriptEl = document.getElementById("vi-transcript");
-    const ocrEl = document.getElementById("vi-ocr");
-    const scenesEl = document.getElementById("vi-scenes");
-    const topicsEl = document.getElementById("vi-topics");
+    // Update the VI summary in commentary header
+    const viSummary = document.getElementById("vi-summary");
+    if (viSummary) {
+      const parts = [];
+      if (insights.transcript.length > 0) parts.push(`${insights.transcript.length} lines`);
+      if (insights.topics.length > 0) parts.push(insights.topics.slice(0, 2).join(", "));
+      viSummary.textContent = parts.join(" | ") || "—";
+    }
 
-    if (transcriptEl) transcriptEl.textContent = `${insights.transcript.length} lines`;
-    if (ocrEl) ocrEl.textContent = `${insights.ocrText.length} items`;
-    if (scenesEl) scenesEl.textContent = `${insights.scenes}`;
-    if (topicsEl) topicsEl.textContent = insights.topics.length > 0 ? insights.topics.join(", ") : "0";
+    // Add to news table
+    const summary = [
+      insights.transcript.slice(0, 2).join(" "),
+      insights.topics.length > 0 ? `Topics: ${insights.topics.join(", ")}` : "",
+    ].filter(Boolean).join(" | ");
+    if (summary) {
+      this.addNewsEntry("video-indexer", "normal", summary.slice(0, 200));
+    }
 
     // Add to commentary feed
     const feed = document.getElementById("commentary-feed");
     if (feed) {
       const time = new Date(insights.timestamp).toLocaleTimeString();
-      const summary = [
+      const feedSummary = [
         insights.transcript.slice(0, 2).join(" "),
         insights.ocrText.length > 0 ? `OCR: ${insights.ocrText.slice(0, 3).join(", ")}` : "",
         insights.topics.length > 0 ? `Topics: ${insights.topics.join(", ")}` : "",
@@ -665,11 +675,9 @@ export class Newsroom {
       const item = document.createElement("div");
       item.className = "feed-item";
       item.innerHTML = `
-        <div class="feed-header">
-          <span class="feed-tag content-analyzer">VIDEO INDEXER</span>
-          <span class="feed-time">${time}</span>
-        </div>
-        <div class="feed-text">${this.escapeHtml(summary.slice(0, 200))}</div>
+        <span class="feed-tag video-indexer">VI</span>
+        <div class="feed-body"><div class="feed-text">${this.escapeHtml(feedSummary.slice(0, 200))}</div></div>
+        <span class="feed-time">${time}</span>
       `;
 
       feed.appendChild(item);
@@ -758,21 +766,16 @@ export class Newsroom {
         viewer_count?: number;
       } = typeof content === "string" ? JSON.parse(content) : content;
 
-      // Update visual analysis with watcher data
-      const gameEl = document.getElementById("va-game");
-      const moodEl = document.getElementById("va-mood");
-      const qualityEl = document.getElementById("va-quality");
-      const sceneEl = document.getElementById("va-scene");
-
-      if (gameEl && report.game_detected) gameEl.textContent = report.game_detected;
-      if (moodEl && report.mood) moodEl.textContent = report.mood;
-      if (qualityEl && report.production_quality) qualityEl.textContent = report.production_quality;
-      if (sceneEl && report.scene_description) sceneEl.textContent = report.scene_description;
-
       // Update viewer count from watcher
       if (report.viewer_count) {
         const viewerEl = document.getElementById("viewer-count");
         if (viewerEl) viewerEl.textContent = `${report.viewer_count.toLocaleString()} viewers`;
+      }
+
+      // Add to news table
+      const severity = report.alert_level === "breaking" ? "breaking" : report.alert_level === "elevated" ? "elevated" : "normal";
+      if (report.summary) {
+        this.addNewsEntry("stream-watcher", severity, report.summary);
       }
 
       // Show breaking news overlay for elevated/breaking alerts
@@ -788,6 +791,49 @@ export class Newsroom {
       console.log(`[Newsroom] Watcher report: ${report.alert_level} — ${report.summary}`);
     } catch {
       // Not valid JSON, ignore
+    }
+  }
+
+  // ── News Table Helper ──────────────────────────────────────
+
+  private newsCount = 0;
+
+  private addNewsEntry(source: string, severity: "breaking" | "elevated" | "normal", text: string): void {
+    const table = document.getElementById("news-table");
+    if (!table) return;
+
+    const time = new Date().toLocaleTimeString("en-US", { hour12: false });
+    this.newsCount++;
+
+    // Update count badge
+    const countEl = document.getElementById("news-count");
+    if (countEl) countEl.textContent = `${this.newsCount} events`;
+
+    const entry = document.createElement("div");
+    entry.className = "news-entry";
+    entry.innerHTML = `
+      <div class="news-severity ${severity}"></div>
+      <div class="news-content">
+        <div class="news-text">${this.escapeHtml(text.slice(0, 200))}</div>
+        <div class="news-meta">
+          <span class="news-source ${source}">${source.toUpperCase()}</span>
+          <span class="news-time">${time}</span>
+        </div>
+      </div>
+    `;
+
+    // Insert after the header (first child)
+    const header = table.querySelector(".news-table-header");
+    if (header && header.nextSibling) {
+      table.insertBefore(entry, header.nextSibling);
+    } else {
+      table.appendChild(entry);
+    }
+
+    // Keep only last 100 entries
+    const entries = table.querySelectorAll(".news-entry");
+    while (entries.length > 100) {
+      entries[0].remove();
     }
   }
 
