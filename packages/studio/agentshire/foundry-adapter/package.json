@@ -10,7 +10,6 @@
     "town:dev": "npx tsx watch town-server.ts"
   },
   "dependencies": {
-    "@momtv/shared": "workspace:*",
     "ws": "^8.16.0"
   },
   "devDependencies": {

@@ -22,7 +22,7 @@
 
 import { WebSocketServer, WebSocket } from "ws";
 import { createServer } from "http";
-import { readFileSync, existsSync, statSync } from "fs";
+import { readFileSync, existsSync, statSync, createReadStream } from "fs";
 import { join, extname, resolve } from "path";
 import { fileURLToPath } from "url";
 import type {
@@ -90,15 +90,14 @@ const httpServer = createServer((req, res) => {
     const ext = extname(filePath);
     const mime = MIME_TYPES[ext] || "application/octet-stream";
     res.writeHead(200, { "Content-Type": mime });
-    readFileSync(filePath);
-    const stream = require("fs").createReadStream(filePath);
+    const stream = createReadStream(filePath);
     stream.pipe(res);
   } else {
     // SPA fallback — serve index.html for routes
     const indexPath = join(FRONTEND_DIR, "index.html");
     if (existsSync(indexPath)) {
       res.writeHead(200, { "Content-Type": "text/html" });
-      const stream = require("fs").createReadStream(indexPath);
+      const stream = createReadStream(indexPath);
       stream.pipe(res);
     } else {
       res.writeHead(404);
