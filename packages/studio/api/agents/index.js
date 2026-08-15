@@ -48,7 +48,9 @@ module.exports = async function (context, req) {
     };
 
     if (req.method === "POST" && req.body) {
-      fetchOptions.body = JSON.stringify(req.body);
+      // Ensure body is a parsed object (Azure Functions may pass it as string)
+      const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+      fetchOptions.body = JSON.stringify(body);
     }
 
     context.log(`[AgentProxy] ${req.method} ${fullUrl}`);
