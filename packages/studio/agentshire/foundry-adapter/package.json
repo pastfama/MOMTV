@@ -1,0 +1,21 @@
+{
+  "name": "@momtv/agentshire-adapter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MOMTV → Agentshire 3D town adapter (WorldState → AgentEvent bridge)",
+  "main": "index.ts",
+  "scripts": {
+    "town": "npx tsx town-server.ts",
+    "town:dev": "npx tsx watch town-server.ts"
+  },
+  "dependencies": {
+    "@momtv/shared": "workspace:*",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.10",
+    "tsx": "^4.19.0",
+    "typescript": "^5.4.0"
+  }
+}
