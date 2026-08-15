@@ -22,30 +22,34 @@ async function getAccessToken(context) {
     return cachedToken;
   }
 
-  try {
-    // Use ARM REST API with DefaultAzureCredential-like approach
-    // Get a token from the Azure Instance Metadata Service (IMDS)
-    const tokenUrl = "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/";
+  // Try environment token first (for SWA with managed identity)
+  const envToken = process.env.AZURE_ACCESS_TOKEN || process.env.VI_ACCESS_TOKEN;
+  if (envToken) {
+    cachedToken = envToken;
+    tokenExpiry = Date.now() + 55 * 60 * 1000;
+    context.log("[VI] Using environment access token");
+    return cachedToken;
+  }
 
-    const tokenResp = await fetch(tokenUrl, {
-      headers: { Metadata: "true" },
-    });
+  try {
+    // Try IMDS (only works when running in Azure with managed identity)
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000); // 2s timeout for IMDS
+    
+    const tokenResp = await fetch(
+      "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/",
+      { headers: { Metadata: "true" }, signal: controller.signal }
+    );
+    clearTimeout(timeout);
 
     if (!tokenResp.ok) {
-      // Fallback: try getting token from environment
-      const envToken = process.env.AZURE_ACCESS_TOKEN;
-      if (envToken) {
-        cachedToken = envToken;
-        tokenExpiry = Date.now() + 55 * 60 * 1000;
-        return cachedToken;
-      }
-      throw new Error(`Failed to get token from IMDS: ${tokenResp.status}`);
+      throw new Error(`IMDS returned ${tokenResp.status}`);
     }
 
     const tokenData = await tokenResp.json();
     const armToken = tokenData.access_token;
 
-    // Now use ARM to get VI token
+    // Use ARM to get VI token
     const url = `https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.VideoIndexer/accounts/${RESOURCE_NAME}/generateAccessToken?api-version=2024-01-01`;
 
     const viResp = await fetch(url, {
@@ -59,17 +63,18 @@ async function getAccessToken(context) {
 
     if (!viResp.ok) {
       const errText = await viResp.text();
-      throw new Error(`Failed to get VI token: ${viResp.status} ${errText}`);
+      throw new Error(`VI token gen failed: ${viResp.status} ${errText}`);
     }
 
     const data = await viResp.json();
     cachedToken = data.accessToken;
     tokenExpiry = Date.now() + 55 * 60 * 1000;
-    context.log("[VI] Got access token");
+    context.log("[VI] Got access token via IMDS");
     return cachedToken;
   } catch (err) {
-    context.log.error(`[VI] Failed to get access token: ${err.message}`);
-    throw err;
+    context.log.warn(`[VI] Auth unavailable: ${err.message} — returning null`);
+    // Return null instead of throwing — callers should handle gracefully
+    return null;
   }
 }
 
@@ -78,6 +83,15 @@ module.exports = async function (context, req) {
 
   try {
     const token = await getAccessToken(context);
+
+    if (!token) {
+      context.res = {
+        status: 503,
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
+        body: { error: "Video Indexer authentication unavailable — set VI_ACCESS_TOKEN or AZURE_ACCESS_TOKEN env var" },
+      };
+      return;
+    }
 
     if (action === "upload") {
       // Upload a video URL for indexing

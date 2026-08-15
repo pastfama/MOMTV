@@ -5,8 +5,8 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["post", "options"],
-      "route": "vision/{action}"
+      "methods": ["get"],
+      "route": "health"
     },
     {
       "type": "http",

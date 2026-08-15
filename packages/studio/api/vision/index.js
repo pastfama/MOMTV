@@ -17,6 +17,8 @@ module.exports = async function (context, req) {
     return;
   }
 
+  const action = context.bindingData.action || "analyze";
+
   try {
     const { imageBase64, imageUrl } = req.body || {};
 

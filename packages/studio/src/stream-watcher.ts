@@ -126,10 +126,11 @@ export class StreamWatcher {
 
   private async pollMetadata(): Promise<void> {
     try {
-      const response = await fetch(TWITCH_GQL_URL, {
+      // Route through Azure Function proxy to avoid CORS
+      const proxyUrl = "/api/twitch/gql";
+      const response = await fetch(proxyUrl, {
         method: "POST",
         headers: {
-          "Client-Id": TWITCH_CLIENT_ID,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
