@@ -34,7 +34,7 @@ module.exports = async function (context, req) {
   const qs = Object.entries(req.query || {})
     .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
     .join("&");
-  const fullUrl = qs ? `${targetUrl}?${qs}` : targetUrl;
+  const fullUrl = qs ? `${targetUrl}?api-version=v1&${qs}` : `${targetUrl}?api-version=v1`;
 
   try {
     // Only send api-key — do NOT forward any Authorization header from browser.
