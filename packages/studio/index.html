@@ -1075,7 +1075,7 @@ async function runAgentCommentary() {
 
     const input = `Generate a ${showType} commentary for the current live stream on ${studio}. The stream is "${currentChannel}". Viewers are watching a live Twitch stream. Cast: ${castNames}. Provide a brief 2-3 line dialogue exchange. Language: Russian mixed with English gaming terms.`;
 
-    const res = await fetch(`${API_BASE}/api/agents/stream-director`, {
+    const res = await fetch(`${API_BASE}/api/agents/show-producer`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ model: "gpt-4o-mini", input: [{ role: "user", content: input }], tools: [] })
@@ -1229,12 +1229,12 @@ async function runWatcherReport() {
     const game = user.stream?.game?.displayName || "Unknown";
     const title = user.stream?.title || "";
 
-    const res = await fetch(`${API_BASE}/api/agents/stream-director`, {
+    const res = await fetch(`${API_BASE}/api/agents/stream-watcher`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         input: [{ role: "user", content: `Generate a brief system status report for the live stream. Channel: ${currentChannel}, Game: ${game}, Viewers: ${viewers}, Title: "${title.slice(0, 60)}". Just 1-2 sentences about the stream health and viewer engagement.` }],
-        model: "gpt-4o-mini", tools: []
+        model: "gpt-4o", tools: []
       })
     });
 
