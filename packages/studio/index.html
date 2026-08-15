@@ -1078,7 +1078,7 @@ async function runAgentCommentary() {
     const res = await fetch(`${API_BASE}/api/agents/stream-director`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "gpt-4o-mini", input: input, tools: [] })
+      body: JSON.stringify({ model: "gpt-4o-mini", input: [{ role: "user", content: input }], tools: [] })
     });
 
     if (!res.ok) throw new Error(`Agent API ${res.status}`);
@@ -1233,7 +1233,7 @@ async function runWatcherReport() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        input: `Generate a brief system status report for the live stream. Channel: ${currentChannel}, Game: ${game}, Viewers: ${viewers}, Title: "${title.slice(0, 60)}". Just 1-2 sentences about the stream health and viewer engagement.`,
+        input: [{ role: "user", content: `Generate a brief system status report for the live stream. Channel: ${currentChannel}, Game: ${game}, Viewers: ${viewers}, Title: "${title.slice(0, 60)}". Just 1-2 sentences about the stream health and viewer engagement.` }],
         model: "gpt-4o-mini", tools: []
       })
     });
