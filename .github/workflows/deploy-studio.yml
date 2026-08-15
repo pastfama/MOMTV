@@ -28,6 +28,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Create foundry config from secret
+        run: |
+          echo '{"apiKeyB64":"'"${{ secrets.FOUNDRY_API_KEY_B64 }}"'"}' > packages/studio/public/foundry-config.json
+
       - name: Build
         run: pnpm --filter @momtv/studio build
 
