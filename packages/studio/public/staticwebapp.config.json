@@ -18,9 +18,8 @@
     "Access-Control-Allow-Headers": "Content-Type, Authorization, api-key"
   },
   "responseOverrides": {
-    "401": {
-      "redirect": "/.auth/login/aad",
-      "statusCode": 302
+    "404": {
+      "rewrite": "/index.html"
     }
   }
 }
