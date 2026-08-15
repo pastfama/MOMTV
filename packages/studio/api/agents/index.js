@@ -5,7 +5,7 @@ const FOUNDRY_ENDPOINT = "https://cog-cdwzd6d3oc77y.services.ai.azure.com/api/pr
 const API_KEY = process.env.FOUNDRY_API_KEY;
 
 const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "https://momtv.surge.sh",
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, api-key",
 };

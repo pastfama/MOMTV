@@ -8,6 +8,12 @@ const SUBSCRIPTION_ID = "8cce2fe7-7c75-4969-9da9-707aadd13e52";
 const RESOURCE_GROUP = "rg-resilient-steering-dev-663329e5";
 const RESOURCE_NAME = "momtv-video-indexer";
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
 let cachedToken = null;
 let tokenExpiry = 0;
 

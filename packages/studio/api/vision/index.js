@@ -5,7 +5,7 @@ const VISION_ENDPOINT = process.env.VISION_ENDPOINT || "https://cog-cdwzd6d3oc77
 const VISION_KEY = process.env.VISION_KEY || process.env.FOUNDRY_API_KEY || "";
 
 const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "https://momtv.surge.sh",
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
