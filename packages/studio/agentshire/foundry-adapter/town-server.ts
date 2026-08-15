@@ -1,8 +1,8 @@
 // ============================================================
-// MOMTV Town Server
+// MOMTV Fameshire Town Server
 // ============================================================
 // Standalone Node.js server that:
-// 1. Serves the pre-built Agentshire 3D town frontend
+// 1. Serves the pre-built Fameshire 3D town frontend
 // 2. Runs a WebSocket server broadcasting AgentEvents
 // 3. Polls the MOMTV simulation API for state updates
 // 4. Maps WorldState/Transactions → AgentEvents via the Foundry adapter
@@ -107,7 +107,7 @@ const httpServer = createServer((req, res) => {
 });
 
 httpServer.listen(TOWN_PORT, () => {
-  console.log(`[MomtvTown] HTTP server: http://localhost:${TOWN_PORT}`);
+  console.log(`[Fameshire] Town server: http://localhost:${TOWN_PORT}`);
 });
 
 // ── WebSocket Server (broadcasts AgentEvents) ─────────────────
@@ -115,11 +115,11 @@ httpServer.listen(TOWN_PORT, () => {
 const wss = new WebSocketServer({ port: WS_PORT });
 const clients = new Set<WebSocket>();
 
-console.log(`[MomtvTown] WebSocket server: ws://localhost:${WS_PORT}`);
+console.log(`[Fameshire] WebSocket: ws://localhost:${WS_PORT}`);
 
 wss.on("connection", (ws) => {
   clients.add(ws);
-  console.log(`[MomtvTown] Client connected (${clients.size} total)`);
+  console.log(`[Fameshire] Client connected (${clients.size} total)`);
 
   // Send system init
   ws.send(JSON.stringify({
@@ -127,15 +127,15 @@ wss.on("connection", (ws) => {
     event: {
       type: "system",
       subtype: "init",
-      sessionId: `momtv-${Date.now()}`,
+      sessionId: `fameshire-${Date.now()}`,
       model: "gpt-4o",
-      persona: "MOMTV World — AI-powered TV network about streamers",
+      persona: "Fameshire — MOMTV's living 3D town where AI agents coexist",
     },
   }));
 
   ws.on("close", () => {
     clients.delete(ws);
-    console.log(`[MomtvTown] Client disconnected (${clients.size} remaining)`);
+    console.log(`[Fameshire] Client disconnected (${clients.size} remaining)`);
   });
 });
 
@@ -228,12 +228,12 @@ function mapTransaction(tx: Record<string, unknown>): AgentEvent {
 
 setInterval(pollSimulation, POLL_INTERVAL_MS);
 
-console.log("[MomtvTown] Town server started — waiting for simulation data");
+console.log("[Fameshire] Town server started — waiting for simulation data");
 
 // ── Graceful shutdown ─────────────────────────────────────────
 
 process.on("SIGINT", () => {
-  console.log("[MomtvTown] Shutting down...");
+  console.log("[Fameshire] Shutting down...");
   for (const ws of clients) ws.close();
   wss.close();
   httpServer.close();
