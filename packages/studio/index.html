@@ -1017,7 +1017,10 @@ async function loadFollowedChannels() {
 // ═══ COMMENTARY ═══
 
 const API_BASE = window.location.origin;
+const FOUNDRY_ENDPOINT = "https://cog-cdwzd6d3oc77y.services.ai.azure.com/api/projects/resilient-steering-dev";
+let FOUNDRY_KEY = "";
 let feedCount = 0;
+(async () => { try { const cfg = await fetch("/foundry-config.json"); if (cfg.ok) { const d = await cfg.json(); FOUNDRY_KEY = d.apiKeyB64 ? atob(d.apiKeyB64) : (d.apiKey || ""); } } catch(e) {} })();
 
 // Character → color mapping for real AI responses
 const CHARACTER_COLORS = {
@@ -1072,10 +1075,10 @@ async function runAgentCommentary() {
 
     const input = `Generate a ${showType} commentary for the current live stream on ${studio}. The stream is "${currentChannel}". Viewers are watching a live Twitch stream. Cast: ${castNames}. Provide a brief 2-3 line dialogue exchange. Language: Russian mixed with English gaming terms.`;
 
-    const res = await fetch(`${API_BASE}/api/agents/stream-director`, {
+    const res = await fetch(`${FOUNDRY_ENDPOINT}/agents/stream-director/endpoint/protocols/openai/responses`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ input, context: { channel: currentChannel, studio, show_type: showType } })
+      headers: { "Content-Type": "application/json", "api-key": FOUNDRY_KEY },
+      body: JSON.stringify({ model: "gpt-4o-mini", input: input, tools: [] })
     });
 
     if (!res.ok) throw new Error(`Agent API ${res.status}`);
@@ -1152,7 +1155,7 @@ async function runVisualAnalysis() {
 
     const res = await fetch(`${API_BASE}/api/vision`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "api-key": FOUNDRY_KEY },
       body: JSON.stringify({
         channel,
         prompt: "Describe what's happening on screen in this Twitch stream. Focus on: game being played, visible text/UI elements, player actions, viewer reactions. Be concise, 1-2 sentences."
@@ -1226,12 +1229,12 @@ async function runWatcherReport() {
     const game = user.stream?.game?.displayName || "Unknown";
     const title = user.stream?.title || "";
 
-    const res = await fetch(`${API_BASE}/api/agents/stream-director`, {
+    const res = await fetch(`${FOUNDRY_ENDPOINT}/agents/stream-director/endpoint/protocols/openai/responses`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "api-key": FOUNDRY_KEY },
       body: JSON.stringify({
         input: `Generate a brief system status report for the live stream. Channel: ${currentChannel}, Game: ${game}, Viewers: ${viewers}, Title: "${title.slice(0, 60)}". Just 1-2 sentences about the stream health and viewer engagement.`,
-        context: { type: "system-health", channel: currentChannel }
+        model: "gpt-4o-mini", tools: []
       })
     });
 
