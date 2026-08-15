@@ -1,0 +1,8 @@
+{
+  "name": "@momtv/studio-api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "func start"
+  }
+}
