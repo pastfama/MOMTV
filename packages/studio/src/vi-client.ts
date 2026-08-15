@@ -77,7 +77,8 @@ export class VIClient {
       // Try to get latest video insights
       // For now, we use a simple approach: check if there are any recent videos
       // In production, this would query the VI API for the latest indexed video
-      const response = await fetch(`${this.viApiUrl}/insights?videoId=latest`, {
+      // Try to get any recent video insights (no specific videoId = get latest)
+      const response = await fetch(`${this.viApiUrl}/insights`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });

@@ -67,7 +67,22 @@ module.exports = async function (context, req) {
     };
 
     if (req.method === "POST" && req.body) {
-      const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+      let body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+      
+      // Convert simple input string to Responses API format
+      // Foundry expects: { input: [{ type: "message", role: "user", content: [{ type: "input_text", text: "..." }] }] }
+      if (typeof body.input === "string") {
+        const text = body.input;
+        body = {
+          ...body,
+          input: [{
+            type: "message",
+            role: "user",
+            content: [{ type: "input_text", text }],
+          }],
+        };
+      }
+      
       fetchOptions.body = JSON.stringify(body);
       context.log(`[AgentProxy] POST ${agentName} — body keys: ${Object.keys(body).join(", ")}`);
     }
