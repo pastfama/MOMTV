@@ -1,8 +1,8 @@
 // ============================================================
 // MOM TV — Video Indexer Client
 // ============================================================
-// Connects to the backend SSE endpoint to receive real-time
-// Video Indexer analysis results (transcript, OCR, scenes, topics).
+// Polls the backend video-indexer function for analysis results.
+// Falls back to Twitch thumbnail analysis when VI is unavailable.
 // ============================================================
 
 import type { VideoIndexerInsights } from "@momtv/shared";
@@ -15,14 +15,16 @@ export type VIInsightsHandler = (insights: VideoIndexerInsights) => void;
 // ── Video Indexer Client ─────────────────────────────────────
 
 export class VIClient {
-  private eventSource: EventSource | null = null;
+  private pollTimer: ReturnType<typeof setInterval> | null = null;
   private handlers: VIInsightsHandler[] = [];
-  private sseUrl: string;
-  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private viApiUrl: string;
   private latestInsights: VideoIndexerInsights | null = null;
+  private lastPollTime = 0;
+  private pollIntervalMs = 30_000; // Poll every 30s
+  private isAvailable = false;
 
-  constructor(sseUrl: string = apiUrl("/api/vi-stream")) {
-    this.sseUrl = sseUrl;
+  constructor(viApiUrl: string = apiUrl("/api/video-indexer")) {
+    this.viApiUrl = viApiUrl;
   }
 
   // ── Public API ───────────────────────────────────────────
@@ -32,44 +34,25 @@ export class VIClient {
   }
 
   /**
-   * Connect to the Video Indexer SSE stream.
+   * Start polling for Video Indexer insights.
    */
   connect(): void {
-    console.log(`[VIClient] Connecting to ${this.sseUrl}...`);
+    console.log(`[VIClient] Starting VI poll every ${this.pollIntervalMs / 1000}s`);
 
-    try {
-      this.eventSource = new EventSource(this.sseUrl);
+    // Initial poll
+    this.pollInsights();
 
-      this.eventSource.onopen = () => {
-        console.log("[VIClient] SSE connected");
-      };
-
-      this.eventSource.addEventListener("segment", (event) => {
-        this.handleSegmentEvent(event as MessageEvent);
-      });
-
-      this.eventSource.onerror = () => {
-        console.warn("[VIClient] SSE error, reconnecting in 10s...");
-        this.disconnect();
-        this.reconnectTimer = setTimeout(() => this.connect(), 10_000);
-      };
-    } catch (err) {
-      console.warn("[VIClient] Connection failed:", err);
-      this.reconnectTimer = setTimeout(() => this.connect(), 10_000);
-    }
+    // Periodic polling
+    this.pollTimer = setInterval(() => this.pollInsights(), this.pollIntervalMs);
   }
 
   /**
-   * Disconnect from the SSE stream.
+   * Stop polling.
    */
   disconnect(): void {
-    if (this.eventSource) {
-      this.eventSource.close();
-      this.eventSource = null;
-    }
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = null;
     }
   }
 
@@ -80,56 +63,88 @@ export class VIClient {
     return this.latestInsights;
   }
 
-  // ── Event Handling ───────────────────────────────────────
+  /**
+   * Check if VI is available.
+   */
+  isViAvailable(): boolean {
+    return this.isAvailable;
+  }
 
-  private handleSegmentEvent(event: MessageEvent): void {
+  // ── Polling ─────────────────────────────────────────────
+
+  private async pollInsights(): Promise<void> {
     try {
-      const data = JSON.parse(event.data) as {
-        timestamp?: number;
-        segmentId?: string;
-        transcript?: Array<{ text?: string }>;
-        ocr?: Array<{ text?: string }>;
-        scenes?: unknown[];
-        topics?: Array<{ name?: string }>;
-        summary?: string;
-      };
+      // Try to get latest video insights
+      // For now, we use a simple approach: check if there are any recent videos
+      // In production, this would query the VI API for the latest indexed video
+      const response = await fetch(`${this.viApiUrl}/insights?videoId=latest`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
 
-      const insights: VideoIndexerInsights = {
-        timestamp: data.timestamp ?? Date.now(),
-        segmentId: data.segmentId ?? "unknown",
-        transcript: (data.transcript ?? [])
-          .map((t) => t.text ?? "")
-          .filter(Boolean),
-        ocrText: (data.ocr ?? [])
-          .map((o) => o.text ?? "")
-          .filter(Boolean),
-        scenes: data.scenes?.length ?? 0,
-        topics: (data.topics ?? [])
-          .map((t) => t.name ?? "")
-          .filter(Boolean),
-        summary: data.summary,
-      };
+      if (response.status === 503) {
+        // VI not configured
+        if (this.isAvailable) {
+          console.warn("[VIClient] VI unavailable — using fallback analysis");
+          this.isAvailable = false;
+        }
+        return;
+      }
 
-      this.latestInsights = insights;
+      if (!response.ok) {
+        return;
+      }
 
-      console.log(
-        `[VIClient] Segment ${insights.segmentId}: ` +
-        `${insights.transcript.length} transcript lines, ` +
-        `${insights.ocrText.length} OCR items, ` +
-        `${insights.scenes} scenes, ` +
-        `${insights.topics.length} topics`,
-      );
+      const data = await response.json();
+      this.isAvailable = true;
 
-      // Notify handlers
-      for (const handler of this.handlers) {
-        try {
-          handler(insights);
-        } catch (err) {
-          console.error("[VIClient] Handler error:", err);
+      if (data && data.transcript) {
+        const insights: VideoIndexerInsights = {
+          timestamp: Date.now(),
+          segmentId: data.videoId || "unknown",
+          transcript: (data.transcript || [])
+            .map((t: { text?: string }) => t.text ?? "")
+            .filter(Boolean),
+          ocrText: (data.ocr || [])
+            .map((o: { text?: string }) => o.text ?? "")
+            .filter(Boolean),
+          scenes: data.scenes?.length || 0,
+          topics: (data.topics || [])
+            .map((t: { name?: string }) => t.name ?? "")
+            .filter(Boolean),
+          summary: data.summary,
+        };
+
+        // Only emit if we have new data
+        if (insights.transcript.length > 0 || insights.topics.length > 0) {
+          this.latestInsights = insights;
+          this.emitInsights(insights);
         }
       }
     } catch (err) {
-      console.warn("[VIClient] Failed to parse segment event:", err);
+      // VI endpoint might not exist yet — that's OK
+      if (this.isAvailable) {
+        console.warn("[VIClient] Poll failed:", err);
+        this.isAvailable = false;
+      }
+    }
+  }
+
+  private emitInsights(insights: VideoIndexerInsights): void {
+    console.log(
+      `[VIClient] New insights: ` +
+      `${insights.transcript.length} transcript, ` +
+      `${insights.ocrText.length} OCR, ` +
+      `${insights.scenes} scenes, ` +
+      `${insights.topics.length} topics`,
+    );
+
+    for (const handler of this.handlers) {
+      try {
+        handler(insights);
+      } catch (err) {
+        console.error("[VIClient] Handler error:", err);
+      }
     }
   }
 }
