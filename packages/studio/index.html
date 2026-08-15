@@ -4,123 +4,569 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MOM TV — 24/7 AI Stream Network</title>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
+    /* ═══════════════════════════════════════════════════════
+       MOM TV — Redesigned Visual Interface
+       Modern glassmorphism · rich palette · premium feel
+       ═══════════════════════════════════════════════════════ */
+
+    :root {
+      --bg-base: #08080d;
+      --bg-surface: #0e0e16;
+      --bg-elevated: #14141f;
+      --bg-glass: rgba(20, 20, 31, 0.6);
+      --bg-glass-hover: rgba(30, 30, 45, 0.7);
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-default: rgba(255, 255, 255, 0.1);
+      --border-accent: rgba(232, 121, 75, 0.25);
+      --accent: #e8794b;
+      --accent-bright: #f59e6b;
+      --accent-glow: rgba(232, 121, 75, 0.15);
+      --purple: #9146ff;
+      --purple-light: #b380ff;
+      --red: #ef4444;
+      --red-bright: #ff5757;
+      --green: #22c55e;
+      --green-light: #4ade80;
+      --yellow: #eab308;
+      --yellow-light: #facc15;
+      --text-primary: #f5ede0;
+      --text-secondary: #b8b0a4;
+      --text-muted: #6b6558;
+      --text-dim: #4a4640;
+      --font-display: 'Space Grotesk', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+      --shadow-glow: 0 0 24px rgba(232, 121, 75, 0.12);
+      --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
     *{margin:0;padding:0;box-sizing:border-box}
-    html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0f;font-family:'DM Sans',sans-serif;color:#e8e0d4}
-    body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.02) 2px,rgba(0,0,0,.02) 3px);pointer-events:none;z-index:9999}
-    .app{display:grid;grid-template-rows:48px 1fr 28px;height:100vh}
-    .header{display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#0d0d14;border-bottom:1px solid rgba(232,121,75,.15)}
-    .header-left{display:flex;align-items:center;gap:12px}
-    .logo{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:#e8794b;letter-spacing:2px}
-    .logo span{color:#f5e6d0;font-weight:400}
-    .live-badge{background:#dc2626;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;animation:pulse 2s infinite;letter-spacing:1px}
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-    .header-right{display:flex;align-items:center;gap:12px}
-    .clock{font-family:'Space Mono',monospace;font-size:14px;color:#e8794b}
+
+    html,body{
+      width:100%;height:100%;overflow:hidden;
+      background:var(--bg-base);
+      font-family:var(--font-body);
+      color:var(--text-primary);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    /* Scanline texture overlay */
+    body::after{
+      content:'';position:fixed;inset:0;
+      background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.015) 2px,rgba(0,0,0,.015) 3px);
+      pointer-events:none;z-index:9999
+    }
+
+    /* Ambient glow background */
+    body::before{
+      content:'';position:fixed;inset:0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 0%, rgba(232,121,75,0.06), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(145,70,255,0.04), transparent);
+      pointer-events:none;z-index:0;
+    }
+
+    .app{
+      display:grid;
+      grid-template-rows:56px 1fr 32px;
+      height:100vh;
+      position:relative;
+      z-index:1;
+    }
+
+    /* ═══ HEADER ═══ */
+    .header{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 20px;
+      background:var(--bg-surface);
+      border-bottom:1px solid var(--border-subtle);
+      backdrop-filter:blur(20px);
+      position:relative;
+    }
+    .header::after{
+      content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+      background:linear-gradient(90deg,transparent,var(--accent-glow),transparent);
+    }
+
+    .header-left{display:flex;align-items:center;gap:16px}
+
+    .logo{
+      font-family:var(--font-display);
+      font-size:20px;font-weight:700;
+      color:var(--accent);
+      letter-spacing:1px;
+      text-shadow:0 0 20px var(--accent-glow);
+    }
+    .logo span{color:var(--text-primary);font-weight:400}
+
+    .live-badge{
+      background:linear-gradient(135deg,var(--red),var(--red-bright));
+      color:#fff;font-size:10px;font-weight:700;
+      padding:3px 10px;border-radius:var(--radius-sm);
+      animation:pulse 2s infinite;letter-spacing:1px;
+      box-shadow:0 0 12px rgba(239,68,68,0.3);
+    }
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+
     .status-pills{display:flex;gap:6px}
-    .pill{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600}
-    .pill-ok{background:rgba(34,197,94,.15);color:#4ade80}
-    .pill-warn{background:rgba(234,179,8,.15);color:#facc15}
-    .login-btn{background:rgba(145,70,255,.2);color:#b380ff;border:1px solid rgba(145,70,255,.3);padding:4px 12px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s}
-    .login-btn:hover{background:rgba(145,70,255,.35)}
-    .user-info{display:flex;align-items:center;gap:8px}
-    .user-avatar{width:24px;height:24px;border-radius:50%;border:2px solid #9146ff}
-    .user-name{font-size:12px;font-weight:600;color:#b380ff}
-    .logout-btn{background:none;border:none;color:rgba(232,224,212,.3);font-size:10px;cursor:pointer;font-family:inherit}
-    .logout-btn:hover{color:#e8794b}
-    .main{display:grid;grid-template-columns:1fr 420px;overflow:hidden}
-    .left-panel{display:grid;grid-template-rows:1fr 200px;overflow:hidden;border-right:1px solid rgba(232,121,75,.1)}
-    .stream-area{position:relative;min-height:0;background:#000}
+    .pill{
+      font-size:10px;padding:3px 10px;
+      border-radius:12px;font-weight:600;
+      display:flex;align-items:center;gap:4px;
+      transition:var(--transition);
+    }
+    .pill-ok{
+      background:rgba(34,197,94,0.1);
+      color:var(--green-light);
+      border:1px solid rgba(34,197,94,0.15);
+    }
+    .pill-ok:hover{background:rgba(34,197,94,0.15)}
+    .pill-warn{
+      background:rgba(234,179,8,0.1);
+      color:var(--yellow-light);
+      border:1px solid rgba(234,179,8,0.15);
+    }
+
+    .header-right{display:flex;align-items:center;gap:16px}
+    .clock{
+      font-family:var(--font-mono);
+      font-size:14px;font-weight:500;
+      color:var(--accent);
+      letter-spacing:1px;
+    }
+
+    .login-btn{
+      background:linear-gradient(135deg,rgba(145,70,255,0.15),rgba(145,70,255,0.08));
+      color:var(--purple-light);
+      border:1px solid rgba(145,70,255,0.25);
+      padding:6px 16px;border-radius:var(--radius-sm);
+      font-size:12px;font-weight:600;cursor:pointer;
+      font-family:var(--font-body);
+      transition:var(--transition);
+    }
+    .login-btn:hover{
+      background:linear-gradient(135deg,rgba(145,70,255,0.25),rgba(145,70,255,0.12));
+      border-color:rgba(145,70,255,0.4);
+      box-shadow:0 0 16px rgba(145,70,255,0.15);
+    }
+
+    .user-info{display:flex;align-items:center;gap:10px}
+    .user-avatar{
+      width:28px;height:28px;border-radius:50%;
+      border:2px solid var(--purple);
+      box-shadow:0 0 8px rgba(145,70,255,0.2);
+    }
+    .user-name{font-size:13px;font-weight:600;color:var(--purple-light)}
+    .logout-btn{
+      background:none;border:none;
+      color:var(--text-muted);
+      font-size:11px;cursor:pointer;
+      font-family:var(--font-body);
+      transition:var(--transition);
+      padding:2px 6px;border-radius:4px;
+    }
+    .logout-btn:hover{color:var(--accent);background:rgba(232,121,75,0.08)}
+
+    /* ═══ MAIN LAYOUT ═══ */
+    .main{
+      display:grid;
+      grid-template-columns:1fr 440px;
+      overflow:hidden;
+    }
+
+    .left-panel{
+      display:grid;
+      grid-template-rows:1fr 220px;
+      overflow:hidden;
+      border-right:1px solid var(--border-subtle);
+    }
+
+    /* ═══ STREAM AREA ═══ */
+    .stream-area{
+      position:relative;min-height:0;
+      background:#000;
+      overflow:hidden;
+    }
     .stream-area iframe{width:100%;height:100%;border:none}
-    .stream-overlay{position:absolute;top:8px;left:8px;display:flex;gap:6px;z-index:10;pointer-events:none}
-    .overlay-badge{background:rgba(0,0,0,.75);backdrop-filter:blur(8px);padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,.1)}
-    .overlay-studio{color:#e8794b;border-color:rgba(232,121,75,.3)}
-    .overlay-cast{color:rgba(232,224,212,.7)}
-    .stream-bottom{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.8));padding:12px 16px 8px;display:flex;justify-content:space-between;align-items:flex-end;pointer-events:none;z-index:10}
-    .stream-now{font-size:11px;color:rgba(232,224,212,.5)}
-    .stream-now strong{color:#e8794b}
-    .vod-badge{background:rgba(139,92,246,.8);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px}
-    .back-live-btn{position:absolute;top:8px;right:8px;background:rgba(220,38,38,.85);color:#fff;border:none;padding:5px 12px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;z-index:10;font-family:inherit;display:none}
-    .back-live-btn:hover{background:#dc2626}
-    .commentary-panel{display:flex;flex-direction:column;background:#0d0d14;border-top:1px solid rgba(232,121,75,.15)}
-    .commentary-header{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;border-bottom:1px solid rgba(255,255,255,.04);flex-shrink:0}
-    .commentary-header h3{font-family:'Space Mono',monospace;font-size:11px;color:#e8794b;letter-spacing:1px}
-    .commentary-feed{flex:1;overflow-y:auto;padding:6px 12px;display:flex;flex-direction:column;gap:4px}
-    .feed-item{display:flex;gap:8px;padding:6px 8px;border-radius:6px;background:rgba(255,255,255,.02);font-size:12px;line-height:1.4}
-    .feed-item:hover{background:rgba(232,121,75,.04)}
-    .feed-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+
+    .stream-overlay{
+      position:absolute;top:12px;left:12px;
+      display:flex;gap:8px;z-index:10;pointer-events:none;
+    }
+    .overlay-badge{
+      background:rgba(8,8,13,0.75);
+      backdrop-filter:blur(12px);
+      padding:5px 12px;border-radius:var(--radius-sm);
+      font-size:11px;font-weight:600;
+      border:1px solid var(--border-default);
+    }
+    .overlay-studio{
+      color:var(--accent);
+      border-color:rgba(232,121,75,0.3);
+      text-shadow:0 0 8px var(--accent-glow);
+    }
+    .overlay-cast{color:var(--text-secondary)}
+
+    .vod-badge{
+      background:linear-gradient(135deg,rgba(139,92,246,0.85),rgba(124,58,237,0.85));
+      color:#fff;font-size:10px;font-weight:700;
+      padding:3px 10px;border-radius:var(--radius-sm);
+      box-shadow:0 0 12px rgba(139,92,246,0.2);
+    }
+
+    .back-live-btn{
+      position:absolute;top:12px;right:12px;
+      background:linear-gradient(135deg,rgba(239,68,68,0.9),rgba(220,38,38,0.9));
+      color:#fff;border:none;
+      padding:6px 14px;border-radius:var(--radius-sm);
+      font-size:11px;font-weight:700;cursor:pointer;
+      z-index:10;font-family:var(--font-body);
+      display:none;
+      transition:var(--transition);
+      box-shadow:0 2px 12px rgba(239,68,68,0.2);
+    }
+    .back-live-btn:hover{
+      background:linear-gradient(135deg,var(--red),var(--red-bright));
+      box-shadow:0 4px 16px rgba(239,68,68,0.3);
+    }
+
+    .stream-bottom{
+      position:absolute;bottom:0;left:0;right:0;
+      background:linear-gradient(transparent,rgba(0,0,0,0.85));
+      padding:16px 20px 10px;
+      display:flex;justify-content:space-between;align-items:flex-end;
+      pointer-events:none;z-index:10;
+    }
+    .stream-now{font-size:12px;color:var(--text-muted)}
+    .stream-now strong{color:var(--accent);font-weight:600}
+
+    /* ═══ COMMENTARY PANEL ═══ */
+    .commentary-panel{
+      display:flex;flex-direction:column;
+      background:var(--bg-surface);
+      border-top:1px solid var(--border-subtle);
+    }
+    .commentary-header{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:8px 16px;
+      border-bottom:1px solid var(--border-subtle);
+      flex-shrink:0;
+      background:var(--bg-elevated);
+    }
+    .commentary-header h3{
+      font-family:var(--font-mono);
+      font-size:11px;color:var(--accent);
+      letter-spacing:1.5px;font-weight:700;
+    }
+
+    .commentary-feed{
+      flex:1;overflow-y:auto;
+      padding:8px 16px;
+      display:flex;flex-direction:column;gap:6px;
+    }
+    .feed-item{
+      display:flex;gap:10px;
+      padding:8px 10px;
+      border-radius:var(--radius-md);
+      background:var(--bg-glass);
+      border:1px solid var(--border-subtle);
+      font-size:12px;line-height:1.5;
+      transition:var(--transition);
+      animation:feedSlideIn 0.3s ease-out;
+    }
+    @keyframes feedSlideIn{
+      from{opacity:0;transform:translateY(8px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+    .feed-item:hover{
+      background:var(--bg-glass-hover);
+      border-color:var(--border-accent);
+    }
+    .feed-avatar{
+      width:32px;height:32px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      font-size:11px;font-weight:700;color:#fff;
+      flex-shrink:0;
+      box-shadow:0 2px 8px rgba(0,0,0,0.3);
+    }
     .feed-body{flex:1;min-width:0}
-    .feed-name{font-weight:600;font-size:11px;margin-bottom:1px}
-    .feed-name .feed-role{font-weight:400;color:rgba(232,224,212,.4);margin-left:6px}
-    .feed-text{color:rgba(232,224,212,.8)}
-    .feed-time{font-size:10px;color:rgba(232,224,212,.3);flex-shrink:0;font-family:'Space Mono',monospace}
-    .sidebar{background:#0d0d14;overflow:hidden;display:flex;flex-direction:column}
+    .feed-name{font-weight:600;font-size:11px;margin-bottom:2px;color:var(--text-primary)}
+    .feed-name .feed-role{font-weight:400;color:var(--text-muted);margin-left:6px;font-size:10px}
+    .feed-text{color:var(--text-secondary)}
+    .feed-time{
+      font-size:10px;color:var(--text-dim);
+      flex-shrink:0;font-family:var(--font-mono);
+    }
+
+    /* ═══ SIDEBAR ═══ */
+    .sidebar{
+      background:var(--bg-surface);
+      overflow:hidden;
+      display:flex;flex-direction:column;
+    }
     .sidebar-scroll{flex:1;overflow-y:auto;min-height:0}
-    .sidebar-section{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.04)}
-    .chat-section{flex-shrink:0;height:50vh;display:flex;flex-direction:column;border-top:2px solid rgba(232,121,75,.3)}
-    .drag-handle{height:6px;cursor:row-resize;background:rgba(232,121,75,.15);flex-shrink:0;position:relative;transition:background .2s}
-    .drag-handle:hover,.drag-handle.active{background:rgba(232,121,75,.4)}
-    .drag-handle::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:30px;height:2px;background:rgba(232,121,75,.3);border-radius:1px}
+
+    .sidebar-section{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border-subtle);
+    }
+    .sidebar-section h3{
+      font-family:var(--font-mono);
+      font-size:10px;color:var(--accent);
+      margin-bottom:10px;letter-spacing:1.5px;font-weight:700;
+      display:flex;align-items:center;gap:6px;
+    }
+
+    /* ON AIR card */
+    .on-air-card{
+      background:linear-gradient(135deg,rgba(239,68,68,0.06),rgba(239,68,68,0.02));
+      border:1px solid rgba(239,68,68,0.15);
+      border-radius:var(--radius-md);
+      padding:12px;
+      position:relative;overflow:hidden;
+    }
+    .on-air-card::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:2px;
+      background:linear-gradient(90deg,transparent,var(--red),transparent);
+    }
+    .on-air-studio{font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:3px}
+    .on-air-hint{font-size:11px;color:var(--text-muted);margin-bottom:10px;line-height:1.4}
+    .on-air-char{
+      display:flex;align-items:center;gap:10px;
+      padding:8px;
+      background:rgba(255,255,255,0.02);
+      border-radius:var(--radius-sm);
+      margin-bottom:5px;
+      transition:var(--transition);
+    }
+    .on-air-char:hover{background:rgba(255,255,255,0.04)}
+    .char-av{
+      width:34px;height:34px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      font-size:13px;font-weight:700;color:#fff;
+      flex-shrink:0;
+      box-shadow:0 2px 8px rgba(0,0,0,0.3);
+    }
+    .char-info{flex:1;min-width:0}
+    .char-name{font-size:13px;font-weight:600;color:var(--text-primary)}
+    .char-sub{font-size:10px;color:var(--text-muted)}
+    .char-role{font-size:11px;color:var(--accent)}
+
+    /* Schedule */
+    .sched-grid{display:flex;flex-direction:column;gap:3px}
+    .sched-slot{
+      display:grid;grid-template-columns:46px 1fr;gap:10px;
+      padding:8px 10px;
+      border-radius:var(--radius-sm);
+      background:rgba(255,255,255,0.02);
+      border:1px solid var(--border-subtle);
+      font-size:11px;
+      transition:var(--transition);
+    }
+    .sched-slot:hover{
+      background:rgba(232,121,75,0.04);
+      border-color:var(--border-accent);
+    }
+    .sched-slot.live{
+      background:rgba(239,68,68,0.06);
+      border-color:rgba(239,68,68,0.25);
+      box-shadow:0 0 12px rgba(239,68,68,0.05);
+    }
+    .sched-slot.prime{border-left:3px solid var(--accent)}
+    .sched-slot.past{opacity:0.35}
+    .sched-time{
+      font-family:var(--font-mono);
+      color:var(--text-muted);
+      display:flex;align-items:center;
+      font-size:11px;font-weight:500;
+    }
+    .sched-slot.live .sched-time{color:var(--red-bright);font-weight:700}
+    .sched-body{display:flex;flex-direction:column;gap:2px}
+    .sched-studio{font-weight:700;color:var(--text-primary);font-size:12px}
+    .sched-cast{display:flex;gap:4px;flex-wrap:wrap}
+    .sched-chip{
+      font-size:9px;padding:2px 6px;
+      border-radius:8px;
+      background:rgba(255,255,255,0.05);
+      color:var(--text-secondary);
+      font-weight:500;
+    }
+    .sched-chip.lead{
+      background:rgba(232,121,75,0.12);
+      color:var(--accent);
+      font-weight:600;
+    }
+    .live-dot{
+      width:6px;height:6px;background:var(--red);
+      border-radius:50%;animation:pulse 1.5s infinite;
+      display:inline-block;margin-right:4px;
+      box-shadow:0 0 6px rgba(239,68,68,0.4);
+    }
+    .lang-tag{
+      font-size:9px;font-weight:700;
+      padding:2px 5px;border-radius:3px;
+      letter-spacing:.5px;margin-left:5px;
+    }
+    .lang-ru{background:rgba(59,130,246,0.12);color:#60a5fa}
+    .lang-en{background:rgba(16,185,129,0.12);color:#34d399}
+
+    /* Channel items */
+    .channel-item{
+      display:flex;align-items:center;gap:10px;
+      padding:8px 10px;
+      border-radius:var(--radius-sm);
+      cursor:pointer;
+      transition:var(--transition);
+      border:1px solid transparent;
+    }
+    .channel-item:hover{
+      background:rgba(145,70,255,0.06);
+      border-color:rgba(145,70,255,0.1);
+    }
+    .channel-item.active{
+      background:rgba(145,70,255,0.1);
+      border-color:rgba(145,70,255,0.2);
+    }
+    .channel-live-dot{
+      width:9px;height:9px;border-radius:50%;
+      flex-shrink:0;
+    }
+    .channel-live-dot.online{
+      background:var(--red);
+      animation:pulse 1.5s infinite;
+      box-shadow:0 0 6px rgba(239,68,68,0.4);
+    }
+    .channel-live-dot.offline{background:var(--text-dim)}
+    .channel-info{flex:1;min-width:0}
+    .channel-name{font-size:13px;font-weight:600;color:var(--text-primary)}
+    .channel-game{
+      font-size:10px;color:var(--text-muted);
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    }
+    .channel-viewers{
+      font-size:10px;color:var(--red-bright);
+      font-family:var(--font-mono);font-weight:600;
+    }
+
+    /* VOD items */
+    .vod-item{
+      display:flex;align-items:center;gap:8px;
+      padding:7px 10px;
+      border-radius:var(--radius-sm);
+      cursor:pointer;
+      transition:var(--transition);
+      font-size:11px;
+      border:1px solid transparent;
+    }
+    .vod-item:hover{
+      background:rgba(139,92,246,0.06);
+      border-color:rgba(139,92,246,0.1);
+    }
+    .vod-item.active{
+      background:rgba(139,92,246,0.1);
+      border-color:rgba(139,92,246,0.15);
+    }
+    .vod-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+    .vod-dot.watched{background:rgba(34,197,94,0.5)}
+    .vod-dot.current{background:var(--red);animation:pulse 1.5s infinite;box-shadow:0 0 6px rgba(239,68,68,0.4)}
+    .vod-dot.pending{background:var(--text-dim)}
+    .vod-title{
+      color:var(--text-secondary);flex:1;min-width:0;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    }
+    .vod-game{font-size:9px;color:var(--text-dim)}
+
+    /* Chat */
+    .chat-section{
+      flex-shrink:0;height:50vh;
+      display:flex;flex-direction:column;
+      border-top:2px solid rgba(232,121,75,0.2);
+      background:var(--bg-elevated);
+    }
+    .chat-section h3{
+      padding:10px 16px 0;
+    }
+    #chat-container{
+      flex:1;min-height:0;
+      display:flex;flex-direction:column;
+      padding:0 16px 16px;
+    }
+    .chat-embed{
+      flex:1;min-height:400px;
+      border-radius:var(--radius-md);
+      overflow:hidden;
+      border:1px solid var(--border-subtle);
+    }
+    .chat-embed iframe{width:100%;height:100%;border:none}
+
+    /* Drag handle */
+    .drag-handle{
+      height:6px;cursor:row-resize;
+      background:rgba(232,121,75,0.1);
+      flex-shrink:0;position:relative;
+      transition:var(--transition);
+    }
+    .drag-handle:hover,.drag-handle.active{
+      background:rgba(232,121,75,0.3);
+    }
+    .drag-handle::after{
+      content:'';position:absolute;top:50%;left:50%;
+      transform:translate(-50%,-50%);
+      width:36px;height:2px;
+      background:rgba(232,121,75,0.4);
+      border-radius:1px;
+    }
+
+    /* Collapsible sections */
     .sidebar-section.collapsible .section-toggle{cursor:pointer;user-select:none}
     .sidebar-section.collapsible .section-toggle::before{content:'▼ ';font-size:8px;margin-right:4px}
     .sidebar-section.collapsed .section-toggle::before{content:'▶ '}
     .sidebar-section.collapsed .section-content{display:none}
-    #chat-container{flex:1;min-height:0;display:flex;flex-direction:column}
-    .sidebar-section h3{font-family:'Space Mono',monospace;font-size:10px;color:#e8794b;margin-bottom:8px;letter-spacing:1px}
-    .on-air-card{background:rgba(220,38,38,.05);border:1px solid rgba(220,38,38,.15);border-radius:8px;padding:10px}
-    .on-air-studio{font-size:15px;font-weight:700;color:#f5e6d0;margin-bottom:2px}
-    .on-air-hint{font-size:10px;color:rgba(232,224,212,.4);margin-bottom:8px;line-height:1.3}
-    .on-air-char{display:flex;align-items:center;gap:8px;padding:6px;background:rgba(255,255,255,.02);border-radius:6px;margin-bottom:4px}
-    .char-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
-    .char-info{flex:1;min-width:0}
-    .char-name{font-size:12px;font-weight:600;color:#f5e6d0}
-    .char-sub{font-size:9px;color:rgba(232,224,212,.35)}
-    .char-role{font-size:10px;color:#e8794b}
-    .sched-grid{display:flex;flex-direction:column;gap:2px}
-    .sched-slot{display:grid;grid-template-columns:42px 1fr;gap:8px;padding:6px 8px;border-radius:5px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.03);font-size:11px}
-    .sched-slot:hover{background:rgba(232,121,75,.05);border-color:rgba(232,121,75,.1)}
-    .sched-slot.live{background:rgba(220,38,38,.06);border-color:rgba(220,38,38,.25)}
-    .sched-slot.prime{border-left:2px solid #e8794b}
-    .sched-slot.past{opacity:.35}
-    .sched-time{font-family:'Space Mono',monospace;color:rgba(232,224,212,.5);display:flex;align-items:center;font-size:11px}
-    .sched-slot.live .sched-time{color:#dc2626;font-weight:700}
-    .sched-body{display:flex;flex-direction:column;gap:1px}
-    .sched-studio{font-weight:700;color:#f5e6d0;font-size:11px}
-    .sched-cast{display:flex;gap:4px;flex-wrap:wrap}
-    .sched-chip{font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(255,255,255,.05);color:rgba(232,224,212,.6)}
-    .sched-chip.lead{background:rgba(232,121,75,.12);color:#e8794b;font-weight:600}
-    .live-dot{width:5px;height:5px;background:#dc2626;border-radius:50%;animation:pulse 1.5s infinite;display:inline-block;margin-right:3px}
-    .lang-tag{font-size:9px;font-weight:700;padding:1px 4px;border-radius:2px;letter-spacing:.5px;margin-left:4px}
-    .lang-ru{background:rgba(59,130,246,.12);color:#60a5fa}
-    .lang-en{background:rgba(16,185,129,.12);color:#34d399}
-    .channel-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;transition:all .15s}
-    .channel-item:hover{background:rgba(145,70,255,.08)}
-    .channel-item.active{background:rgba(145,70,255,.12);border:1px solid rgba(145,70,255,.2)}
-    .channel-live-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-    .channel-live-dot.online{background:#dc2626;animation:pulse 1.5s infinite}
-    .channel-live-dot.offline{background:rgba(232,224,212,.15)}
-    .channel-info{flex:1;min-width:0}
-    .channel-name{font-size:12px;font-weight:600;color:#f5e6d0}
-    .channel-game{font-size:10px;color:rgba(232,224,212,.4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .channel-viewers{font-size:10px;color:#dc2626;font-family:'Space Mono',monospace}
-    .vod-item{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:5px;cursor:pointer;transition:all .15s;font-size:11px}
-    .vod-item:hover{background:rgba(139,92,246,.08)}
-    .vod-item.active{background:rgba(139,92,246,.12)}
-    .vod-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-    .vod-dot.watched{background:rgba(34,197,94,.5)}
-    .vod-dot.current{background:#dc2626;animation:pulse 1.5s infinite}
-    .vod-dot.pending{background:rgba(232,224,212,.2)}
-    .vod-title{color:rgba(232,224,212,.6);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .vod-game{font-size:9px;color:rgba(232,224,212,.3)}
-    .chat-embed{flex:1;min-height:400px;border-radius:6px;overflow:hidden}
-    .chat-embed iframe{width:100%;height:100%;border:none}
-    .ticker{display:flex;align-items:center;background:#e8794b;color:#0a0a0f;font-weight:700;font-size:11px;letter-spacing:.5px;overflow:hidden}
-    .ticker-label{background:#0a0a0f;color:#e8794b;padding:0 12px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;height:100%;display:flex;align-items:center}
-    .ticker-content{white-space:nowrap;animation:scroll 80s linear infinite;padding-left:100%}
+
+    /* ═══ TICKER ═══ */
+    .ticker{
+      display:flex;align-items:center;
+      background:linear-gradient(90deg,var(--accent),var(--accent-bright));
+      color:var(--bg-base);
+      font-weight:700;font-size:11px;letter-spacing:.5px;
+      overflow:hidden;
+      box-shadow:0 -2px 12px rgba(232,121,75,0.1);
+    }
+    .ticker-label{
+      background:var(--bg-base);
+      color:var(--accent);
+      padding:0 14px;
+      font-family:var(--font-mono);
+      font-size:10px;letter-spacing:2px;
+      height:100%;display:flex;align-items:center;
+      font-weight:700;
+    }
+    .ticker-content{
+      white-space:nowrap;
+      animation:scroll 80s linear infinite;
+      padding-left:100%;
+    }
     @keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
+
     .hidden{display:none!important}
-    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(232,121,75,.15);border-radius:2px}
+
+    /* Scrollbar */
+    ::-webkit-scrollbar{width:5px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{
+      background:rgba(232,121,75,0.15);
+      border-radius:3px;
+    }
+    ::-webkit-scrollbar-thumb:hover{background:rgba(232,121,75,0.3)}
   </style>
 </head>
 <body>
@@ -160,7 +606,7 @@
       <div class="commentary-panel">
         <div class="commentary-header">
           <h3>📡 COMMENTARY FEED</h3>
-          <span style="font-size:10px;color:rgba(232,224,212,.3)" id="feed-count">0 events</span>
+          <span style="font-size:10px;color:var(--text-dim)" id="feed-count">0 events</span>
         </div>
         <div class="commentary-feed" id="commentary-feed"></div>
       </div>
@@ -179,7 +625,7 @@
         <div class="sidebar-section hidden" id="followed-section">
           <h3>🔴 LIVE FOLLOWED</h3>
           <div id="live-followed"></div>
-          <h3 style="margin-top:10px">📺 FOLLOWED CHANNELS</h3>
+          <h3 style="margin-top:12px">📺 FOLLOWED CHANNELS</h3>
           <div id="all-followed"></div>
         </div>
 
@@ -191,7 +637,7 @@
 
         <!-- VOD QUEUE -->
         <div class="sidebar-section">
-          <h3>📼 VODS <span id="vod-channel-label" style="color:rgba(232,224,212,.3)"></span></h3>
+          <h3>📼 VODS <span id="vod-channel-label" style="color:var(--text-dim)"></span></h3>
           <div id="vod-queue"></div>
         </div>
       </div>
@@ -460,7 +906,7 @@ function embedStream(channel) {
   document.getElementById("vod-badge").style.display = "none";
   document.getElementById("back-live-btn").style.display = "none";
   document.getElementById("live-badge").textContent = "● LIVE";
-  document.getElementById("live-badge").style.background = "#dc2626";
+  document.getElementById("live-badge").style.background = "linear-gradient(135deg,#ef4444,#ff5757)";
   isLive = true; currentVodId = null;
   renderChatEmbed(channel);
   addFeedItem("system", "MOM TV", "#e8794b", `Switched to LIVE: ${channel}`, "character");
@@ -474,7 +920,7 @@ function embedVod(vodId, title, channel) {
   document.getElementById("vod-badge").style.display = "inline";
   document.getElementById("back-live-btn").style.display = "block";
   document.getElementById("live-badge").textContent = "● VOD";
-  document.getElementById("live-badge").style.background = "#9146ff";
+  document.getElementById("live-badge").style.background = "linear-gradient(135deg,#9146ff,#7c3aed)";
   isLive = false; currentVodId = vodId;
   document.getElementById("stream-now").innerHTML = `<strong>VOD:</strong> ${title || vodId}`;
   renderChatEmbed(channel);
@@ -511,7 +957,7 @@ async function loadVods(channel) {
 
 function renderVodQueue() {
   const el = document.getElementById("vod-queue");
-  if (allVods.length === 0) { el.innerHTML = '<div style="font-size:10px;color:rgba(232,224,212,.3);padding:4px">No VODs found</div>'; return; }
+  if (allVods.length === 0) { el.innerHTML = '<div style="font-size:10px;color:var(--text-dim);padding:4px">No VODs found</div>'; return; }
   el.innerHTML = allVods.slice(0, 10).map(v => {
     const status = v.id === currentVodId ? "current" : watchedVods.has(v.id) ? "watched" : "pending";
     return `<div class="vod-item${v.id === currentVodId ? ' active' : ''}" onclick="embedVod('${v.id}','${escapeHtml(v.title).replace(/'/g,"\\'")}','${currentChannel}')">
@@ -535,7 +981,7 @@ async function loadFollowedChannels() {
   // Live followed
   const liveEl = document.getElementById("live-followed");
   if (live.length === 0) {
-    liveEl.innerHTML = '<div style="font-size:10px;color:rgba(232,224,212,.3);padding:4px">No followed channels live</div>';
+    liveEl.innerHTML = '<div style="font-size:10px;color:var(--text-dim);padding:4px">No followed channels live</div>';
   } else {
     liveEl.innerHTML = live.map(s => {
       const active = s.user_login === currentChannel ? " active" : "";
@@ -554,7 +1000,7 @@ async function loadFollowedChannels() {
   const offline = followed.filter(f => !live.some(l => l.user_login === f.broadcaster_login));
   const allEl = document.getElementById("all-followed");
   if (offline.length === 0) {
-    allEl.innerHTML = '<div style="font-size:10px;color:rgba(232,224,212,.3);padding:4px">All followed are live!</div>';
+    allEl.innerHTML = '<div style="font-size:10px;color:var(--text-dim);padding:4px">All followed are live!</div>';
   } else {
     allEl.innerHTML = offline.slice(0, 15).map(f => {
       return `<div class="channel-item" onclick="switchToChannel('${f.broadcaster_login}')">
@@ -570,14 +1016,39 @@ async function loadFollowedChannels() {
 
 // ═══ COMMENTARY ═══
 
+const API_BASE = window.location.origin;
 let feedCount = 0;
+
+// Character → color mapping for real AI responses
+const CHARACTER_COLORS = {
+  "Алексей": "#3b82f6", "Alex": "#3b82f6", "alex": "#3b82f6",
+  "Саша": "#ef4444", "Sasha": "#ef4444", "sasha": "#ef4444",
+  "Виктор Орлов": "#e8794b", "Director": "#e8794b", "director": "#e8794b",
+  "Watcher": "#dc2626", "Stream Watcher": "#dc2626",
+  "Analyzer": "#3b82f6", "Stream Analyzer": "#3b82f6",
+  "VI": "#a855f7", "Video Indexer": "#a855f7",
+  "MOM TV": "#e8794b", "System": "#6b6558",
+  "Дмитрий Волков": "#3b82f6",
+  "Ирина Морозова": "#ef4444",
+  "Татьяна Смирнова": "#a855f7",
+  "Олег Кузнецов": "#dc2626",
+  "Артём Соколов": "#f59e0b",
+  "Роман Волков": "#ef4444",
+};
+
+const CHARACTER_NAMES = {
+  "alex": { name: "Алексей Орлов", latin: "Alex Orlov", role: "Lead Anchor" },
+  "sasha": { name: "Саша Морозова", latin: "Sasha Morozova", role: "Co-Anchor" },
+  "director": { name: "Виктор Орлов", latin: "Viktor Orlov", role: "Director" },
+};
+
 function addFeedItem(source, name, color, text, cls) {
   const feed = document.getElementById("commentary-feed");
   const time = new Date().toLocaleTimeString("en-US", { hour12: false });
   const initials = name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
   const item = document.createElement("div");
   item.className = "feed-item";
-  item.innerHTML = `<div class="feed-avatar" style="background:${color}">${initials}</div><div class="feed-body"><div class="feed-name">${name} <span class="feed-role">${source}</span></div><div class="feed-text">${text}</div></div><div class="feed-time">${time}</div>`;
+  item.innerHTML = `<div class="feed-avatar" style="background:${color}">${initials}</div><div class="feed-body"><div class="feed-name">${name} <span class="feed-role">${source}</span></div><div class="feed-text">${escapeHtml(text)}</div></div><div class="feed-time">${time}</div>`;
   feed.appendChild(item);
   feed.scrollTop = feed.scrollHeight;
   feedCount++;
@@ -586,21 +1057,224 @@ function addFeedItem(source, name, color, text, cls) {
   if (cls === "character") document.getElementById("ticker-text").textContent = `${name}: "${text.slice(0,80)}" • MOM TV`;
 }
 
-const TEMPLATES = {
-  "Дмитрий Волков":{color:"#3b82f6",lines:["Это было невероятно! Стрим горит!","Давайте разберёмся!","Пошли дальше!","Зрители, космос!"]},
-  "Ирина Морозова":{color:"#ef4444",lines:["По данным источников...","Серьёзная ситуация.","Интересный поворот.","Цифры показывают рост."]},
-  "Watcher":{color:"#dc2626",lines:["Viewer spike detected.","Chat surging.","Game change detected.","Stream quality: 1080p60."]},
-  "Analyzer":{color:"#3b82f6",lines:["Intense gameplay detected.","On-screen: leaderboard.","Mood: excited.","Production quality: professional."]},
-  "VI":{color:"#a855f7",lines:["Transcript: '...and that's how you win.'","OCR: kill feed 5 eliminations.","Topics: esports, tournaments.","Key visual: victory celebration."]}
+// ═══ REAL AI COMMENTARY ═══
+
+let commentaryInFlight = false;
+
+async function runAgentCommentary() {
+  if (commentaryInFlight) return;
+  commentaryInFlight = true;
+  try {
+    const slot = getCurrentSlot();
+    const showType = slot && slot.prime ? "full-news" : "quick-news";
+    const castNames = slot ? slot.cast.map(c => c.latin).join(" and ") : "Alex Orlov and Sasha Morozova";
+    const studio = slot ? slot.studio : "MOM TV";
+
+    const input = `Generate a ${showType} commentary for the current live stream on ${studio}. The stream is "${currentChannel}". Viewers are watching a live Twitch stream. Cast: ${castNames}. Provide a brief 2-3 line dialogue exchange. Language: Russian mixed with English gaming terms.`;
+
+    const res = await fetch(`${API_BASE}/api/agents/stream-director`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ input, context: { channel: currentChannel, studio, show_type: showType } })
+    });
+
+    if (!res.ok) throw new Error(`Agent API ${res.status}`);
+    const data = await res.json();
+    parseAndDisplayAgentResponse(data);
+  } catch (e) {
+    console.warn("[Commentary] Agent call failed:", e);
+    // Fallback: use local templates with current slot characters
+    useFallbackCommentary();
+  } finally {
+    commentaryInFlight = false;
+  }
+}
+
+function parseAndDisplayAgentResponse(data) {
+  // OpenAI Responses API format: data.output[0].content[0].text
+  let text = "";
+  if (data.output) {
+    for (const item of data.output) {
+      if (item.type === "message" && item.content) {
+        for (const c of item.content) {
+          if (c.type === "output_text") text += c.text;
+        }
+      }
+    }
+  }
+  if (!text) { useFallbackCommentary(); return; }
+
+  // Try to parse as AnchorScript JSON
+  try {
+    const script = JSON.parse(text);
+    if (script.dialogue && Array.isArray(script.dialogue)) {
+      script.dialogue.forEach((line, i) => {
+        setTimeout(() => {
+          const info = CHARACTER_NAMES[line.speaker] || { name: line.speaker || "Anchor", latin: line.speaker || "Anchor", role: "Anchor" };
+          const color = CHARACTER_COLORS[line.speaker] || "#e8794b";
+          addFeedItem(info.role, info.name, color, line.text, "character");
+        }, i * 2000);
+      });
+      if (script.ticker) {
+        document.getElementById("ticker-text").textContent = script.ticker;
+      }
+      return;
+    }
+  } catch {}
+
+  // Not JSON — treat as plain text, split into lines
+  const lines = text.split("\n").filter(l => l.trim());
+  const slot = getCurrentSlot();
+  const char = slot && slot.cast[0] ? slot.cast[0] : { name: "Алексей Орлов", color: "#3b82f6", role: "Anchor" };
+  lines.slice(0, 3).forEach((line, i) => {
+    setTimeout(() => {
+      addFeedItem(char.role, char.name, char.color, line.trim(), "character");
+    }, i * 2000);
+  });
+}
+
+function getCurrentSlot() {
+  const h = new Date().getHours();
+  return SCHEDULE.slots.find(s => s.hour === h) || null;
+}
+
+// ═══ VISUAL ANALYSIS (Vision API) ═══
+
+let visionInFlight = false;
+
+async function runVisualAnalysis() {
+  if (visionInFlight || !isLive) return;
+  visionInFlight = true;
+  try {
+    const iframe = document.getElementById("stream-embed");
+    if (!iframe || !iframe.src) { visionInFlight = false; return; }
+    const channel = currentChannel;
+
+    const res = await fetch(`${API_BASE}/api/vision`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        channel,
+        prompt: "Describe what's happening on screen in this Twitch stream. Focus on: game being played, visible text/UI elements, player actions, viewer reactions. Be concise, 1-2 sentences."
+      })
+    });
+
+    if (!res.ok) throw new Error(`Vision API ${res.status}`);
+    const data = await res.json();
+    const description = data.description || data.text || data.analysis || "";
+
+    if (description) {
+      addFeedItem("Analyzer", "Stream Analyzer", "#3b82f6", description, "analyzer");
+    }
+  } catch (e) {
+    console.warn("[Vision] Analysis failed:", e);
+  } finally {
+    visionInFlight = false;
+  }
+}
+
+// ═══ VIDEO INDEXER ═══
+
+let viInFlight = false;
+
+async function runVIAnalysis() {
+  if (viInFlight) return;
+  viInFlight = true;
+  try {
+    const res = await fetch(`${API_BASE}/api/video-indexer/search?query=${encodeURIComponent(currentChannel)}&top=1`);
+    if (!res.ok) throw new Error(`VI API ${res.status}`);
+    const data = await res.json();
+    const videos = data.results || data.videos || [];
+
+    if (videos.length > 0) {
+      const video = videos[0];
+      const topics = video.topics || video.labels || [];
+      const transcript = video.transcript || video.description || "";
+      const summary = video.summary || video.title || "";
+
+      let text = "";
+      if (topics.length > 0) text += `Topics: ${topics.slice(0, 3).join(", ")}. `;
+      if (summary) text += summary;
+      if (!text && transcript) text = transcript.slice(0, 120);
+
+      if (text) {
+        addFeedItem("VI", "Video Indexer", "#a855f7", text, "vi");
+      }
+    }
+  } catch (e) {
+    console.warn("[VI] Analysis failed:", e);
+  } finally {
+    viInFlight = false;
+  }
+}
+
+// ═══ STREAM WATCHER ═══
+
+let watcherInFlight = false;
+
+async function runWatcherReport() {
+  if (watcherInFlight) return;
+  watcherInFlight = true;
+  try {
+    const user = await fetchStreamStatus(currentChannel);
+    if (!user) { watcherInFlight = false; return; }
+
+    const live = user.stream?.type === "live";
+    if (!live) { watcherInFlight = false; return; }
+
+    const viewers = user.stream?.viewersCount || 0;
+    const game = user.stream?.game?.displayName || "Unknown";
+    const title = user.stream?.title || "";
+
+    const res = await fetch(`${API_BASE}/api/agents/stream-director`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        input: `Generate a brief system status report for the live stream. Channel: ${currentChannel}, Game: ${game}, Viewers: ${viewers}, Title: "${title.slice(0, 60)}". Just 1-2 sentences about the stream health and viewer engagement.`,
+        context: { type: "system-health", channel: currentChannel }
+      })
+    });
+
+    if (!res.ok) throw new Error(`Agent API ${res.status}`);
+    const data = await res.json();
+    let text = "";
+    if (data.output) {
+      for (const item of data.output) {
+        if (item.type === "message" && item.content) {
+          for (const c of item.content) {
+            if (c.type === "output_text") text += c.text;
+          }
+        }
+      }
+    }
+    if (text) {
+      addFeedItem("Watcher", "Stream Watcher", "#dc2626", text.slice(0, 150), "watcher");
+    }
+  } catch (e) {
+    console.warn("[Watcher] Report failed:", e);
+  } finally {
+    watcherInFlight = false;
+  }
+}
+
+// ═══ FALLBACK: Local commentary using scheduled characters ═══
+
+const FALLBACK_LINES = {
+  "Алексей Орлов": ["Зрители, у нас горячая тема!", "Давайте разберём детали!", "Это важно для нашей аудитории!"],
+  "Саша Морозова": ["По нашим данным, это значимое событие.", "Интересные цифры на экране.", "Аналитика показывает рост."],
+  "Виктор Орлов": ["Команда, готовим сюжет!", "Начинаем шоу!", "Зрители, не отходите!"]
 };
 
-function simulateCommentary() {
-  const keys = Object.keys(TEMPLATES);
-  const k = keys[Math.floor(Math.random()*keys.length)];
-  const t = TEMPLATES[k];
-  const l = t.lines[Math.floor(Math.random()*t.lines.length)];
-  const cls = k==="Watcher"?"watcher":k==="Analyzer"?"analyzer":k==="VI"?"vi":"character";
-  addFeedItem(k, k, t.color, l, cls);
+function useFallbackCommentary() {
+  const slot = getCurrentSlot();
+  if (slot && slot.cast.length > 0) {
+    const char = slot.cast[0];
+    const lines = FALLBACK_LINES[char.name] || ["Продолжаем эфир!", "Следим за стримом!", "Новости поступают!"];
+    const line = lines[Math.floor(Math.random() * lines.length)];
+    addFeedItem(char.role, char.name, char.color, line, "character");
+  } else {
+    addFeedItem("system", "MOM TV", "#e8794b", "Analyzing current stream...", "character");
+  }
 }
 
 // ═══ SCHEDULE + ON AIR ═══
@@ -612,7 +1286,7 @@ function renderSchedule() {
     const live = s.hour===h, past = s.hour<h;
     const cls = `sched-slot${live?" live":""}${s.prime?" prime":""}${past?" past":""}`;
     const cast = s.cast.map(c=>`<span class="sched-chip${c.lead?" lead":""}">${c.latin}</span>`).join("");
-    return `<div class="${cls}"><div class="sched-time">${live?'<span class="live-dot"></span>':''}${s.hour}:00</div><div class="sched-body"><div><span class="sched-studio">${s.studio}</span><span class="lang-tag lang-${s.lang}">${s.lang.toUpperCase()}</span>${s.event?` <span style="color:#e8794b;font-size:9px">${s.event}</span>`:''}</div><div class="sched-cast">${cast}</div></div></div>`;
+    return `<div class="${cls}"><div class="sched-time">${live?'<span class="live-dot"></span>':''}${s.hour}:00</div><div class="sched-body"><div><span class="sched-studio">${s.studio}</span><span class="lang-tag lang-${s.lang}">${s.lang.toUpperCase()}</span>${s.event?` <span style="color:var(--accent);font-size:9px">${s.event}</span>`:''}</div><div class="sched-cast">${cast}</div></div></div>`;
   }).join("");
 }
 
@@ -621,7 +1295,7 @@ function renderOnAir() {
   const slot = SCHEDULE.slots.find(s=>s.hour===h);
   const el = document.getElementById("on-air");
   if (!slot) {
-    el.innerHTML='<div style="color:rgba(232,224,212,.3);font-size:11px;padding:10px;text-align:center">Off air</div>';
+    el.innerHTML='<div style="color:var(--text-dim);font-size:11px;padding:10px;text-align:center">Off air</div>';
     return;
   }
   document.getElementById("overlay-studio").textContent=slot.studio;
@@ -655,7 +1329,7 @@ function updateClock() { document.getElementById("clock").textContent = new Date
 
 // ═══ SETTINGS PERSISTENCE ═══
 const SETTINGS_KEY = "momtv_settings";
-const DEFAULT_SETTINGS = { chatHeightVh: 50, sidebarWidth: 420, channel: DEFAULT_CHANNEL };
+const DEFAULT_SETTINGS = { chatHeightVh: 50, sidebarWidth: 440, channel: DEFAULT_CHANNEL };
 let settings = { ...DEFAULT_SETTINGS };
 
 function loadSettings() {
@@ -749,11 +1423,16 @@ function initDragHandle() {
   setInterval(renderSchedule, 60000);
   setInterval(renderOnAir, 60000);
   setInterval(checkStream, 60000);
-  setInterval(simulateCommentary, 8000);
+
+  // Real AI commentary — staggered API calls to avoid overwhelming backend
+  setInterval(runAgentCommentary, 30000);  // Director commentary every 30s
+  setInterval(runWatcherReport, 60000);    // Stream health report every 60s
+  setInterval(runVisualAnalysis, 120000);  // Vision analysis every 2min
+  setInterval(runVIAnalysis, 180000);      // Video Indexer every 3min
   setInterval(() => { if (twitchUser) loadFollowedChannels(); }, 120000);
 
   setTimeout(() => addFeedItem("system","MOM TV Director","#e8794b","Эфир начат! Русский Стрим Марафон.","character"), 2000);
-  setTimeout(() => addFeedItem("Watcher","Watcher","#dc2626","All 3 analysis pipelines running.","watcher"), 4000);
+  setTimeout(runAgentCommentary, 5000);    // First AI commentary after 5s
 })();
 </script>
 </body>
