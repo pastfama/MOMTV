@@ -171,22 +171,13 @@ export class Newsroom {
   }
 
   // ── FIB Intelligence Routine ─────────────────────────────────
+  // NOTE: FIB intelligence is now handled server-side by the azure.yaml
+  // "agent-fib" routine (every 5 min). No client-side polling needed.
+  // The initial kick is still sent on startup for immediate data.
 
   private startFIBRoutine(): void {
-    console.log("[Newsroom] Starting FIB intelligence gathering...");
-    // Run FIB every 3 minutes
-    setInterval(() => {
-      this.agentClient.sendCommand("agent-fib",
-        `INTELLIGENCE GATHERING MISSION for KNIG04Ei on Twitch. ` +
-        `Search the web for KNIG04Ei's latest activity, social media, and community discussions. ` +
-        `Find information about the game currently being played. ` +
-        `Look for similar streamers and compare engagement metrics. ` +
-        `Check for notable events, clips, or highlights. ` +
-        `Return your intelligence report with profile updates.`
-      );
-    }, 180_000);
-
-    // First FIB run after 45 seconds
+    console.log("[Newsroom] FIB intelligence handled server-side (azure.yaml routine)");
+    // Single kick after 45 seconds to get initial intelligence
     setTimeout(() => {
       this.agentClient.sendCommand("agent-fib",
         `INTELLIGENCE GATHERING MISSION for KNIG04Ei on Twitch. ` +

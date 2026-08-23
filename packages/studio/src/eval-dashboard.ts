@@ -71,7 +71,13 @@ export class EvalDashboard {
       const response = await fetch(
         `${PROJECT_ENDPOINT}/evaluators?api-version=v1`,
       );
-      if (!response.ok) return this.getDefaultEvaluators();
+      if (!response.ok) {
+        console.warn(`[EvalDashboard] Evaluator catalog API returned ${response.status} — using defaults`);
+        if (response.status >= 500) {
+          this.showBackendError("Evaluator catalog");
+        }
+        return this.getDefaultEvaluators();
+      }
       const data = (await response.json()) as {
         value?: Array<{
           name: string;
@@ -88,7 +94,8 @@ export class EvalDashboard {
           version: e.version ?? "latest",
         })) ?? this.getDefaultEvaluators()
       );
-    } catch {
+    } catch (err) {
+      console.warn("[EvalDashboard] Evaluator catalog fetch failed:", err);
       return this.getDefaultEvaluators();
     }
   }
@@ -98,7 +105,13 @@ export class EvalDashboard {
       const response = await fetch(
         `${PROJECT_ENDPOINT}/evaluations?isRequestForRuns=true&api-version=v1`,
       );
-      if (!response.ok) return this.runs;
+      if (!response.ok) {
+        console.warn(`[EvalDashboard] Evaluation runs API returned ${response.status}`);
+        if (response.status >= 500) {
+          this.showBackendError("Evaluation runs");
+        }
+        return this.runs;
+      }
       const data = (await response.json()) as {
         value?: Array<{
           id: string;
@@ -345,6 +358,17 @@ export class EvalDashboard {
     console.log("[EvalDashboard] Refreshing evaluation data...");
     await this.fetchEvaluationRuns();
     this.render();
+  }
+
+  private showBackendError(endpoint: string): void {
+    const existing = document.querySelector(".eval-backend-error");
+    if (existing) return; // Don't stack errors
+
+    const note = document.createElement("div");
+    note.className = "eval-toast eval-backend-error";
+    note.innerHTML = `⚠️ ${endpoint} unavailable (500). Evaluation backend may be provisioning. <a href="https://ai.azure.com" target="_blank" style="color:#93c5fd">Check Portal →</a>`;
+    this.container.prepend(note);
+    setTimeout(() => note.remove(), 15000);
   }
 
   private async runFullSuite(): Promise<void> {

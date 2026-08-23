@@ -70,7 +70,7 @@ export const AGENTS: Record<string, AgentConfig> = {
   "stream-watcher": {
     name: "stream-watcher",
     displayName: "Stream Watcher",
-    endpoint: "",
+    endpoint: apiUrl(`${PROXY_BASE}/stream-watcher?api-version=v1`),
   },
 };
 
