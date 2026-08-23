@@ -1,4 +1,4 @@
-name: Deploy MOM TV Studio to Azure Static Web Apps
+name: Deploy MOM TV to gagarin.fameshire.com
 
 on:
   push:
@@ -28,20 +28,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Create foundry config from secret
-        run: |
-          echo '{"apiKeyB64":"'"${{ secrets.FOUNDRY_API_KEY_B64 }}"'"}' > packages/studio/public/foundry-config.json
-
       - name: Build
         run: pnpm --filter @momtv/studio build
 
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GAGARIN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
           app_location: packages/studio/dist
-          api_location: packages/studio/api
-          output_location: .
+          output_location: packages/studio/dist
           skip_app_build: true

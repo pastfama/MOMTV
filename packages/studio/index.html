@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MOM TV — 24/7 AI Stream Network</title>
+  <title>MOM TV — Live Stream Viewer</title>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
     /* ═══════════════════════════════════════════════════════
-       MOM TV — Redesigned Visual Interface
-       Modern glassmorphism · rich palette · premium feel
+       MOM TV — Simplified Stream Viewer
        ═══════════════════════════════════════════════════════ */
 
     :root {
@@ -117,25 +116,6 @@
     }
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
 
-    .status-pills{display:flex;gap:6px}
-    .pill{
-      font-size:10px;padding:3px 10px;
-      border-radius:12px;font-weight:600;
-      display:flex;align-items:center;gap:4px;
-      transition:var(--transition);
-    }
-    .pill-ok{
-      background:rgba(34,197,94,0.1);
-      color:var(--green-light);
-      border:1px solid rgba(34,197,94,0.15);
-    }
-    .pill-ok:hover{background:rgba(34,197,94,0.15)}
-    .pill-warn{
-      background:rgba(234,179,8,0.1);
-      color:var(--yellow-light);
-      border:1px solid rgba(234,179,8,0.15);
-    }
-
     .header-right{display:flex;align-items:center;gap:16px}
     .clock{
       font-family:var(--font-mono);
@@ -179,20 +159,19 @@
     /* ═══ MAIN LAYOUT ═══ */
     .main{
       display:grid;
-      grid-template-columns:1fr 440px;
+      grid-template-columns:1fr 400px;
       overflow:hidden;
     }
 
     .left-panel{
-      display:grid;
-      grid-template-rows:1fr 220px;
+      display:flex;flex-direction:column;
       overflow:hidden;
       border-right:1px solid var(--border-subtle);
     }
 
     /* ═══ STREAM AREA ═══ */
     .stream-area{
-      position:relative;min-height:0;
+      position:relative;flex:1;min-height:0;
       background:#000;
       overflow:hidden;
     }
@@ -249,62 +228,42 @@
     .stream-now{font-size:12px;color:var(--text-muted)}
     .stream-now strong{color:var(--accent);font-weight:600}
 
-    /* ═══ COMMENTARY PANEL ═══ */
-    .commentary-panel{
-      display:flex;flex-direction:column;
+    /* ═══ ANALYTICS PANEL ═══ */
+    .analytics-panel{
       background:var(--bg-surface);
       border-top:1px solid var(--border-subtle);
-    }
-    .commentary-header{
-      display:flex;align-items:center;justify-content:space-between;
-      padding:8px 16px;
-      border-bottom:1px solid var(--border-subtle);
+      padding:12px 16px;
+      display:flex;gap:20px;align-items:center;
       flex-shrink:0;
-      background:var(--bg-elevated);
     }
-    .commentary-header h3{
+    .stat-box{
+      display:flex;flex-direction:column;gap:2px;
+    }
+    .stat-label{
       font-family:var(--font-mono);
-      font-size:11px;color:var(--accent);
+      font-size:9px;color:var(--text-dim);
       letter-spacing:1.5px;font-weight:700;
+      text-transform:uppercase;
     }
+    .stat-value{
+      font-family:var(--font-mono);
+      font-size:16px;font-weight:700;
+      color:var(--accent);
+    }
+    .stat-value.green{color:var(--green-light)}
+    .stat-value.purple{color:var(--purple-light)}
+    .stat-value.red{color:var(--red-bright)}
 
-    .commentary-feed{
-      flex:1;overflow-y:auto;
-      padding:8px 16px;
-      display:flex;flex-direction:column;gap:6px;
+    .sparkline{
+      display:flex;align-items:flex-end;gap:2px;
+      height:28px;
     }
-    .feed-item{
-      display:flex;gap:10px;
-      padding:8px 10px;
-      border-radius:var(--radius-md);
-      background:var(--bg-glass);
-      border:1px solid var(--border-subtle);
-      font-size:12px;line-height:1.5;
-      transition:var(--transition);
-      animation:feedSlideIn 0.3s ease-out;
-    }
-    @keyframes feedSlideIn{
-      from{opacity:0;transform:translateY(8px)}
-      to{opacity:1;transform:translateY(0)}
-    }
-    .feed-item:hover{
-      background:var(--bg-glass-hover);
-      border-color:var(--border-accent);
-    }
-    .feed-avatar{
-      width:32px;height:32px;border-radius:50%;
-      display:flex;align-items:center;justify-content:center;
-      font-size:11px;font-weight:700;color:#fff;
-      flex-shrink:0;
-      box-shadow:0 2px 8px rgba(0,0,0,0.3);
-    }
-    .feed-body{flex:1;min-width:0}
-    .feed-name{font-weight:600;font-size:11px;margin-bottom:2px;color:var(--text-primary)}
-    .feed-name .feed-role{font-weight:400;color:var(--text-muted);margin-left:6px;font-size:10px}
-    .feed-text{color:var(--text-secondary)}
-    .feed-time{
-      font-size:10px;color:var(--text-dim);
-      flex-shrink:0;font-family:var(--font-mono);
+    .spark-bar{
+      width:4px;
+      background:var(--accent);
+      border-radius:2px 2px 0 0;
+      min-height:2px;
+      transition:height 0.3s ease;
     }
 
     /* ═══ SIDEBAR ═══ */
@@ -325,99 +284,6 @@
       margin-bottom:10px;letter-spacing:1.5px;font-weight:700;
       display:flex;align-items:center;gap:6px;
     }
-
-    /* ON AIR card */
-    .on-air-card{
-      background:linear-gradient(135deg,rgba(239,68,68,0.06),rgba(239,68,68,0.02));
-      border:1px solid rgba(239,68,68,0.15);
-      border-radius:var(--radius-md);
-      padding:12px;
-      position:relative;overflow:hidden;
-    }
-    .on-air-card::before{
-      content:'';position:absolute;top:0;left:0;right:0;height:2px;
-      background:linear-gradient(90deg,transparent,var(--red),transparent);
-    }
-    .on-air-studio{font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:3px}
-    .on-air-hint{font-size:11px;color:var(--text-muted);margin-bottom:10px;line-height:1.4}
-    .on-air-char{
-      display:flex;align-items:center;gap:10px;
-      padding:8px;
-      background:rgba(255,255,255,0.02);
-      border-radius:var(--radius-sm);
-      margin-bottom:5px;
-      transition:var(--transition);
-    }
-    .on-air-char:hover{background:rgba(255,255,255,0.04)}
-    .char-av{
-      width:34px;height:34px;border-radius:50%;
-      display:flex;align-items:center;justify-content:center;
-      font-size:13px;font-weight:700;color:#fff;
-      flex-shrink:0;
-      box-shadow:0 2px 8px rgba(0,0,0,0.3);
-    }
-    .char-info{flex:1;min-width:0}
-    .char-name{font-size:13px;font-weight:600;color:var(--text-primary)}
-    .char-sub{font-size:10px;color:var(--text-muted)}
-    .char-role{font-size:11px;color:var(--accent)}
-
-    /* Schedule */
-    .sched-grid{display:flex;flex-direction:column;gap:3px}
-    .sched-slot{
-      display:grid;grid-template-columns:46px 1fr;gap:10px;
-      padding:8px 10px;
-      border-radius:var(--radius-sm);
-      background:rgba(255,255,255,0.02);
-      border:1px solid var(--border-subtle);
-      font-size:11px;
-      transition:var(--transition);
-    }
-    .sched-slot:hover{
-      background:rgba(232,121,75,0.04);
-      border-color:var(--border-accent);
-    }
-    .sched-slot.live{
-      background:rgba(239,68,68,0.06);
-      border-color:rgba(239,68,68,0.25);
-      box-shadow:0 0 12px rgba(239,68,68,0.05);
-    }
-    .sched-slot.prime{border-left:3px solid var(--accent)}
-    .sched-slot.past{opacity:0.35}
-    .sched-time{
-      font-family:var(--font-mono);
-      color:var(--text-muted);
-      display:flex;align-items:center;
-      font-size:11px;font-weight:500;
-    }
-    .sched-slot.live .sched-time{color:var(--red-bright);font-weight:700}
-    .sched-body{display:flex;flex-direction:column;gap:2px}
-    .sched-studio{font-weight:700;color:var(--text-primary);font-size:12px}
-    .sched-cast{display:flex;gap:4px;flex-wrap:wrap}
-    .sched-chip{
-      font-size:9px;padding:2px 6px;
-      border-radius:8px;
-      background:rgba(255,255,255,0.05);
-      color:var(--text-secondary);
-      font-weight:500;
-    }
-    .sched-chip.lead{
-      background:rgba(232,121,75,0.12);
-      color:var(--accent);
-      font-weight:600;
-    }
-    .live-dot{
-      width:6px;height:6px;background:var(--red);
-      border-radius:50%;animation:pulse 1.5s infinite;
-      display:inline-block;margin-right:4px;
-      box-shadow:0 0 6px rgba(239,68,68,0.4);
-    }
-    .lang-tag{
-      font-size:9px;font-weight:700;
-      padding:2px 5px;border-radius:3px;
-      letter-spacing:.5px;margin-left:5px;
-    }
-    .lang-ru{background:rgba(59,130,246,0.12);color:#60a5fa}
-    .lang-en{background:rgba(16,185,129,0.12);color:#34d399}
 
     /* Channel items */
     .channel-item{
@@ -526,11 +392,7 @@
       border-radius:1px;
     }
 
-    /* Collapsible sections */
-    .sidebar-section.collapsible .section-toggle{cursor:pointer;user-select:none}
-    .sidebar-section.collapsible .section-toggle::before{content:'▼ ';font-size:8px;margin-right:4px}
-    .sidebar-section.collapsed .section-toggle::before{content:'▶ '}
-    .sidebar-section.collapsed .section-content{display:none}
+    .hidden{display:none!important}
 
     /* ═══ TICKER ═══ */
     .ticker{
@@ -557,8 +419,6 @@
     }
     @keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
 
-    .hidden{display:none!important}
-
     /* Scrollbar */
     ::-webkit-scrollbar{width:5px}
     ::-webkit-scrollbar-track{background:transparent}
@@ -575,11 +435,6 @@
     <div class="header-left">
       <div class="logo">MOM <span>TV</span></div>
       <div class="live-badge" id="live-badge">● LIVE</div>
-      <div class="status-pills">
-        <span class="pill pill-ok" id="pill-watcher">Watcher ✓</span>
-        <span class="pill pill-ok" id="pill-analyzer">Analyzer ✓</span>
-        <span class="pill pill-ok" id="pill-vi">VI ✓</span>
-      </div>
     </div>
     <div class="header-right">
       <div id="auth-section">
@@ -603,36 +458,34 @@
           <div class="stream-now" id="stream-now"><strong>KNIG04Ei</strong> — Loading...</div>
         </div>
       </div>
-      <div class="commentary-panel">
-        <div class="commentary-header">
-          <h3>📡 COMMENTARY FEED</h3>
-          <span style="font-size:10px;color:var(--text-dim)" id="feed-count">0 events</span>
+      <div class="analytics-panel">
+        <div class="stat-box">
+          <div class="stat-label">VIEWERS</div>
+          <div class="stat-value" id="viewer-count">—</div>
         </div>
-        <div class="commentary-feed" id="commentary-feed"></div>
+        <div class="stat-box">
+          <div class="stat-label">SPARKLINE</div>
+          <div class="sparkline" id="sparkline"></div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">UPTIME</div>
+          <div class="stat-value green" id="uptime">—</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">CHAT MSGS</div>
+          <div class="stat-value purple" id="chat-count">0</div>
+        </div>
       </div>
     </div>
 
     <div class="sidebar">
-      <!-- SCROLLABLE INFO AREA -->
       <div class="sidebar-scroll">
-        <!-- ON AIR -->
-        <div class="sidebar-section">
-          <h3>● ON AIR NOW</h3>
-          <div class="on-air-card" id="on-air"></div>
-        </div>
-
-        <!-- FOLLOWED CHANNELS (shown when logged in) -->
+        <!-- FOLLOWED CHANNELS -->
         <div class="sidebar-section hidden" id="followed-section">
           <h3>🔴 LIVE FOLLOWED</h3>
           <div id="live-followed"></div>
           <h3 style="margin-top:12px">📺 FOLLOWED CHANNELS</h3>
           <div id="all-followed"></div>
-        </div>
-
-        <!-- SCHEDULE -->
-        <div class="sidebar-section">
-          <h3>📅 SCHEDULE</h3>
-          <div class="sched-grid" id="schedule-grid"></div>
         </div>
 
         <!-- VOD QUEUE -->
@@ -642,9 +495,7 @@
         </div>
       </div>
 
-      <!-- DRAG HANDLE -->
       <div class="drag-handle" id="sidebar-drag"></div>
-      <!-- CHAT — pinned to bottom, takes 50% viewport height -->
       <div class="sidebar-section chat-section" id="chat-section">
         <h3>💬 CHAT</h3>
         <div id="chat-container"></div>
@@ -654,18 +505,17 @@
 
   <div class="ticker">
     <div class="ticker-label">MOM TV</div>
-    <div class="ticker-content" id="ticker-text">РУССКИЙ СТРИМ МАРАФОН • 9 студий • 26 персонажей • Директор Виктор Орлов</div>
+    <div class="ticker-content" id="ticker-text">MOMENTUM TV — Live Stream Viewer — gagarin.fameshire.com</div>
   </div>
 </div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-// MOM TV — Twitch Client + Stream + Schedule + Commentary
+// MOM TV — Simplified Stream Viewer
 // ═══════════════════════════════════════════════════════════════
 
-const GQL_CLIENT_ID = "kimne78kx3ncx6brgo4mv6wki5h1ko"; // Public Twitch client ID for GQL (unauthenticated)
-const OAUTH_CLIENT_ID = localStorage.getItem("momtv_custom_client_id") || ""; // User's registered app for OAuth
-// For authenticated API calls, use OAuth client ID; for unauthenticated GQL, use public ID
+const GQL_CLIENT_ID = "kimne78kx3ncx6brgo4mv6wki5h1ko";
+const OAUTH_CLIENT_ID = localStorage.getItem("momtv_custom_client_id") || "";
 function getAuthClientId() { return OAUTH_CLIENT_ID || GQL_CLIENT_ID; }
 const DEFAULT_CHANNEL = "KNIG04Ei";
 const REDIRECT_URI = window.location.origin + window.location.pathname;
@@ -681,25 +531,49 @@ let isLive = false;
 let ircWs = null;
 let watchedVods = new Set(JSON.parse(localStorage.getItem(WATCHED_KEY) || "[]"));
 
-// ── Schedule ──
-const SCHEDULE = { slots: [
-  { hour:13, studio:"MOM TV", lang:"ru", prime:false, hint:"Afternoon stream news", cast:[{name:"Дмитрий Волков",latin:"Dmitri Volkov",role:"Lead Anchor",lead:true,color:"#3b82f6"},{name:"Ирина Морозова",latin:"Irina Morozova",role:"Analyst",lead:false,color:"#ef4444"}]},
-  { hour:14, studio:"Стрим Кингз", lang:"ru", prime:false, hint:"Streamer profiles", cast:[{name:"Татьяна Смирнова",latin:"Tatyana Smirnova",role:"Anchor",lead:true,color:"#a855f7"},{name:"Анна Васильева",latin:"Anna Vasileva",role:"Analyst",lead:false,color:"#ec4899"}]},
-  { hour:15, studio:"MOM TV ФПС", lang:"ru", prime:false, hint:"FPS tactical breakdowns", cast:[{name:"Олег Кузнецов",latin:"Oleg Kuznetsov",role:"Analyst",lead:true,color:"#dc2626"},{name:"Сергей Новиков",latin:"Sergey Novikov",role:"Commentator",lead:false,color:"#f97316"}]},
-  { hour:16, studio:"MOM TV Gaming", lang:"ru", prime:false, hint:"Esports coverage", cast:[{name:"Артём Соколов",latin:"Artem Sokolov",role:"Esports Analyst",lead:true,color:"#f59e0b"},{name:"Максим Петров",latin:"Maxim Petrov",role:"Host",lead:false,color:"#06b6d4"}]},
-  { hour:17, studio:"Новичок", lang:"ru", prime:false, hint:"Rising streamers", cast:[{name:"Марина Лебедева",latin:"Marina Lebedeva",role:"Scout",lead:true,color:"#22c55e"},{name:"Павел Фёдоров",latin:"Pavel Fedorov",role:"Critic",lead:false,color:"#78716c"}]},
-  { hour:18, studio:"MOM TV", lang:"ru", prime:true, event:"★ Evening Prime", hint:"Breaking stories", cast:[{name:"Дмитрий Волков",latin:"Dmitri Volkov",role:"Lead Anchor",lead:true,color:"#3b82f6"},{name:"Ирина Морозова",latin:"Irina Morozova",role:"Co-Anchor",lead:false,color:"#ef4444"}]},
-  { hour:19, studio:"Стрим Кингз", lang:"ru", prime:true, event:"★ Prime Profiles", hint:"Top Russian streamers", cast:[{name:"Татьяна Смирнова",latin:"Tatyana Smirnova",role:"Anchor",lead:true,color:"#a855f7"},{name:"Анна Васильева",latin:"Anna Vasileva",role:"Analyst",lead:false,color:"#ec4899"}]},
-  { hour:20, studio:"MOM TV Gaming", lang:"ru", prime:true, event:"★ Tournament Night", hint:"Tournament reactions", cast:[{name:"Артём Соколов",latin:"Artem Sokolov",role:"Lead Analyst",lead:true,color:"#f59e0b"},{name:"Максим Петров",latin:"Maxim Petrov",role:"Host",lead:false,color:"#06b6d4"}]},
-  { hour:21, studio:"MOM TV Драма", lang:"ru", prime:true, event:"★ Showdown", hint:"Streamer drama", cast:[{name:"Роман Волков",latin:"Roman Volkov",role:"Host",lead:true,color:"#ef4444"},{name:"Юлия Захарова",latin:"Yulia Zakharova",role:"Devil's Advocate",lead:false,color:"#f59e0b"}]},
-  { hour:22, studio:"Глубокий Анализ", lang:"ru", prime:false, hint:"Investigative analysis", cast:[{name:"Елена Морозова",latin:"Elena Morozova",role:"Narrator",lead:true,color:"#6366f1"},{name:"Николай Орлов",latin:"Nikolay Orlov",role:"Data Analyst",lead:false,color:"#0ea5e9"}]},
-  { hour:23, studio:"MOM TV Драма", lang:"ru", prime:false, event:"Late Night", hint:"Unfiltered drama", cast:[{name:"Роман Волков",latin:"Roman Volkov",role:"Host",lead:true,color:"#ef4444"},{name:"Юлия Захарова",latin:"Yulia Zakharova",role:"Co-Host",lead:false,color:"#f59e0b"}]}
-]};
+// ═══ ANALYTICS ═══
+
+let viewerHistory = [];
+let streamStartTime = null;
+let chatMessageCount = 0;
+const MAX_SPARKLINE = 12;
+
+function updateViewerCount(count) {
+  if (!count && count !== 0) return;
+  document.getElementById("viewer-count").textContent = count.toLocaleString();
+  viewerHistory.push(count);
+  if (viewerHistory.length > MAX_SPARKLINE) viewerHistory.shift();
+  renderSparkline();
+}
+
+function renderSparkline() {
+  const el = document.getElementById("sparkline");
+  if (viewerHistory.length === 0) { el.innerHTML = ''; return; }
+  const max = Math.max(...viewerHistory, 1);
+  el.innerHTML = viewerHistory.map(v => {
+    const h = Math.max(2, Math.round((v / max) * 28));
+    return `<div class="spark-bar" style="height:${h}px"></div>`;
+  }).join("");
+}
+
+function updateUptime() {
+  if (!streamStartTime) { document.getElementById("uptime").textContent = "—"; return; }
+  const diff = Math.floor((Date.now() - streamStartTime) / 1000);
+  const h = Math.floor(diff / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  const s = diff % 60;
+  document.getElementById("uptime").textContent =
+    h > 0 ? `${h}h ${m}m` : `${m}m ${s}s`;
+}
+
+function incrementChatCount() {
+  chatMessageCount++;
+  document.getElementById("chat-count").textContent = chatMessageCount.toLocaleString();
+}
 
 // ═══ TWITCH AUTH ═══
 
 function twitchLogin() {
-  // Need a registered client ID for OAuth
   let cid = OAUTH_CLIENT_ID;
   if (!cid) {
     cid = prompt(
@@ -745,7 +619,6 @@ function checkOAuthRedirect() {
 
 async function validateToken() {
   if (!twitchToken) return false;
-  // Try to get user info via Helix API (avoids CORS issue with /oauth2/validate)
   const cid = getAuthClientId();
   try {
     const res = await fetch("https://api.twitch.tv/helix/users", {
@@ -844,49 +717,30 @@ function connectIRC(channel) {
       ircWs.send(`PASS oauth:${twitchToken}`);
       ircWs.send(`NICK ${twitchUser?.login || "justinfan12345"}`);
       ircWs.send(`JOIN #${channel}`);
-      console.log(`[IRC] Connected to #${channel}`);
     };
     ircWs.onmessage = (e) => {
       const lines = e.data.split("\r\n");
       for (const line of lines) {
         if (line.includes("PRIVMSG")) {
           const match = line.match(/:(\w+)!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :(.+)/);
-          if (match) addIRCMessage(match[1], match[2]);
+          if (match) { incrementChatCount(); }
         }
         if (line.startsWith("PING")) ircWs.send("PONG :tmi.twitch.tv");
       }
     };
-    ircWs.onclose = () => console.log("[IRC] Disconnected");
-    ircWs.onerror = (e) => console.warn("[IRC] Error:", e);
-  } catch (e) { console.warn("[IRC] Connection failed:", e); }
+    ircWs.onclose = () => {};
+    ircWs.onerror = () => {};
+  } catch {}
 }
 
 function disconnectIRC() {
   if (ircWs) { ircWs.close(); ircWs = null; }
 }
 
-function addIRCMessage(user, text) {
-  const el = document.getElementById("chat-container");
-  if (!el || !el.querySelector(".irc-chat")) return;
-  const chat = el.querySelector(".irc-chat");
-  const colors = ["#ff6b6b","#ffd93d","#6bcb77","#4d96ff","#ff6bff","#ff9f43","#a29bfe","#fd79a8"];
-  const color = colors[user.charCodeAt(0) % colors.length];
-  const msg = document.createElement("div");
-  msg.className = "irc-msg";
-  msg.innerHTML = `<span class="irc-user" style="color:${color}">${user}</span>: ${escapeHtml(text)}`;
-  chat.appendChild(msg);
-  while (chat.children.length > 200) chat.removeChild(chat.firstChild);
-  chat.scrollTop = chat.scrollHeight;
-}
-
-function escapeHtml(t) { const d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
-
 function renderChatEmbed(channel) {
   const el = document.getElementById("chat-container");
   const parents = getParents();
   const pp = parents.map(p => `&parent=${p}`).join("");
-  // Always use Twitch embed chat — it provides full features:
-  // typing, emotes, channel points, rewards, moderation, emoji picker
   el.innerHTML = `<div class="chat-embed"><iframe src="https://www.twitch.tv/embed/${channel}/chat?parent=${parents[0]}${pp}" frameborder="0"></iframe></div>`;
 }
 
@@ -908,8 +762,9 @@ function embedStream(channel) {
   document.getElementById("live-badge").textContent = "● LIVE";
   document.getElementById("live-badge").style.background = "linear-gradient(135deg,#ef4444,#ff5757)";
   isLive = true; currentVodId = null;
+  streamStartTime = Date.now();
   renderChatEmbed(channel);
-  addFeedItem("system", "MOM TV", "#e8794b", `Switched to LIVE: ${channel}`, "character");
+  document.getElementById("overlay-cast").textContent = channel;
 }
 
 function embedVod(vodId, title, channel) {
@@ -922,9 +777,9 @@ function embedVod(vodId, title, channel) {
   document.getElementById("live-badge").textContent = "● VOD";
   document.getElementById("live-badge").style.background = "linear-gradient(135deg,#9146ff,#7c3aed)";
   isLive = false; currentVodId = vodId;
+  streamStartTime = null;
   document.getElementById("stream-now").innerHTML = `<strong>VOD:</strong> ${title || vodId}`;
   renderChatEmbed(channel);
-  addFeedItem("system", "VOD Watcher", "#9146ff", `Now analyzing: ${title || vodId}`, "watcher");
   renderVodQueue();
 }
 
@@ -978,7 +833,6 @@ async function loadFollowedChannels() {
   const section = document.getElementById("followed-section");
   section.classList.remove("hidden");
 
-  // Live followed
   const liveEl = document.getElementById("live-followed");
   if (live.length === 0) {
     liveEl.innerHTML = '<div style="font-size:10px;color:var(--text-dim);padding:4px">No followed channels live</div>';
@@ -996,7 +850,6 @@ async function loadFollowedChannels() {
     }).join("");
   }
 
-  // All followed (offline)
   const offline = followed.filter(f => !live.some(l => l.user_login === f.broadcaster_login));
   const allEl = document.getElementById("all-followed");
   if (offline.length === 0) {
@@ -1014,329 +867,7 @@ async function loadFollowedChannels() {
   }
 }
 
-// ═══ COMMENTARY ═══
-
-const API_BASE = window.location.origin;
-const FOUNDRY_ENDPOINT = "https://cog-cdwzd6d3oc77y.services.ai.azure.com/api/projects/resilient-steering-dev";
-let FOUNDRY_KEY = "";
-let feedCount = 0;
-(async () => { try { const cfg = await fetch("/foundry-config.json"); if (cfg.ok) { const d = await cfg.json(); FOUNDRY_KEY = d.apiKeyB64 ? atob(d.apiKeyB64) : (d.apiKey || ""); } } catch(e) {} })();
-
-// Character → color mapping for real AI responses
-const CHARACTER_COLORS = {
-  "Алексей": "#3b82f6", "Alex": "#3b82f6", "alex": "#3b82f6",
-  "Саша": "#ef4444", "Sasha": "#ef4444", "sasha": "#ef4444",
-  "Виктор Орлов": "#e8794b", "Director": "#e8794b", "director": "#e8794b",
-  "Watcher": "#dc2626", "Stream Watcher": "#dc2626",
-  "Analyzer": "#3b82f6", "Stream Analyzer": "#3b82f6",
-  "VI": "#a855f7", "Video Indexer": "#a855f7",
-  "MOM TV": "#e8794b", "System": "#6b6558",
-  "Дмитрий Волков": "#3b82f6",
-  "Ирина Морозова": "#ef4444",
-  "Татьяна Смирнова": "#a855f7",
-  "Олег Кузнецов": "#dc2626",
-  "Артём Соколов": "#f59e0b",
-  "Роман Волков": "#ef4444",
-};
-
-const CHARACTER_NAMES = {
-  "alex": { name: "Алексей Орлов", latin: "Alex Orlov", role: "Lead Anchor" },
-  "sasha": { name: "Саша Морозова", latin: "Sasha Morozova", role: "Co-Anchor" },
-  "director": { name: "Виктор Орлов", latin: "Viktor Orlov", role: "Director" },
-};
-
-function addFeedItem(source, name, color, text, cls) {
-  const feed = document.getElementById("commentary-feed");
-  const time = new Date().toLocaleTimeString("en-US", { hour12: false });
-  const initials = name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
-  const item = document.createElement("div");
-  item.className = "feed-item";
-  item.innerHTML = `<div class="feed-avatar" style="background:${color}">${initials}</div><div class="feed-body"><div class="feed-name">${name} <span class="feed-role">${source}</span></div><div class="feed-text">${escapeHtml(text)}</div></div><div class="feed-time">${time}</div>`;
-  feed.appendChild(item);
-  feed.scrollTop = feed.scrollHeight;
-  feedCount++;
-  document.getElementById("feed-count").textContent = `${feedCount} events`;
-  while (feed.children.length > 100) feed.removeChild(feed.firstChild);
-  if (cls === "character") document.getElementById("ticker-text").textContent = `${name}: "${text.slice(0,80)}" • MOM TV`;
-}
-
-// ═══ REAL AI COMMENTARY ═══
-
-let commentaryInFlight = false;
-
-async function runAgentCommentary() {
-  if (commentaryInFlight) return;
-  commentaryInFlight = true;
-  try {
-    const slot = getCurrentSlot();
-    const showType = slot && slot.prime ? "full-news" : "quick-news";
-    const castNames = slot ? slot.cast.map(c => c.latin).join(" and ") : "Alex Orlov and Sasha Morozova";
-    const studio = slot ? slot.studio : "MOM TV";
-
-    const input = `Generate a ${showType} commentary for the current live stream on ${studio}. The stream is "${currentChannel}". Viewers are watching a live Twitch stream. Cast: ${castNames}. Provide a brief 2-3 line dialogue exchange. Language: Russian mixed with English gaming terms.`;
-
-    const res = await fetch(`${API_BASE}/api/agents/show-producer`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "gpt-4o-mini", input: [{ role: "user", content: input }], tools: [] })
-    });
-
-    if (!res.ok) throw new Error(`Agent API ${res.status}`);
-    const data = await res.json();
-    parseAndDisplayAgentResponse(data);
-  } catch (e) {
-    console.warn("[Commentary] Agent call failed:", e);
-    // Fallback: use local templates with current slot characters
-    useFallbackCommentary();
-  } finally {
-    commentaryInFlight = false;
-  }
-}
-
-function parseAndDisplayAgentResponse(data) {
-  // OpenAI Responses API format: data.output[0].content[0].text
-  let text = "";
-  if (data.output) {
-    for (const item of data.output) {
-      if (item.type === "message" && item.content) {
-        for (const c of item.content) {
-          if (c.type === "output_text") text += c.text;
-        }
-      }
-    }
-  }
-  if (!text) { useFallbackCommentary(); return; }
-
-  // Try to parse as AnchorScript JSON
-  try {
-    const script = JSON.parse(text);
-    if (script.dialogue && Array.isArray(script.dialogue)) {
-      script.dialogue.forEach((line, i) => {
-        setTimeout(() => {
-          const info = CHARACTER_NAMES[line.speaker] || { name: line.speaker || "Anchor", latin: line.speaker || "Anchor", role: "Anchor" };
-          const color = CHARACTER_COLORS[line.speaker] || "#e8794b";
-          addFeedItem(info.role, info.name, color, line.text, "character");
-        }, i * 2000);
-      });
-      if (script.ticker) {
-        document.getElementById("ticker-text").textContent = script.ticker;
-      }
-      return;
-    }
-  } catch {}
-
-  // Not JSON — treat as plain text, split into lines
-  const lines = text.split("\n").filter(l => l.trim());
-  const slot = getCurrentSlot();
-  const char = slot && slot.cast[0] ? slot.cast[0] : { name: "Алексей Орлов", color: "#3b82f6", role: "Anchor" };
-  lines.slice(0, 3).forEach((line, i) => {
-    setTimeout(() => {
-      addFeedItem(char.role, char.name, char.color, line.trim(), "character");
-    }, i * 2000);
-  });
-}
-
-function getCurrentSlot() {
-  const h = new Date().getHours();
-  return SCHEDULE.slots.find(s => s.hour === h) || null;
-}
-
-// ═══ VISUAL ANALYSIS (Vision API) ═══
-
-let visionInFlight = false;
-
-async function runVisualAnalysis() {
-  if (visionInFlight || !isLive) return;
-  visionInFlight = true;
-  try {
-    const iframe = document.getElementById("stream-embed");
-    if (!iframe || !iframe.src) { visionInFlight = false; return; }
-    const channel = currentChannel;
-
-    const res = await fetch(`${API_BASE}/api/vision`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "api-key": FOUNDRY_KEY },
-      body: JSON.stringify({
-        channel,
-        prompt: "Describe what's happening on screen in this Twitch stream. Focus on: game being played, visible text/UI elements, player actions, viewer reactions. Be concise, 1-2 sentences."
-      })
-    });
-
-    if (!res.ok) throw new Error(`Vision API ${res.status}`);
-    const data = await res.json();
-    const description = data.description || data.text || data.analysis || "";
-
-    if (description) {
-      addFeedItem("Analyzer", "Stream Analyzer", "#3b82f6", description, "analyzer");
-    }
-  } catch (e) {
-    console.warn("[Vision] Analysis failed:", e); useFallbackVisionAnalysis();
-  } finally {
-    visionInFlight = false;
-  }
-}
-
-// ═══ VIDEO INDEXER ═══
-
-let viInFlight = false;
-
-async function runVIAnalysis() {
-  if (viInFlight) return;
-  viInFlight = true;
-  try {
-    const res = await fetch(`${API_BASE}/api/video-indexer/search?query=${encodeURIComponent(currentChannel)}&top=1`);
-    if (!res.ok) throw new Error(`VI API ${res.status}`);
-    const data = await res.json();
-    const videos = data.results || data.videos || [];
-
-    if (videos.length > 0) {
-      const video = videos[0];
-      const topics = video.topics || video.labels || [];
-      const transcript = video.transcript || video.description || "";
-      const summary = video.summary || video.title || "";
-
-      let text = "";
-      if (topics.length > 0) text += `Topics: ${topics.slice(0, 3).join(", ")}. `;
-      if (summary) text += summary;
-      if (!text && transcript) text = transcript.slice(0, 120);
-
-      if (text) {
-        addFeedItem("VI", "Video Indexer", "#a855f7", text, "vi");
-      }
-    }
-  } catch (e) {
-    console.warn("[VI] Analysis failed:", e); useFallbackVI();
-  } finally {
-    viInFlight = false;
-  }
-}
-
-// ═══ STREAM WATCHER ═══
-
-let watcherInFlight = false;
-
-async function runWatcherReport() {
-  if (watcherInFlight) return;
-  watcherInFlight = true;
-  try {
-    const user = await fetchStreamStatus(currentChannel);
-    if (!user) { watcherInFlight = false; return; }
-
-    const live = user.stream?.type === "live";
-    if (!live) { watcherInFlight = false; return; }
-
-    const viewers = user.stream?.viewersCount || 0;
-    const game = user.stream?.game?.displayName || "Unknown";
-    const title = user.stream?.title || "";
-
-    const res = await fetch(`${API_BASE}/api/agents/stream-watcher`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        input: [{ role: "user", content: `Generate a brief system status report for the live stream. Channel: ${currentChannel}, Game: ${game}, Viewers: ${viewers}, Title: "${title.slice(0, 60)}". Just 1-2 sentences about the stream health and viewer engagement.` }],
-        model: "gpt-4o", tools: []
-      })
-    });
-
-    if (!res.ok) throw new Error(`Agent API ${res.status}`);
-    const data = await res.json();
-    let text = "";
-    if (data.output) {
-      for (const item of data.output) {
-        if (item.type === "message" && item.content) {
-          for (const c of item.content) {
-            if (c.type === "output_text") text += c.text;
-          }
-        }
-      }
-    }
-    if (text) {
-      addFeedItem("Watcher", "Stream Watcher", "#dc2626", text.slice(0, 150), "watcher");
-    }
-  } catch (e) {
-    console.warn("[Watcher] Report failed:", e); useFallbackWatcher();
-  } finally {
-    watcherInFlight = false;
-  }
-}
-
-// ═══ FALLBACK: Rich local commentary using ALL scheduled characters ═══
-
-const CHARACTER_LINES = {
-  "Дмитрий Волков": ["Зрители, у нас горячая тема! Стрим набирает обороты!", "Давайте разберём детали — что происходит на экране?", "Это важно для нашей аудитории! Смотрите внимательно!", "Прямой эфир — здесь каждая секунда на счету!", "Коллеги, у нас экстренные новости из мира стримов!", "Зрители, космос! Посмотрите на эти цифры!", "Мы на прямом эфире MOM TV — не отходите от экранов!", "Анализируем ситуацию в реальном времени!"],
-  "Ирина Морозова": ["По данным источников, стример показывает впечатляющие результаты!", "Серьёзная ситуация — viewer count растёт каждую минуту!", "Интересный поворот! Смотрите, что происходит на экране!", "Цифры показывают рост на 15% за последний час!", "Анализ данных говорит о высоком уровне вовлечённости!", "Мои коллеги подтверждают — это один из лучших стримов дня!", "Статистика не врёт: аудитория активно взаимодействует!", "По нашим данным, это событие привлекает внимание всего сообщества!"],
-  "Татьяна Смирнова": ["Добро пожаловать в Стрим Кингз! Сегодня у нас особый выпуск!", "Разбираем профили лучших стримеров — кто они?", "Посмотрите на это прохождение! Мастерство на высоте!", "Стример сегодня в ударе — контент на высшем уровне!", "Наши зрители знают толк в качественном контенте!", "Этот стрим заслуживает внимания! Рекомендую всем!", "Мы следим за лучшими — и делимся наблюдениями!", "Король стримов сегодня показывает класс!"],
-  "Анна Васильева": ["Аналитика показывает стабильный рост аудитории!", "Интересные данные по вовлечённости — комментарии бурлят!", "Стример демонстрирует профессиональный подход!", "По нашим данным, это один из топовых стримов сегодня!", "Качество продакшена на высоком уровне!", "Цифры говорят сами за себя: аудитория довольна!", "Мониторинг показывает положительную динамику!", "Рекомендую обратить внимание на этот стрим!"],
-  "Олег Кузнецов": ["Tactical breakdown: стример применяет отличную стратегию!", "Смотрите на этот клатч — потрясающая реакция!", "FPS на высоте! Разбираем тактику по кадрам!", "Kill feed показывает 5 уничтожений подряд — это серия!", "Стример доминирует на арене!", "Анализируем каждый выстрел — профессиональный уровень!", "Tactical advantage на стороне стримера!", "Этот момент стоит разобрать — идеальное исполнение!"],
-  "Сергей Новиков": ["Комментарии зрителей говорят о высоком напряжении!", "Публика в восторге от того, что видит на экране!", "Стример держит внимание аудитории весь эфир!", "Эмоции зрителей зашкаливают — чат горит!", "Прямой эфир показывает отличные результаты!", "Аудитория активно реагирует на каждый момент!", "Комментарии зрителей подтверждают: стрим на высоте!", "Напряжение нарастает — продолжаем следить!"],
-  "Артём Соколов": ["Esports analysis: стример показывает турнирный уровень!", "Турнирная ситуация — каждое решение имеет значение!", "Анализируем игровой процесс в деталях!", "Стример демонстрирует отличное владение механиками!", "Этот момент определит исход матча!", "Профессиональный уровень игры — видно подготовку!", "Тактическое превосходство на стороне стримера!", "Esports на высшем уровне — продолжаем трансляцию!"],
-  "Максим Петров": ["Добро пожаловать в MOM TV Gaming! Сегодня жаркий вечер!", "Ведём прямую трансляцию игрового шоу!", "Зрители, подготовьтесь — будет жарко!", "Наши эксперты уже готовы к анализу!", "Начинаем наш геймерский марафон!", "Приглашаем всех присоединиться к обсуждению!", "Gaming контент на высшем уровне — только у нас!", "Следите за обновлениями — будет много интересного!"],
-  "Марина Лебедева": ["Новичок стримит — а мы следим за прогрессом!", "Интересный начинающий стример — есть потенциал!", "Скауты MOM TV уже нашли нового таланта!", "Посмотрите на рост — за неделю +500 подписчиков!", "Новые лица в мире стримов — мы первые рассказываем!", "Этот новичок определённо стоит внимания!", "Прогресс впечатляет — продолжаем наблюдение!", "Скоро этот стример будет в топе — запомните!"],
-  "Павел Фёдоров": ["Критический анализ: стример показывает средний уровень, но есть потенциал!", "Объективная оценка контента — не хвалим просто так!", "Есть над чем работать, но направление верное!", "Аудитория растёт — значит, контент находит отклик!", "Рекомендую обратить внимание на развитие этого стримера!", "Честный обзор без прикрас — таков наш стиль!", "Потенциал есть, нужна стабильность!", "Следим за развитием — будет интересно!"],
-  "Роман Волков": ["Вечерний прайм-тайм на MOM TV Драма! Начинаем шоу!", "Добро пожаловать в шоу! Здесь правда без прикрас!", "Стример-драма — тема, которая волнует всех!", "Начинаем разбор полётов! Будет жарко!", "Вечернее шоу для тех, кто любит эмоции!", "Мы здесь чтобы показать всё как есть!", "Драма на стримах — это искусство! Разбираемся!", "Приглашаем всех к обсуждению — ваше мнение важно!"],
-  "Юлия Захарова": ["Дьявольский адвокат в деле! Разбираем каждую деталь!", "Я вижу то, что другие пропускают!", "Контрарийное мнение — но обоснованное!", "Давайте посмотрим на это с другой стороны!", "Мой анализ отличается от общего мнения!", "Не всё так просто, как кажется на первый взгляд!", "Предлагаю рассмотреть альтернативную точку зрения!", "Критический взгляд на то, что все считают очевидным!"],
-  "Елена Морозова": ["Глубокий анализ: за кадром стрима скрывается больше!", "Расследование показывает интересные закономерности!", "Наша команда провела глубокий анализ данных!", "Цифры и факты — мы разбираемся в деталях!", "Исследование раскрывает скрытые тренды!", "Аналитический обзор для тех, кто хочет знать больше!", "Детальный разбор каждого аспекта стрима!", "Наши данные говорят сами за себя — слушайте!"],
-  "Николай Орлов": ["Data analysis: viewer engagement показывает рекордные значения!", "Статистика подтверждает рост ключевых метрик!", "Анализ данных в реальном времени — картина маслом!", "Цифры не лгут: аудитория растёт экспоненциально!", "Метрики показывают положительную динамику!", "Data-driven подход — только факты, никакой воды!", "Аналитика стрима показывает превосходные результаты!", "Числа говорят нам о многом — разбираемся вместе!"]
-};
-
-const SYSTEM_LINES = {
-  "Watcher": ["Viewer spike detected: +200 зрителей за 5 минут!", "Chat activity surging: комментарии каждую секунду!", "Stream quality: 1080p60 — отличное качество!", "Game change detected: стример переключился!", "Audience retention: 85% зрителей досматривают!", "Peak viewership: рекорд за сегодня!", "Engagement rate: чат активнее обычного на 40%!", "Stream health: все системы в норме!"],
-  "Analyzer": ["Intense gameplay detected: высокий уровень!", "On-screen: leaderboard — первое место!", "Mood: excited — зрители в восторге!", "Production quality: профессиональная дорожка!", "Visual analysis: графика на максимуме!", "Player performance: серия побед из 5 матчей!", "Chat sentiment: 92% положительных комментариев!", "Content analysis: контент высшего качества!"],
-  "VI": ["Transcript: стример обсуждает стратегию с зрителями!", "OCR data: результаты матча 15:3!", "Topics: gaming, esports, competitive play!", "Key visual: победный экран!", "Audio analysis: энергичная музыка!", "Scene detection: переключение между игрой и веб-камерой!", "Text recognition: надпись Victory на экране!", "Visual index: 3 ключевых момента за минуту!"]
-};
-
-function useFallbackCommentary() {
-  const slot = getCurrentSlot();
-  if (slot && slot.cast.length > 0) {
-    const char = slot.cast[Math.floor(Math.random() * slot.cast.length)];
-    const lines = CHARACTER_LINES[char.name] || ["Продолжаем эфир!", "Следим за стримом!", "Новости поступают!", "Анализируем данные!", "Зрители, с нами!"];
-    const line = lines[Math.floor(Math.random() * lines.length)];
-    addFeedItem(char.role, char.name, char.color, line, "character");
-  } else {
-    addFeedItem("system", "MOM TV", "#e8794b", "Эфир продолжается! Анализируем стрим в реальном времени.", "character");
-  }
-}
-
-function useFallbackVisionAnalysis() {
-  const lines = SYSTEM_LINES["Analyzer"];
-  addFeedItem("Analyzer", "Stream Analyzer", "#3b82f6", lines[Math.floor(Math.random() * lines.length)], "analyzer");
-}
-
-function useFallbackVI() {
-  const lines = SYSTEM_LINES["VI"];
-  addFeedItem("VI", "Video Indexer", "#a855f7", lines[Math.floor(Math.random() * lines.length)], "vi");
-}
-
-function useFallbackWatcher() {
-  const lines = SYSTEM_LINES["Watcher"];
-  addFeedItem("Watcher", "Stream Watcher", "#dc2626", lines[Math.floor(Math.random() * lines.length)], "watcher");
-}
-
-// ═══ SCHEDULE + ON AIR ═══
-
-function renderSchedule() {
-  const grid = document.getElementById("schedule-grid");
-  const h = new Date().getHours();
-  grid.innerHTML = SCHEDULE.slots.map(s => {
-    const live = s.hour===h, past = s.hour<h;
-    const cls = `sched-slot${live?" live":""}${s.prime?" prime":""}${past?" past":""}`;
-    const cast = s.cast.map(c=>`<span class="sched-chip${c.lead?" lead":""}">${c.latin}</span>`).join("");
-    return `<div class="${cls}"><div class="sched-time">${live?'<span class="live-dot"></span>':''}${s.hour}:00</div><div class="sched-body"><div><span class="sched-studio">${s.studio}</span><span class="lang-tag lang-${s.lang}">${s.lang.toUpperCase()}</span>${s.event?` <span style="color:var(--accent);font-size:9px">${s.event}</span>`:''}</div><div class="sched-cast">${cast}</div></div></div>`;
-  }).join("");
-}
-
-function renderOnAir() {
-  const h = new Date().getHours();
-  const slot = SCHEDULE.slots.find(s=>s.hour===h);
-  const el = document.getElementById("on-air");
-  if (!slot) {
-    el.innerHTML='<div style="color:var(--text-dim);font-size:11px;padding:10px;text-align:center">Off air</div>';
-    return;
-  }
-  document.getElementById("overlay-studio").textContent=slot.studio;
-  document.getElementById("overlay-cast").textContent=slot.cast.map(c=>c.latin).join(" + ");
-  el.innerHTML=`<div class="on-air-studio">${slot.studio}</div><div class="on-air-hint">${slot.hint}</div>${slot.cast.map(c=>`<div class="on-air-char"><div class="char-av" style="background:${c.color}">${c.latin.split(" ").map(w=>w[0]).join("")}</div><div class="char-info"><div class="char-name">${c.name}</div><div class="char-sub">${c.latin}</div><div class="char-role">${c.role}</div></div></div>`).join('')}`;
-}
+function escapeHtml(t) { const d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
 
 // ═══ STREAM STATUS LOOP ═══
 
@@ -1346,9 +877,9 @@ async function checkStream() {
   const live = user.stream?.type === "live";
   if (live && !isLive) {
     embedStream(currentChannel);
+    updateViewerCount(user.stream?.viewersCount || 0);
     document.getElementById("stream-now").innerHTML = `<strong>${currentChannel}</strong> — ${user.stream.game?.displayName||""} — ${(user.stream.viewersCount||0).toLocaleString()} viewers`;
   } else if (!live && isLive) {
-    // Go to VODs
     await loadVods(currentChannel);
     if (allVods.length > 0) {
       const unwatched = getUnwatchedVods(allVods);
@@ -1356,15 +887,16 @@ async function checkStream() {
       if (next) embedVod(next.id, next.title, currentChannel);
     }
   } else if (live) {
+    updateViewerCount(user.stream?.viewersCount || 0);
     document.getElementById("stream-now").innerHTML = `<strong>${currentChannel}</strong> — ${user.stream.game?.displayName||""} — ${(user.stream.viewersCount||0).toLocaleString()} viewers`;
   }
 }
 
 function updateClock() { document.getElementById("clock").textContent = new Date().toLocaleTimeString("en-US",{hour12:false}); }
 
-// ═══ SETTINGS PERSISTENCE ═══
+// ═══ SETTINGS ═══
 const SETTINGS_KEY = "momtv_settings";
-const DEFAULT_SETTINGS = { chatHeightVh: 50, sidebarWidth: 440, channel: DEFAULT_CHANNEL };
+const DEFAULT_SETTINGS = { chatHeightVh: 50, sidebarWidth: 400, channel: DEFAULT_CHANNEL };
 let settings = { ...DEFAULT_SETTINGS };
 
 function loadSettings() {
@@ -1426,13 +958,9 @@ function initDragHandle() {
 // ═══ INIT ═══
 
 (async function init() {
-  // Check OAuth redirect
   checkOAuthRedirect();
-
-  // Restore token
   if (!twitchToken) twitchToken = localStorage.getItem(TOKEN_KEY);
 
-  // Validate
   if (twitchToken) {
     const valid = await validateToken();
     if (valid) {
@@ -1441,33 +969,18 @@ function initDragHandle() {
     }
   }
 
-  // Load saved settings and init drag handle
   loadSettings();
   initDragHandle();
 
-  // Embed default stream
   embedStream(settings.channel || DEFAULT_CHANNEL);
   await loadVods(DEFAULT_CHANNEL);
-  renderSchedule();
-  renderOnAir();
   updateClock();
   checkStream();
 
-  // Start loops
   setInterval(updateClock, 1000);
-  setInterval(renderSchedule, 60000);
-  setInterval(renderOnAir, 60000);
-  setInterval(checkStream, 60000);
-
-  // Real AI commentary — staggered API calls to avoid overwhelming backend
-  setInterval(runAgentCommentary, 30000);  // Director commentary every 30s
-  setInterval(runWatcherReport, 60000);    // Stream health report every 60s
-  setInterval(runVisualAnalysis, 120000);  // Vision analysis every 2min
-  setInterval(runVIAnalysis, 180000);      // Video Indexer every 3min
+  setInterval(checkStream, 30000);       // Stream status every 30s
   setInterval(() => { if (twitchUser) loadFollowedChannels(); }, 120000);
-
-  setTimeout(() => addFeedItem("system","MOM TV Director","#e8794b","Эфир начат! Русский Стрим Марафон.","character"), 2000);
-  setTimeout(runAgentCommentary, 5000);    // First AI commentary after 5s
+  setInterval(updateUptime, 1000);       // Uptime every second
 })();
 </script>
 </body>
