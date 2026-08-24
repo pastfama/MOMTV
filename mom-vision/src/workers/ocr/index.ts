@@ -4,10 +4,14 @@
 
 import http from 'http';
 import { CapturePipeline } from '../../capture/index.js';
+import { initLogger } from '../../logging/logger.js';
 
-const channel = process.env.CURRENT_CHANNEL || 'KNIG04Ei';
+// Initialize logger first
+initLogger();
 
-console.log(`[OCR Worker] Initializing for channel: ${channel}`);
+let currentChannel = process.env.CURRENT_CHANNEL || 'KNIG04Ei';
+
+console.log(`[OCR Worker] Initializing for channel: ${currentChannel}`);
 
 // ── HTTP API Server (start first) ────────────────────────────
 
@@ -33,7 +37,7 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         id: 'current',
-        channel,
+        channel: currentChannel,
         isLive: true,
         vodId: null,
         vodTitle: null,
@@ -44,14 +48,21 @@ const server = http.createServer(async (req, res) => {
       let body = '';
       req.on('data', chunk => { body += chunk; });
       req.on('end', () => {
+        try {
+          const data = JSON.parse(body);
+          if (data.channel) {
+            currentChannel = data.channel;
+            console.log(`[OCR Worker] Channel updated to: ${currentChannel}`);
+          }
+        } catch {}
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: true }));
+        res.end(JSON.stringify({ ok: true, channel: currentChannel }));
       });
 
     } else if (url.pathname === '/api/status') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
-        channel,
+        channel: currentChannel,
         isRunning: true,
         lastOcr: 0,
         lastAudio: 0,
@@ -77,16 +88,28 @@ server.listen(PORT, () => {
 });
 
 // Start capture pipeline after server is up
+let pipeline: CapturePipeline;
 try {
-  const pipeline = new CapturePipeline({
+  pipeline = new CapturePipeline({
     ocrIntervalMs: 5_000,
-    currentChannel: channel,
+    currentChannel: currentChannel,
   });
-  pipeline.start(channel);
-  console.log(`[OCR Worker] Capture pipeline started for ${channel}`);
+  pipeline.start(currentChannel);
+  console.log(`[OCR Worker] Capture pipeline started for ${currentChannel}`);
 } catch (err) {
   console.error(`[OCR Worker] Pipeline failed to start:`, err);
 }
+
+// Poll pipeline status to sync channel from Cosmos DB
+setInterval(() => {
+  if (pipeline) {
+    const status = pipeline.getStatus();
+    if (status.channel && status.channel !== currentChannel) {
+      currentChannel = status.channel;
+      console.log(`[OCR Worker] Pipeline switched to: ${currentChannel}`);
+    }
+  }
+}, 3000);
 
 // Handle graceful shutdown
 process.on('SIGTERM', () => {

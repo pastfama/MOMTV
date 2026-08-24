@@ -1,0 +1,1 @@
+{"name":"@momtv/studio-api","version":"0.1.0","private":true,"scripts":{"start":"func start"},"dependencies":{"@azure/cosmos":"^4.1.0"}}

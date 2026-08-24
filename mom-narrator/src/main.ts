@@ -2,11 +2,12 @@
 import { NarratorAgent } from './narrator/agent.js';
 
 const FOUNDRY_ENDPOINT = 'https://fameshire-foundry-resource.services.ai.azure.com/api/projects/fameshire-foundry';
-const FOUNDRY_KEY = process.env.FOUNDRY_KEY || '';
 
 const narrator = new NarratorAgent({
   llmEndpoint: FOUNDRY_ENDPOINT,
-  interval: 30000
+  interval: 30000,
+  cosmosEndpoint: process.env.COSMOS_ENDPOINT,
+  cosmosKey: process.env.COSMOS_KEY
 });
 
 const server = http.createServer((req, res) => {

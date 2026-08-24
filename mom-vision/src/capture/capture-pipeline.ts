@@ -5,6 +5,7 @@
 // ============================================================
 
 import type { CaptureConfig, StreamState } from './types.js';
+import { initLogger, logCapture, logChannelSwitch, logError, trackMetric } from '../logging/logger.js';
 import { OcrWorker } from './ocr-worker.js';
 import { AudioWorker } from './audio-worker.js';
 import { StorageClient } from './storage-client.js';
@@ -38,6 +39,9 @@ export class CapturePipeline {
     this.storage = new StorageClient();
     this.highlightManager = new HighlightManager(this.storage);
     this.statusTracker = new StatusTracker();
+    
+    // Initialize logger
+    initLogger();
   }
 
   /**
@@ -45,7 +49,6 @@ export class CapturePipeline {
    */
   start(channel: string): void {
     if (this.isRunning) {
-      console.log('[Capture] Already running');
       return;
     }
 
@@ -53,8 +56,6 @@ export class CapturePipeline {
     this.isRunning = true;
 
     console.log(`[Capture] Starting for ${channel}`);
-    console.log(`[Capture] OCR every ${this.config.ocrIntervalMs / 1000}s`);
-    console.log(`[Capture] Polling stream state every 5s`);
 
     // Start OCR loop
     this.timers.push(
@@ -118,16 +119,23 @@ export class CapturePipeline {
   private async pollStreamState(): Promise<void> {
     try {
       const state = await this.storage.getStreamState();
-      if (!state) return;
-
-      const target = state.vodId ? `${state.channel} (VOD)` : state.channel;
-
-      if (target !== this.config.currentChannel) {
-        console.log(`[Capture] Frontend switched to: ${target}`);
-        this.config.currentChannel = state.vodId ? state.channel : state.channel;
+      if (!state) {
+        return;
       }
-    } catch {
-      // Silently ignore poll errors
+
+      const target = state.channel;
+
+      if (target && target !== this.config.currentChannel) {
+        logChannelSwitch({
+          from: this.config.currentChannel,
+          to: target,
+          reason: 'Frontend switched',
+          isLive: true,
+        });
+        this.config.currentChannel = target;
+      }
+    } catch (err) {
+      logError(err as Error, { component: 'pollStreamState' });
     }
   }
 
@@ -138,6 +146,7 @@ export class CapturePipeline {
     if (!this.isRunning) return;
 
     try {
+      const startTime = Date.now();
       const thumbnail = await this.fetchThumbnail();
       if (!thumbnail) return;
 
@@ -150,16 +159,31 @@ export class CapturePipeline {
       this.lastOcrTime = Date.now();
       this.totalCaptures++;
 
+      const durationMs = Date.now() - startTime;
+      
+      logCapture({
+        channel: this.config.currentChannel,
+        type: 'ocr',
+        captureCount: this.totalCaptures,
+        durationMs,
+      });
+
+      trackMetric('OcrCaptureDuration', durationMs, { channel: this.config.currentChannel });
+
       // Check for highlights
       const highlight = await this.highlightManager.checkForHighlight(
         capture,
         null
       );
       if (highlight) {
-        console.log(`[Capture] Highlight detected: ${highlight.reason}`);
+        logCapture({
+          channel: this.config.currentChannel,
+          type: 'highlight',
+          captureCount: this.totalCaptures,
+        });
       }
     } catch (error) {
-      console.error('[Capture] OCR failed:', error);
+      logError(error as Error, { component: 'runOcr', channel: this.config.currentChannel });
     }
   }
 
