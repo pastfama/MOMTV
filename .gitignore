@@ -22,7 +22,7 @@ momtv-server.zip
 .azure/
 
 # IDE
-.vscode/
+
 .idea/
 
 # OS

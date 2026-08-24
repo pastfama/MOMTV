@@ -1,0 +1,19 @@
+{
+  "name": "mom-vision",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start:ocr": "node dist/workers/ocr/index.js",
+    "start:audio": "node dist/workers/audio/index.js"
+  },
+  "dependencies": {
+    "@azure/cosmos": "^4.1.0",
+    "@azure/storage-blob": "^12.17.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/node": "^22.0.0"
+  }
+}

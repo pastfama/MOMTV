@@ -1,0 +1,61 @@
+name: Deploy mom-vision
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  RESOURCE_GROUP: Fameshire-STREAM
+  LOCATION: eastus
+
+jobs:
+  deploy-infra:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      - name: Deploy Bicep
+        uses: azure/arm-deploy@v2
+        with:
+          subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          resourceGroupName: ${{ env.RESOURCE_GROUP }}
+          template: infra/main.bicep
+          parameters: infra/environments/prod.bicepparam
+
+  deploy-containers:
+    needs: deploy-infra
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      - name: Build and push OCR worker
+        uses: azure/docker-login@v2
+        with:
+          login-server: fameshirestream.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+      
+      - run: |
+          docker build -t fameshirestream.azurecr.io/ocr-worker:latest ./src/workers/ocr
+          docker push fameshirestream.azurecr.io/ocr-worker:latest
+      
+      - name: Build and push Audio worker
+        run: |
+          docker build -t fameshirestream.azurecr.io/audio-worker:latest ./src/workers/audio
+          docker push fameshirestream.azurecr.io/audio-worker:latest
+      
+      - name: Update Container Apps
+        run: |
+          az containerapp update --name ocr-worker --resource-group ${{ env.RESOURCE_GROUP }} --image fameshirestream.azurecr.io/ocr-worker:latest
+          az containerapp update --name audio-worker --resource-group ${{ env.RESOURCE_GROUP }} --image fameshirestream.azurecr.io/audio-worker:latest

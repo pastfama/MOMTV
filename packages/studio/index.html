@@ -254,6 +254,13 @@
     .stat-value.purple{color:var(--purple-light)}
     .stat-value.red{color:var(--red-bright)}
 
+    .ocr-status{display:flex;align-items:center;gap:6px;font-size:11px}
+    .ocr-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+    .ocr-dot.active{background:var(--green);animation:pulse 2s infinite}
+    .ocr-dot.inactive{background:#555}
+    .ocr-count{color:var(--text-dim);font-size:10px}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
     .sparkline{
       display:flex;align-items:flex-end;gap:2px;
       height:28px;
@@ -474,6 +481,14 @@
         <div class="stat-box">
           <div class="stat-label">CHAT MSGS</div>
           <div class="stat-value purple" id="chat-count">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">OCR</div>
+          <div class="stat-value ocr-status" id="ocr-status">
+            <span class="ocr-dot inactive" id="ocr-dot"></span>
+            <span id="ocr-label">Idle</span>
+            <span class="ocr-count" id="ocr-count"></span>
+          </div>
         </div>
       </div>
     </div>
@@ -792,6 +807,52 @@ function switchToChannel(channel) {
   currentChannel = channel;
   embedStream(channel);
   loadVods(channel);
+  notifyWorkers(channel, true, null);
+}
+
+// ═══ OCR WORKER INTEGRATION ═══
+
+const OCR_API_URL = window.location.origin + '/api/capture/state';
+
+async function notifyWorkers(channel, isLive, vodId) {
+  try {
+    await fetch(OCR_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ channel, isLive, vodId }),
+    });
+  } catch (e) {
+    console.warn('[OCR] Could not notify workers:', e);
+  }
+}
+
+async function pollOcrStatus() {
+  // OCR status is not available via the Function relay
+  // Workers will poll Cosmos DB directly
+  const dot = document.getElementById('ocr-dot');
+  const label = document.getElementById('ocr-label');
+  const count = document.getElementById('ocr-count');
+  if (dot) dot.className = 'ocr-dot active';
+  if (label) label.textContent = 'Watching';
+  if (count) count.textContent = '';
+}
+
+async function fetchStreamStateFromWorkers() {
+  try {
+    const res = await fetch(OCR_API_URL);
+    const state = await res.json();
+    if (state && state.channel && state.channel !== currentChannel) {
+      currentChannel = state.channel;
+      if (state.isLive) {
+        embedStream(state.channel);
+      } else if (state.vodId) {
+        embedVod(state.vodId, state.vodTitle, state.channel);
+      }
+      loadVods(state.channel);
+    }
+  } catch {
+    // Function not reachable — use default
+  }
 }
 
 // ═══ VOD TRACKING ═══
@@ -972,8 +1033,11 @@ function initDragHandle() {
   loadSettings();
   initDragHandle();
 
-  embedStream(settings.channel || DEFAULT_CHANNEL);
-  await loadVods(DEFAULT_CHANNEL);
+  // Try to get current channel from workers first
+  await fetchStreamStateFromWorkers();
+
+  embedStream(currentChannel);
+  await loadVods(currentChannel);
   updateClock();
   checkStream();
 
@@ -981,6 +1045,7 @@ function initDragHandle() {
   setInterval(checkStream, 30000);       // Stream status every 30s
   setInterval(() => { if (twitchUser) loadFollowedChannels(); }, 120000);
   setInterval(updateUptime, 1000);       // Uptime every second
+  setInterval(pollOcrStatus, 3000);      // OCR status every 3s
 })();
 </script>
 </body>
