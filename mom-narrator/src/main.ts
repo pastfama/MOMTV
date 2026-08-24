@@ -1,20 +1,34 @@
-﻿// MOM Narrator - Connect to Cosmos DB and Twitch API
+﻿import http from 'http';
 import { NarratorAgent } from './narrator/agent.js';
-import { EventBus } from './orchestrator/event-bus.js';
 
-const COSMOS_ENDPOINT = process.env.COSMOS_ENDPOINT || '';
-const COSMOS_KEY = process.env.COSMOS_KEY || '';
+const FOUNDRY_ENDPOINT = 'https://fameshire-foundry-resource.services.ai.azure.com/api/projects/fameshire-foundry';
+const FOUNDRY_KEY = process.env.FOUNDRY_KEY || '';
 
-async function main() {
-  console.log('[MOM Narrator] Starting...');
-  console.log('[MOM Narrator] Cosmos:', COSMOS_ENDPOINT ? 'configured' : 'not configured');
+const narrator = new NarratorAgent({
+  llmEndpoint: FOUNDRY_ENDPOINT,
+  interval: 30000
+});
 
-  const narrator = new NarratorAgent({
-    llmEndpoint: 'https://cog-cdwzd6d3oc77y.services.ai.azure.com',
-    interval: 30000
-  });
+const server = http.createServer((req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Content-Type', 'application/json');
 
-  await narrator.runLoop();
-}
+  if (req.url === '/status') {
+    res.writeHead(200);
+    res.end(JSON.stringify(narrator.getStatus()));
+  } else if (req.url === '/health') {
+    res.writeHead(200);
+    res.end(JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() }));
+  } else {
+    res.writeHead(404);
+    res.end(JSON.stringify({ error: 'Not found' }));
+  }
+});
 
-main().catch(console.error);
+const PORT = process.env.PORT || 80;
+server.listen(PORT, () => {
+  console.log('[Narrator] API server on port ' + PORT);
+  console.log('[Narrator] Foundry: ' + FOUNDRY_ENDPOINT);
+});
+
+narrator.runLoop().catch(console.error);
