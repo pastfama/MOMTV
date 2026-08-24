@@ -1,0 +1,2 @@
+{" name:@momtv/narrator,ersion:.0.0,private:true,	ype:module,scripts:{uild:	sc,start:
+ode dist/narrator/agent.js},dependencies:{},devDependencies:{	ypescript:^5.4.0,@types/node:^22.0.0}}
