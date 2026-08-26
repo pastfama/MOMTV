@@ -1,0 +1,24 @@
+@keyframes blink {
+  0%, 5%, 10%, 100% { r: 6; }
+  7.5% { r: 1; }
+}
+
+.avatar .eye {
+  animation-name: blink;
+  animation-duration: 4s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  transform-origin: center center;
+}
+
+.avatar-bob .eye {
+  animation-delay: 0s;
+}
+
+.avatar-sarah .eye {
+  animation-delay: 1.5s;
+}
+
+.avatar-mike .eye {
+  animation-delay: 3s;
+}
