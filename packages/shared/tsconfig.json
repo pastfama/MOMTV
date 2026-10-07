@@ -2,7 +2,11 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    // simulation-engine uses setInterval/console, so this package needs the DOM
+    // globals even though it also runs under Node. Previously masked by stale
+    // checked-in .js files in src/ that were built with a looser config.
+    "lib": ["ES2022", "DOM"]
   },
   "include": ["src"]
 }

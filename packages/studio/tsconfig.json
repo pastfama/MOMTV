@@ -1,12 +1,16 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "./src",
-    "outDir": "./dist",
+    // No rootDir/outDir here: this package is type-checked with --noEmit and
+    // bundled by Vite, and the inherited rootDir made every @momtv/shared
+    // source file an "not under rootDir" error (TS6059) via the paths alias.
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "composite": false,
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
     "paths": {
       "@momtv/shared": ["../shared/src"]
     }

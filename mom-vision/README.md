@@ -31,7 +31,7 @@ docker push fameshirestream.azurecr.io/ocr-worker:latest
 
 ## Integration
 
-Gagarin (gagarin.fameshire.com) manages channel switching via API:
+MOM TV (momtv.fameshire.com) manages channel switching via API:
 - `POST /api/capture/start` - Start capturing
 - `POST /api/capture/switch` - Switch channel
 - `GET /api/capture/status` - Current status

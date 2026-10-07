@@ -103,7 +103,15 @@ export interface StreamConfig {
   frameSampleRate: number; // seconds between frame captures
 }
 
-export interface StreamState {
+/**
+ * Raw stream metadata as reported by the Twitch/Video Indexer layer.
+ *
+ * NOTE: deliberately distinct from `world-state.ts`'s `StreamState`, which is
+ * the *world* view (viewers/game/uptime). This one is the wire format.
+ * It was previously also called `StreamState` and collided with the
+ * `export *` barrel, so `StreamMetadata` keeps the two unambiguous.
+ */
+export interface StreamMetadata {
   streamId: string;
   isLive: boolean;
   startedAt: Date | null;
@@ -383,13 +391,21 @@ export interface StudioOverlay {
 
 export interface StudioState {
   scene: StudioScene;
-  activeAgents: AgentState[];
+  activeAgents: SceneAgentState[];
   ticker: string;
   banner: string | null;
   chatVisible: boolean;
 }
 
-export interface AgentState {
+/**
+ * Per-agent render state for the on-screen avatar (position, Rive state
+ * machine input, current bubble).
+ *
+ * NOTE: deliberately distinct from `world-state.ts`'s `AgentState`, which is
+ * the *simulation* view (mood/goals/fame/airtime). Renamed from `AgentState`
+ * so the `export *` barrel stops exporting two different `AgentState`s.
+ */
+export interface SceneAgentState {
   agentId: string;
   position: { x: number; y: number };
   animationState: string; // maps to Rive state machine input
@@ -474,6 +490,7 @@ export interface FoundryConfig {
     vision: FoundryModelConfig;
     reasoning: FoundryModelConfig;
     fastReasoning: FoundryModelConfig;
+    coder: FoundryModelConfig;
     transcription: FoundryModelConfig;
     contentSafety: FoundryModelConfig;
   };

@@ -1,10 +1,4 @@
-// ============================================================
-// mom-vision — Capture Pipeline
-// ============================================================
-// Main orchestrator for OCR and audio capture
-// ============================================================
-
-import type { CaptureConfig, StreamState } from './types.js';
+﻿import type { CaptureConfig, StreamState } from './types.js';
 import { initLogger, logCapture, logChannelSwitch, logError, trackMetric } from '../logging/logger.js';
 import { OcrWorker } from './ocr-worker.js';
 import { AudioWorker } from './audio-worker.js';
@@ -13,11 +7,13 @@ import { HighlightManager } from './highlight-manager.js';
 import { StatusTracker } from './stream-status.js';
 
 const DEFAULT_CONFIG: CaptureConfig = {
-  ocrIntervalMs: 5_000, // 5 seconds
+  ocrIntervalMs: 5_000,
   audioChunkSeconds: 30,
   storageRetentionDays: 30,
   currentChannel: '',
 };
+
+const API_BASE = process.env.API_BASE || 'https://momtv.azurewebsites.net';
 
 export class CapturePipeline {
   private ocrWorker: OcrWorker;
@@ -39,67 +35,31 @@ export class CapturePipeline {
     this.storage = new StorageClient();
     this.highlightManager = new HighlightManager(this.storage);
     this.statusTracker = new StatusTracker();
-    
-    // Initialize logger
     initLogger();
   }
 
-  /**
-   * Start capturing from a channel
-   */
   start(channel: string): void {
-    if (this.isRunning) {
-      return;
-    }
-
+    if (this.isRunning) return;
     this.config.currentChannel = channel;
     this.isRunning = true;
-
     console.log(`[Capture] Starting for ${channel}`);
-
-    // Start OCR loop
-    this.timers.push(
-      setInterval(() => this.runOcr(), this.config.ocrIntervalMs)
-    );
-
-    // Start stream state polling (switch channels when frontend changes)
-    this.timers.push(
-      setInterval(() => this.pollStreamState(), 5_000)
-    );
-
-    // Start audio capture
+    this.timers.push(setInterval(() => this.runOcr(), this.config.ocrIntervalMs));
+    this.timers.push(setInterval(() => this.pollStreamState(), 5_000));
     this.startAudioCapture();
-
-    // Run initial OCR
     this.runOcr();
   }
 
-  /**
-   * Stop capturing
-   */
   stop(): void {
     this.isRunning = false;
-
-    for (const timer of this.timers) {
-      clearInterval(timer);
-    }
+    for (const timer of this.timers) clearInterval(timer);
     this.timers = [];
-
-    console.log('[Capture] Stopped');
   }
 
-  /**
-   * Switch to a different channel
-   */
   switchChannel(channel: string): void {
-    console.log(`[Capture] Switching to ${channel}`);
     this.config.currentChannel = channel;
   }
 
-  /**
-   * Get current status
-   */
-  getStatus(): { channel: string; isRunning: boolean; lastOcr: number; lastAudio: number; totalCaptures: number } {
+  getStatus() {
     return {
       channel: this.config.currentChannel,
       isRunning: this.isRunning,
@@ -109,150 +69,74 @@ export class CapturePipeline {
     };
   }
 
-  getStorage(): StorageClient {
-    return this.storage;
-  }
+  getStorage(): StorageClient { return this.storage; }
 
-  /**
-   * Poll stream state from Cosmos DB — switch if frontend changed channel
-   */
   private async pollStreamState(): Promise<void> {
     try {
-      const state = await this.storage.getStreamState();
-      if (!state) {
-        return;
-      }
-
-      const target = state.channel;
-
-      if (target && target !== this.config.currentChannel) {
-        logChannelSwitch({
-          from: this.config.currentChannel,
-          to: target,
-          reason: 'Frontend switched',
-          isLive: true,
-        });
-        this.config.currentChannel = target;
+      const res = await fetch(`${API_BASE}/api/capture/state`);
+      if (!res.ok) return;
+      const state: any = await res.json();
+      if (state.channel && state.channel !== this.config.currentChannel) {
+        console.log(`[Capture] Frontend switched to: ${state.channel}`);
+        this.config.currentChannel = state.channel;
       }
     } catch (err) {
-      logError(err as Error, { component: 'pollStreamState' });
+      console.error('[Capture] pollStreamState error:', err);
     }
   }
 
-  /**
-   * Run OCR on current stream frame
-   */
   private async runOcr(): Promise<void> {
     if (!this.isRunning) return;
-
     try {
       const startTime = Date.now();
       const thumbnail = await this.fetchThumbnail();
       if (!thumbnail) return;
-
-      const capture = await this.ocrWorker.captureFrame(
-        thumbnail,
-        this.config.currentChannel
-      );
-
+      const capture = await this.ocrWorker.captureFrame(thumbnail, this.config.currentChannel);
       await this.storage.storeOcr(capture);
       this.lastOcrTime = Date.now();
       this.totalCaptures++;
-
       const durationMs = Date.now() - startTime;
-      
-      logCapture({
-        channel: this.config.currentChannel,
-        type: 'ocr',
-        captureCount: this.totalCaptures,
-        durationMs,
-      });
-
+      logCapture({ channel: this.config.currentChannel, type: 'ocr', captureCount: this.totalCaptures, durationMs });
       trackMetric('OcrCaptureDuration', durationMs, { channel: this.config.currentChannel });
-
-      // Check for highlights
-      const highlight = await this.highlightManager.checkForHighlight(
-        capture,
-        null
-      );
+      const highlight = await this.highlightManager.checkForHighlight(capture, null);
       if (highlight) {
-        logCapture({
-          channel: this.config.currentChannel,
-          type: 'highlight',
-          captureCount: this.totalCaptures,
-        });
+        logCapture({ channel: this.config.currentChannel, type: 'highlight', captureCount: this.totalCaptures });
       }
     } catch (error) {
       logError(error as Error, { component: 'runOcr', channel: this.config.currentChannel });
     }
   }
 
-  /**
-   * Continuous audio capture loop
-   */
   private async startAudioCapture(): Promise<void> {
     while (this.isRunning) {
       try {
         const audioChunk = await this.recordAudioChunk();
         if (!audioChunk) continue;
-
-        const transcript = await this.audioWorker.transcribeChunk(
-          audioChunk,
-          this.config.currentChannel,
-          this.config.audioChunkSeconds
-        );
-
+        const transcript = await this.audioWorker.transcribeChunk(audioChunk, this.config.currentChannel, this.config.audioChunkSeconds);
         await this.storage.storeTranscript(transcript);
         this.lastAudioTime = Date.now();
-
-        // Check for highlights
-        const highlight = await this.highlightManager.checkForHighlight(
-          null,
-          transcript
-        );
-        if (highlight) {
-          console.log(`[Capture] Audio highlight: ${highlight.reason}`);
-        }
       } catch (error) {
-        console.error('[Capture] Audio failed:', error);
+        // Silently ignore
       }
     }
   }
 
-  /**
-   * Fetch Twitch stream thumbnail
-   */
   private async fetchThumbnail(): Promise<string | null> {
     try {
       const url = `https://static-cdn.jtvnw.net/previews-ttv/live_user_${this.config.currentChannel}-1920x1080.jpg?_t=${Date.now()}`;
       const response = await fetch(url);
-
-      if (!response.ok) {
-        return null;
-      }
-
+      if (!response.ok) return null;
       const blob = await response.blob();
       return this.blobToBase64(blob);
-    } catch (error) {
-      console.error('[Capture] Thumbnail fetch failed:', error);
-      return null;
-    }
+    } catch { return null; }
   }
 
-  /**
-   * Convert Blob to base64
-   */
   private async blobToBase64(blob: Blob): Promise<string> {
     const buffer = Buffer.from(await blob.arrayBuffer());
     return `data:image/jpeg;base64,${buffer.toString('base64')}`;
   }
 
-  /**
-   * Record audio chunk (placeholder - implement actual audio recording)
-   */
   private async recordAudioChunk(): Promise<Buffer | null> {
-    // TODO: Implement actual audio recording from stream
-    // This would use FFmpeg to capture audio from the HLS stream
     return null;
   }
 }

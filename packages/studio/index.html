@@ -235,7 +235,13 @@
       padding:12px 16px;
       display:flex;gap:20px;align-items:center;
       flex-shrink:0;
+      flex-wrap:wrap;
+      row-gap:10px;
     }
+    /* Keeps the extra stat boxes from pushing the panel past the window
+       width on narrow screens / large sidebar settings. */
+    .analytics-panel{overflow-x:auto;scrollbar-width:none}
+    .analytics-panel::-webkit-scrollbar{display:none}
     .stat-box{
       display:flex;flex-direction:column;gap:2px;
     }
@@ -253,6 +259,13 @@
     .stat-value.green{color:var(--green-light)}
     .stat-value.purple{color:var(--purple-light)}
     .stat-value.red{color:var(--red-bright)}
+    /* Small caption under a value (e.g. "peak 412", "3.2k avg") */
+    .stat-sub{font-family:var(--font-mono);font-size:9px;color:var(--text-dim)}
+    /* Up/down delta arrow */
+    .delta.up{color:var(--green-light)}
+    .delta.down{color:var(--red-bright)}
+    .delta.flat{color:var(--text-dim)}
+    .stat-value.dim{color:var(--text-dim)}
 
     .ocr-status{display:flex;align-items:center;gap:6px;font-size:11px}
     .ocr-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
@@ -272,6 +285,8 @@
       min-height:2px;
       transition:height 0.3s ease;
     }
+    /* Newest sample, so the leading edge is easy to pick out */
+    .spark-bar.latest{background:var(--green-light);box-shadow:0 0 6px var(--green)}
 
     /* ═══ SIDEBAR ═══ */
     .sidebar{
@@ -426,6 +441,38 @@
     }
     @keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
 
+    /* ═══ WEAZEL NEWS (live feed from the Fameshire FiveM city) ═══ */
+    .weazel-section h3{display:flex;align-items:center;gap:6px}
+    .weazel-live-dot{
+      display:inline-block;width:7px;height:7px;border-radius:50%;
+      background:var(--red);box-shadow:0 0 8px var(--red);
+      animation:weazelPulse 1.6s ease-in-out infinite;
+    }
+    @keyframes weazelPulse{0%,100%{opacity:1}50%{opacity:.35}}
+    .weazel-card{
+      background:var(--bg-elevated);
+      border:1px solid var(--border-default);
+      border-left:3px solid var(--accent);
+      border-radius:var(--radius-sm);
+      padding:10px;margin-bottom:8px;cursor:pointer;
+      transition:var(--transition);
+    }
+    .weazel-card:hover{background:var(--bg-glass-hover);border-color:var(--border-accent)}
+    .weazel-card .wc-head{
+      font-family:var(--font-display);font-weight:700;font-size:12px;
+      line-height:1.35;color:var(--text-primary);
+    }
+    .weazel-card .wc-lead{font-size:11px;color:var(--text-secondary);margin-top:4px;line-height:1.4}
+    .weazel-card .wc-meta{
+      font-family:var(--font-mono);font-size:9px;color:var(--text-muted);
+      margin-top:6px;letter-spacing:.4px;display:flex;justify-content:space-between;
+    }
+    .weazel-card .wc-img{
+      width:100%;height:auto;border-radius:4px;margin-top:8px;
+      display:block;background:var(--bg-base);
+    }
+    .weazel-empty{font-size:10px;color:var(--text-dim);padding:6px 2px}
+
     /* Scrollbar */
     ::-webkit-scrollbar{width:5px}
     ::-webkit-scrollbar-track{background:transparent}
@@ -469,18 +516,32 @@
         <div class="stat-box">
           <div class="stat-label">VIEWERS</div>
           <div class="stat-value" id="viewer-count">—</div>
+          <div class="stat-sub" id="viewer-delta">—</div>
         </div>
         <div class="stat-box">
           <div class="stat-label">SPARKLINE</div>
           <div class="sparkline" id="sparkline"></div>
+          <div class="stat-sub" id="viewer-avg">—</div>
         </div>
         <div class="stat-box">
           <div class="stat-label">UPTIME</div>
           <div class="stat-value green" id="uptime">—</div>
+          <div class="stat-sub" id="uptime-start">—</div>
         </div>
         <div class="stat-box">
           <div class="stat-label">CHAT MSGS</div>
           <div class="stat-value purple" id="chat-count">0</div>
+          <div class="stat-sub" id="chat-rate">— /min</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">PEAK</div>
+          <div class="stat-value dim" id="peak-viewers">—</div>
+          <div class="stat-sub" id="peak-time">this session</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">FOLLOWERS</div>
+          <div class="stat-value dim" id="follower-count">—</div>
+          <div class="stat-sub" id="channel-name">—</div>
         </div>
         <div class="stat-box">
           <div class="stat-label">OCR</div>
@@ -503,6 +564,14 @@
           <div id="all-followed"></div>
         </div>
 
+        <!-- WEAZEL NEWS (live feed from the Fameshire FiveM city) -->
+        <div class="sidebar-section weazel-section" id="weazel-section">
+          <h3><span class="weazel-live-dot"></span> 🛰 WEAZEL NEWS</h3>
+          <div id="weazel-feed">
+            <div class="weazel-empty">Waiting for the desk to go on air…</div>
+          </div>
+        </div>
+
         <!-- VOD QUEUE -->
         <div class="sidebar-section">
           <h3>📼 VODS <span id="vod-channel-label" style="color:var(--text-dim)"></span></h3>
@@ -520,7 +589,7 @@
 
   <div class="ticker">
     <div class="ticker-label">MOM TV</div>
-    <div class="ticker-content" id="ticker-text">MOMENTUM TV — Live Stream Viewer — gagarin.fameshire.com</div>
+    <div class="ticker-content" id="ticker-text">MOMENTUM TV — Live Stream Viewer — momtv.fameshire.com</div>
   </div>
 </div>
 
@@ -553,37 +622,229 @@ let streamStartTime = null;
 let chatMessageCount = 0;
 const MAX_SPARKLINE = 12;
 
+// --- New metrics state ---
+let peakViewers = 0;          // highest concurrent viewers this session
+let peakViewersAt = null;     // when that peak happened
+let previousViewerCount = null;
+let chatTimestamps = [];      // rolling window for msgs/min
+const chatRateWindowMs = 60_000; // compute rate over the last 60s
+const MAX_CHAT_SAMPLES = 500; // bound the array so it can't grow forever
+
+// Compact number formatting for the caption rows (3.2k, 1.4M).
+function formatCompact(n) {
+  if (typeof n !== "number" || !isFinite(n)) return "—";
+  if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
+  return String(n);
+}
+
 function updateViewerCount(count) {
   if (!count && count !== 0) return;
   document.getElementById("viewer-count").textContent = count.toLocaleString();
+
+  // Delta vs. the previous poll — absolute plus percentage, because "+2" is a
+  // huge story at 10 viewers and noise at 10,000.
+  const deltaEl = document.getElementById("viewer-delta");
+  if (previousViewerCount !== null) {
+    const diff = count - previousViewerCount;
+    const arrow = diff > 0 ? "▲" : diff < 0 ? "▼" : "■";
+    const cls = diff > 0 ? "up" : diff < 0 ? "down" : "flat";
+    // Guard divide-by-zero: from 0 viewers any gain is +100%.
+    const pct = previousViewerCount > 0
+      ? Math.round((diff / previousViewerCount) * 100)
+      : (diff > 0 ? 100 : 0);
+    const pctStr = diff === 0 ? "" : ` (${pct > 0 ? "+" : ""}${pct}%)`;
+    deltaEl.className = "stat-sub delta " + cls;
+    deltaEl.textContent = arrow + " " + (diff > 0 ? "+" : "") +
+      diff.toLocaleString() + pctStr;
+  } else {
+    deltaEl.className = "stat-sub delta flat";
+    deltaEl.textContent = "—";
+  }
+  previousViewerCount = count;
+
+  // Peak tracking
+  if (count > peakViewers) {
+    peakViewers = count;
+    peakViewersAt = new Date();
+    document.getElementById("peak-viewers").textContent = count.toLocaleString();
+    document.getElementById("peak-time").textContent =
+      "at " + peakViewersAt.toLocaleTimeString("en-US", { hour12: false });
+  }
+
   viewerHistory.push(count);
   if (viewerHistory.length > MAX_SPARKLINE) viewerHistory.shift();
   renderSparkline();
+  renderViewerAvg();
+  saveSessionState();
+}
+
+// The caption under the sparkline. Shows whether the stream is trending up or
+// down by comparing the recent half of the window against the earlier half —
+// a single "avg" number hides that direction entirely.
+function renderViewerAvg() {
+  const el = document.getElementById("viewer-avg");
+  if (viewerHistory.length === 0) { el.textContent = "—"; return; }
+  const avg = viewerHistory.reduce((a, b) => a + b, 0) / viewerHistory.length;
+  el.textContent = formatCompact(Math.round(avg)) + " avg";
+
+  if (viewerHistory.length < 4) return;
+  const half = Math.floor(viewerHistory.length / 2);
+  const older = viewerHistory.slice(0, half);
+  const recent = viewerHistory.slice(-half);
+  const avgOf = a => a.reduce((x, y) => x + y, 0) / a.length;
+  const olderAvg = avgOf(older);
+  const trend = avgOf(recent) - olderAvg;
+  // Ignore swings under 2% — at that point it's just polling noise.
+  if (olderAvg === 0 || Math.abs(trend) < olderAvg * 0.02) {
+    el.textContent += " · steady";
+    return;
+  }
+  const pct = Math.round((trend / olderAvg) * 100);
+  el.textContent += trend > 0 ? ` · ▲${pct}%` : ` · ▼${Math.abs(pct)}%`;
 }
 
 function renderSparkline() {
   const el = document.getElementById("sparkline");
   if (viewerHistory.length === 0) { el.innerHTML = ''; return; }
+  // Scale zero→peak so bar height is proportional to the real viewer count.
+  // Scaling min→max made small absolute swings look like dramatic spikes.
   const max = Math.max(...viewerHistory, 1);
-  el.innerHTML = viewerHistory.map(v => {
+  el.innerHTML = viewerHistory.map((v, i) => {
     const h = Math.max(2, Math.round((v / max) * 28));
-    return `<div class="spark-bar" style="height:${h}px"></div>`;
+    // Tint the newest bar so the leading edge reads at a glance.
+    const cls = i === viewerHistory.length - 1 ? "spark-bar latest" : "spark-bar";
+    return `<div class="${cls}" style="height:${h}px"></div>`;
   }).join("");
 }
 
+// Real stream start (from the GQL poll), so uptime stays correct across a
+// reload. Falls back to when this page embedded the player.
+let realStreamStartedAt = null;
+
 function updateUptime() {
-  if (!streamStartTime) { document.getElementById("uptime").textContent = "—"; return; }
-  const diff = Math.floor((Date.now() - streamStartTime) / 1000);
+  // Prefer Twitch's own createdAt; fall back to the local embed time.
+  const start = realStreamStartedAt || streamStartTime;
+  if (!start) {
+    document.getElementById("uptime").textContent = "—";
+    document.getElementById("uptime-start").textContent = "offline";
+    return;
+  }
+  const diff = Math.floor((Date.now() - start) / 1000);
+  if (diff < 0) {
+    // Clock skew / bad data — never render a negative uptime.
+    document.getElementById("uptime").textContent = "—";
+    document.getElementById("uptime-start").textContent = "—";
+    return;
+  }
   const h = Math.floor(diff / 3600);
   const m = Math.floor((diff % 3600) / 60);
   const s = diff % 60;
   document.getElementById("uptime").textContent =
     h > 0 ? `${h}h ${m}m` : `${m}m ${s}s`;
+  document.getElementById("uptime-start").textContent =
+    (realStreamStartedAt ? "started " : "since ") +
+    new Date(start).toLocaleTimeString("en-US", { hour12: false });
 }
 
 function incrementChatCount() {
   chatMessageCount++;
   document.getElementById("chat-count").textContent = chatMessageCount.toLocaleString();
+  chatTimestamps.push(Date.now());
+  if (chatMessageCount % 5 === 0) saveSessionState(); // don't hammer storage
+}
+
+// Messages per minute over a rolling 60s window.
+function renderChatRate() {
+  const el = document.getElementById("chat-rate");
+  if (chatMessageCount === 0) { el.textContent = "0 /min"; return; }
+  const cutoff = Date.now() - chatRateWindowMs;
+  while (chatTimestamps.length && chatTimestamps[0] < cutoff) chatTimestamps.shift();
+  if (chatTimestamps.length > MAX_CHAT_SAMPLES) {
+    chatTimestamps = chatTimestamps.slice(-MAX_CHAT_SAMPLES);
+  }
+  el.textContent = chatTimestamps.length + " /min";
+}
+
+// Follower count rides along on the existing GQL status poll, so it costs no
+// extra request. Stays "—" when the query fails or we're signed out.
+function updateFollowers(total, channel) {
+  const el = document.getElementById("follower-count");
+  const sub = document.getElementById("channel-name");
+  if (typeof total === "number" && isFinite(total)) {
+    el.textContent = formatCompact(total);
+    el.title = total.toLocaleString() + " followers";
+  } else {
+    el.textContent = "—";
+  }
+  sub.textContent = channel || "—";
+}
+
+// Per-channel persistence. Without this, every refresh wiped peak/chat counts,
+// so "peak" only ever meant "peak since I opened the tab". sessionStorage (not
+// localStorage) keeps it scoped to the tab and can't grow without bound.
+const SESSION_KEY = "momtv_metrics";
+
+function loadSessionState() {
+  try {
+    const all = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "{}");
+    return all[currentChannel] || null;
+  } catch { return null; }
+}
+
+function saveSessionState() {
+  try {
+    const all = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "{}");
+    all[currentChannel] = {
+      peakViewers,
+      peakViewersAt,
+      chatMessageCount,
+      viewerSamples: viewerHistory.length,
+    };
+    // Keep only the 10 most recent channels.
+    const keys = Object.keys(all);
+    if (keys.length > 10) keys.slice(0, keys.length - 10).forEach(k => delete all[k]);
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(all));
+  } catch { /* quota / private mode — metrics just won't persist */ }
+}
+
+function restoreSessionState() {
+  const s = loadSessionState();
+  if (!s) return;
+  peakViewers = s.peakViewers || 0;
+  peakViewersAt = s.peakViewersAt || null;
+  chatMessageCount = s.chatMessageCount || 0;
+  if (peakViewers > 0) {
+    document.getElementById("peak-viewers").textContent = peakViewers.toLocaleString();
+    document.getElementById("peak-time").textContent = peakViewersAt
+      ? "at " + new Date(peakViewersAt).toLocaleTimeString("en-US", { hour12: false })
+      : "this session";
+  }
+  if (chatMessageCount > 0) {
+    document.getElementById("chat-count").textContent = chatMessageCount.toLocaleString();
+  }
+}
+
+// Clear per-session metrics when switching channel or dropping to a VOD.
+function resetSessionMetrics() {
+  peakViewers = 0;
+  peakViewersAt = null;
+  previousViewerCount = null;
+  viewerHistory = [];
+  chatMessageCount = 0;
+  chatTimestamps = [];
+  // Must clear this too, or the previous channel's stream start leaks through
+  // and uptime shows the old channel's age until the next successful poll.
+  realStreamStartedAt = null;
+  streamStartTime = null;
+  document.getElementById("peak-viewers").textContent = "—";
+  document.getElementById("peak-time").textContent = "this session";
+  document.getElementById("chat-count").textContent = "0";
+  document.getElementById("chat-rate").textContent = "0 /min";
+  document.getElementById("viewer-avg").textContent = "—";
+  document.getElementById("viewer-delta").textContent = "—";
+  document.getElementById("viewer-count").textContent = "—";
+  document.getElementById("sparkline").innerHTML = "";
 }
 
 // ═══ TWITCH AUTH ═══
@@ -713,8 +974,9 @@ async function fetchVods(channel) {
 
 async function fetchStreamStatus(channel) {
   try {
+    // totalCount comes from the same poll as the viewer count — no extra request.
     const data = await gqlQuery(
-      `query($login:String!){user(login:$login){stream{type viewersCount game{displayName} title}videos(first:5,type:ARCHIVE,sort:TIME){edges{node{id title game{displayName}}}}}}`,
+      `query($login:String!){user(login:$login){followers{totalCount}stream{id createdAt viewersCount game{displayName} title}videos(first:5,type:ARCHIVE,sort:TIME){edges{node{id title game{displayName}}}}}}`,
       { login: channel }
     );
     return data?.user;
@@ -804,7 +1066,12 @@ function switchToLive() {
 }
 
 function switchToChannel(channel) {
+  // Metrics are per-channel: save the outgoing one, clear the display, then
+  // restore whatever we had for the incoming channel.
+  saveSessionState();
   currentChannel = channel;
+  resetSessionMetrics();
+  restoreSessionState();
   embedStream(channel);
   loadVods(channel);
   notifyWorkers(channel, true, null);
@@ -856,6 +1123,82 @@ async function fetchStreamStateFromWorkers() {
 }
 
 // ═══ VOD TRACKING ═══
+
+// ═══ WEAZEL NEWS FEED (live from the Fameshire FiveM city) ═══
+// The city's Weazel News desk (la_npc_ai/server/newsdesk.lua) writes a headline,
+// a lead sentence and a snapshot, and exposes the rolling feed at
+//   GET /la_npc_ai/weazel:getfeed   ->   { feed: [{headline, lead, image, time}], count }
+// We poll that JSON and render it as the Weazel News panel + the bottom ticker.
+// No game client is required to read it — the site only ever reads JSON.
+const WEAZEL_FEED_URL = localStorage.getItem("momtv_weazel_feed") ||
+  "https://momtv.fameshire.com/la_npc_ai/weazel:getfeed";
+let weazelLastTicker = "";
+
+function weazelTimeAgo(ts) {
+  const secs = Math.floor(Date.now() / 1000) - Number(ts || 0);
+  if (!isFinite(secs) || secs < 0) return "just now";
+  if (secs < 60) return "just now";
+  if (secs < 3600) return Math.floor(secs / 60) + "m ago";
+  if (secs < 86400) return Math.floor(secs / 3600) + "h ago";
+  return Math.floor(secs / 86400) + "d ago";
+}
+
+function renderWeazelFeed(items) {
+  const el = document.getElementById("weazel-feed");
+  if (!el) return;
+  if (!items || items.length === 0) {
+    el.innerHTML = '<div class="weazel-empty">Waiting for the desk to go on air…</div>';
+    return;
+  }
+  const view = items.slice(0, 5);   // newest first, capped so the panel stays short
+  el.innerHTML = view.map((it, i) => {
+    const img = it.image
+      ? `<img class="wc-img" src="${escapeHtml(it.image)}" alt="Weazel News snapshot"
+             onerror="this.style.display='none'">`
+      : "";
+    const studio = escapeHtml(it.studio || "Weazel News");
+    const lead = it.lead ? `<div class="wc-lead">${escapeHtml(it.lead)}</div>` : "";
+    const top = i === 0 ? ' style="border-left-color:var(--red)"' : "";
+    return `<div class="weazel-card"${top}>
+      <div class="wc-head">${escapeHtml(it.headline || "Weazel News")}</div>
+      ${lead}
+      ${img}
+      <div class="wc-meta"><span>${studio}</span><span>${weazelTimeAgo(it.time)}</span></div>
+    </div>`;
+  }).join("");
+}
+
+function updateWeazelTicker(items) {
+  const ticker = document.getElementById("ticker-text");
+  if (!ticker || !items || items.length === 0) return;
+  const line = items.slice(0, 8).map(it => it.headline || "Weazel News").join("   •   ");
+  const text = "WEAZEL NEWS  |  " + line;
+  if (text === weazelLastTicker) return;   // avoid restarting the scroll animation
+  weazelLastTicker = text;
+  ticker.textContent = text;
+}
+
+async function pollWeazelNews() {
+  try {
+    const res = await fetch(WEAZEL_FEED_URL, { cache: "no-store" });
+    if (!res.ok) return;
+    const data = await res.json();
+    const raw = Array.isArray(data) ? data : (data.feed || []);
+    if (!Array.isArray(raw)) return;
+    // Normalise {time} vs {timestamp} and sort newest first.
+    const items = raw.map(it => ({
+      headline: it.headline || it.title || "",
+      lead: it.lead || it.body || "",
+      image: it.image || it.image_url || "",
+      studio: it.studio || "",
+      time: it.time || it.timestamp || 0,
+    })).sort((a, b) => Number(b.time) - Number(a.time));
+    renderWeazelFeed(items);
+    updateWeazelTicker(items);
+  } catch (e) {
+    // Feed offline (city not running, or CORS) — leave the panel as-is.
+  }
+}
 
 function markWatched(vodId) {
   watchedVods.add(vodId);
@@ -936,6 +1279,18 @@ async function checkStream() {
   const user = await fetchStreamStatus(currentChannel);
   if (!user) return;
   const live = user.stream?.type === "live";
+
+  // Follower count is channel-level, so update it whether live or not.
+  updateFollowers(user.followers?.totalCount, currentChannel);
+
+  // Real stream start time — makes uptime correct after a page reload.
+  if (live && user.stream?.createdAt) {
+    const parsed = Date.parse(user.stream.createdAt);
+    if (!isNaN(parsed)) realStreamStartedAt = parsed;
+  } else if (!live) {
+    realStreamStartedAt = null;
+  }
+
   if (live && !isLive) {
     embedStream(currentChannel);
     updateViewerCount(user.stream?.viewersCount || 0);
@@ -950,6 +1305,12 @@ async function checkStream() {
   } else if (live) {
     updateViewerCount(user.stream?.viewersCount || 0);
     document.getElementById("stream-now").innerHTML = `<strong>${currentChannel}</strong> — ${user.stream.game?.displayName||""} — ${(user.stream.viewersCount||0).toLocaleString()} viewers`;
+  } else {
+    // Offline and already offline — keep the viewer metric honest rather than
+    // leaving the last known count sitting there looking current.
+    document.getElementById("viewer-count").textContent = "—";
+    document.getElementById("viewer-delta").className = "stat-sub delta flat";
+    document.getElementById("viewer-delta").textContent = "offline";
   }
 }
 
@@ -1018,7 +1379,14 @@ function initDragHandle() {
 
 // ═══ INIT ═══
 
-(async function init() {
+(function init() {
+  // Restore this channel's metrics before the first poll renders.
+  restoreSessionState();
+  updateUptime();
+  renderChatRate();
+})();
+
+(async function initAsync() {
   checkOAuthRedirect();
   if (!twitchToken) twitchToken = localStorage.getItem(TOKEN_KEY);
 
@@ -1045,7 +1413,12 @@ function initDragHandle() {
   setInterval(checkStream, 30000);       // Stream status every 30s
   setInterval(() => { if (twitchUser) loadFollowedChannels(); }, 120000);
   setInterval(updateUptime, 1000);       // Uptime every second
+  setInterval(renderChatRate, 5000);     // Chat msgs/min over a rolling 60s window
   setInterval(pollOcrStatus, 3000);      // OCR status every 3s
+
+  // Weazel News desk feed (headline + snapshot from the Fameshire FiveM city)
+  pollWeazelNews();
+  setInterval(pollWeazelNews, 15000);    // refresh the desk feed every 15s
 })();
 </script>
 </body>

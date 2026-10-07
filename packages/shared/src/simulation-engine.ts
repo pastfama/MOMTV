@@ -101,8 +101,13 @@ export class MOMTVSimulationEngine {
   private config: SimulationConfig;
   private tickTimer: ReturnType<typeof setInterval> | null = null;
   private memories: Map<string, CharacterMemory> = new Map();
-  private onAction: ((decision: AgentDecision, transaction: Transaction) => void) | null = null;
-  private onWorldStateUpdate: ((state: WorldState) => void) | null = null;
+  // NOTE: these hold the callbacks registered via onAction()/onWorldStateUpdate().
+  // They were previously named `onAction`/`onWorldStateUpdate`, which collided
+  // with the same-named methods below (TS2300) — the methods shadowed the fields,
+  // so `this.onAction = callback` assigned to the method and the field stayed
+  // permanently null. Renamed to `actionCallback`/`stateCallback` to fix that.
+  private actionCallback: ((decision: AgentDecision, transaction: Transaction) => void) | null = null;
+  private stateCallback: ((state: WorldState) => void) | null = null;
 
   constructor(
     initialState: WorldState,
@@ -146,14 +151,14 @@ export class MOMTVSimulationEngine {
    * Register callback for agent actions.
    */
   onAction(callback: (decision: AgentDecision, transaction: Transaction) => void): void {
-    this.onAction = callback;
+    this.actionCallback = callback;
   }
 
   /**
    * Register callback for world state updates.
    */
   onWorldStateUpdate(callback: (state: WorldState) => void): void {
-    this.onWorldStateUpdate = callback;
+    this.stateCallback = callback;
   }
 
   /**
@@ -161,7 +166,7 @@ export class MOMTVSimulationEngine {
    */
   updateWorldState(updates: Partial<WorldState>): void {
     this.worldState = { ...this.worldState, ...updates, timestamp: Date.now() };
-    this.onWorldStateUpdate?.(this.worldState);
+    this.stateCallback?.(this.worldState);
   }
 
   /**
@@ -280,13 +285,13 @@ export class MOMTVSimulationEngine {
       }
 
       // Emit action
-      this.onAction?.(decision, transaction);
+      this.actionCallback?.(decision, transaction);
 
       console.log(`[Simulation] ${agent.agentName}: ${decision.action} — "${decision.dialogue.slice(0, 50)}..."`);
     }
 
     // 4. Emit world state update
-    this.onWorldStateUpdate?.(this.worldState);
+    this.stateCallback?.(this.worldState);
   }
 
   /**

@@ -1,10 +1,20 @@
 node_modules/
 dist/
 .cache/
+.vite-temp/
 .env
 *.log
 *.swp
 *.zip
+
+# 3.8MB Azure API debug dump (git rm --cached, kept on disk)
+func-body.json
+
+# Duplicate Azure Functions deploy staging dirs; canonical copy is
+# packages/studio/api. These were three near-identical scratch copies.
+functions-temp/
+functions-temp2/
+functions-fix/
 
 # Build artifacts
 packages/shared/src/*.js

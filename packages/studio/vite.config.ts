@@ -1,8 +1,10 @@
 import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 import { resolve } from "path";
 
 export default defineConfig({
   root: ".",
+  plugins: [react()],
   resolve: {
     alias: {
       "@momtv/shared": resolve(__dirname, "../shared/src"),

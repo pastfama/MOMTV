@@ -573,7 +573,7 @@ export class Newsroom {
 
   private handleAnchorScript(script: AnchorScript): void {
     // Handle multi-exchange dialogue array (new format from director v3)
-    const dialogue = (script as Record<string, unknown>).dialogue as Array<{speaker: string; text: string; emotion?: string}> | undefined;
+    const dialogue = (script as unknown as Record<string, unknown>).dialogue as Array<{speaker: string; text: string; emotion?: string}> | undefined;
 
     if (dialogue && Array.isArray(dialogue) && dialogue.length > 0) {
       // Play each dialogue line with staggered timing
@@ -805,7 +805,7 @@ export class Newsroom {
     }, 300_000);
 
     // Expose for debugging
-    (window as Record<string, unknown>).momtvAnalytics = this.analyticsClient;
+    (window as unknown as Record<string, unknown>).momtvAnalytics = this.analyticsClient;
   }
 
   // ── Stream Watcher Report Handler ───────────────────────────
