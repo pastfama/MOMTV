@@ -4,6 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MOM TV — Live Stream Viewer</title>
+<style>
+/* Enforce Twitch iframe size */
+#stream-embed{min-width:400px;min-height:300px;}
+</style>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
     /* ═══════════════════════════════════════════════════════
@@ -177,7 +181,8 @@
     }
     /* Floor the embed size so the player is initialised at a non-zero size —
    below this, Twitch's autoplay policy ("size, viewport visibility") fails. */
-.stream-area iframe{width:100%;height:100%;min-width:280px;min-height:160px;border:none}
+/* Enforce Twitch minimum size 400x300. */
+.stream-area iframe{width:100%;height:100%;min-width:400px;min-height:300px;border:none}
 
     .stream-overlay{
       position:absolute;top:12px;left:12px;
@@ -555,6 +560,7 @@
         <div class="stream-overlay">
           <div class="overlay-badge overlay-studio" id="overlay-studio">MOM TV</div>
           <div class="overlay-badge overlay-cast" id="overlay-cast">Loading...</div>
+         <button id="play-back-btn" class="play-back-btn" style="display:none">▶︎</button>
           <div class="vod-badge" id="vod-badge" style="display:none">VOD</div>
         </div>
         <button class="back-live-btn" id="back-live-btn" onclick="switchToLive()">← Back to LIVE</button>
