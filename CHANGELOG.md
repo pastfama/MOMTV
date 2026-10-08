@@ -1,5 +1,11 @@
 # Changelog
 
+# Changelog
+
+## v0.4.9 — Embed visibility improvement
+- Updated embedIframeReady() to also verify that the iframe is actually within the viewport (bottom > 0 && top < window.innerHeight), preventing autoplay blocks due to the player being scrolled out of view.
+
+## v0.4.8 — Weazel banner width fix
 ## v0.4.8 — Weazel banner width fix
 - Changed .weazel-banner .wb-head and .weazel-banner .wb-lead from `flex:1 1 auto` to `flex:0 0 auto` so the banner only takes up space needed for its content, preventing it from stretching to full width on wide screens.
 
