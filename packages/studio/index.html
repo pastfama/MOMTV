@@ -175,7 +175,9 @@
       background:#000;
       overflow:hidden;
     }
-    .stream-area iframe{width:100%;height:100%;border:none}
+    /* Floor the embed size so the player is initialised at a non-zero size —
+   below this, Twitch's autoplay policy ("size, viewport visibility") fails. */
+.stream-area iframe{width:100%;height:100%;min-width:280px;min-height:160px;border:none}
 
     .stream-overlay{
       position:absolute;top:12px;left:12px;
@@ -549,7 +551,7 @@
   <div class="main">
     <div class="left-panel">
       <div class="stream-area">
-        <iframe id="stream-embed" allowfullscreen allow="autoplay; fullscreen; encrypted-media; picture-in-picture"></iframe>
+        <iframe id="stream-embed" allowfullscreen allow="autoplay; fullscreen; picture-in-picture"></iframe>
         <div class="stream-overlay">
           <div class="overlay-badge overlay-studio" id="overlay-studio">MOM TV</div>
           <div class="overlay-badge overlay-cast" id="overlay-cast">Loading...</div>
@@ -1070,6 +1072,18 @@ function renderChatEmbed(channel) {
 }
 
 // ═══ STREAM EMBED ═══
+//
+// Autoplay-safe mount. Twitch rejects *autoplay* if the player starts while
+// the tab is hidden or the iframe has no non-zero layout (the console error:
+// "minimum requirements … size, viewport visibility"). We therefore never set
+// `src` eagerly: embedStream()/embedVod() only *request* a URL, and the
+// scheduler below mounts it as soon as the page is visible AND the iframe has
+// a real box (>= 280x160, matching the CSS floor). After the mount, a time-
+// boxed play-pump drives the documented Twitch JS player API: if the player
+// does not confirm status "Playing" within ~45 s it is nudged once every
+// 5 s; on the first "Playing" the pump stops and the player reference is
+// closed, which releases the API listeners (fixes the
+// MaxListenersExceededWarning "Playing listeners" pile-up).
 
 function getParents() {
   const h = window.location.hostname;
@@ -1077,11 +1091,91 @@ function getParents() {
   return [h];
 }
 
+let pendingEmbedUrl = null;      // URL requested but not yet mounted
+let embedGeneration = 0;         // bumped on every mount so stale pumps die
+let embedMountTimer = null;      // layout/visibility poll
+let playPumpTimer = null;        // post-mount play() nudges
+
+function embedIframeReady() {
+  const f = document.getElementById("stream-embed");
+  if (!f || document.visibilityState !== "visible") return false;
+  const r = f.getBoundingClientRect();
+  return r.width >= 280 && r.height >= 160;
+}
+
+function scheduleEmbed(url) {
+  pendingEmbedUrl = url;
+  if (embedIframeReady()) { mountEmbed(); return; }
+  if (embedMountTimer) return;
+  let waited = 0;
+  embedMountTimer = setInterval(() => {
+    waited += 750;
+    if (pendingEmbedUrl && embedIframeReady()) {
+      clearInterval(embedMountTimer); embedMountTimer = null;
+      mountEmbed();
+    } else if (waited > 90000) {
+      // Give up waiting (e.g. page kept hidden): mount anyway so the viewer
+      // at least sees the stream with its play button instead of nothing.
+      clearInterval(embedMountTimer); embedMountTimer = null;
+      pendingEmbedUrl && mountEmbed();
+    }
+  }, 750);
+}
+
+function mountEmbed() {
+  const f = document.getElementById("stream-embed");
+  if (!f || !pendingEmbedUrl) return;
+  embedGeneration++;
+  const gen = embedGeneration;
+  const url = pendingEmbedUrl;
+  pendingEmbedUrl = null;
+  f.src = url;
+  startPlayPump(f, gen);
+}
+
+function stopPlayPump() {
+  if (playPumpTimer) { clearInterval(playPumpTimer); playPumpTimer = null; }
+}
+
+function startPlayPump(f, gen) {
+  stopPlayPump();
+  const start = Date.now();
+  playPumpTimer = setInterval(() => {
+    if (gen !== embedGeneration) { stopPlayPump(); return; }   // re-mounted
+    if (Date.now() - start > 45000) { stopPlayPump(); return; } // gave up
+    try {
+      const w = f.contentWindow;
+      if (!w || !w.Twitch) return;                              // player not up yet
+      let player = null;
+      try { player = w.Twitch.getCurrentPlayer(); } catch (e) {}
+      if (!player) return;
+      const state = (player.getPlayerState && player.getPlayerState()) || null;
+      if (state && state.status === "Playing") {
+        try { player.close(); } catch (e) {}   // release API listeners
+        stopPlayPump();
+        return;
+      }
+      // Not playing yet (Idle/Loading/Paused) — nudge once per tick.
+      try {
+        const pb = player.getPlayback && player.getPlayback();
+        if (pb && typeof pb.play === "function") pb.play();
+      } catch (e) {}
+    } catch (e) { /* cross-origin hiccup — next tick */ }
+  }, 5000);
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && pendingEmbedUrl && !embedMountTimer) scheduleEmbed(pendingEmbedUrl);
+});
+window.addEventListener("resize", () => {
+  if (pendingEmbedUrl && !embedMountTimer) scheduleEmbed(pendingEmbedUrl);
+});
+
 function embedStream(channel) {
   channel = channel || currentChannel;
   currentChannel = channel;
   const pp = getParents().map(p => `&parent=${p}`).join("");
-  document.getElementById("stream-embed").src = `https://player.twitch.tv/?channel=${channel}${pp}&autoplay=true&muted=true`;
+  scheduleEmbed(`https://player.twitch.tv/?channel=${channel}${pp}&autoplay=true&muted=true`);
   document.getElementById("vod-badge").style.display = "none";
   document.getElementById("back-live-btn").style.display = "none";
   document.getElementById("live-badge").textContent = "● LIVE";
@@ -1096,7 +1190,7 @@ function embedVod(vodId, title, channel) {
   channel = channel || currentChannel;
   const pp = getParents().map(p => `&parent=${p}`).join("");
   if (currentVodId) markWatched(currentVodId);
-  document.getElementById("stream-embed").src = `https://player.twitch.tv/?video=${vodId}${pp}&autoplay=true&muted=true`;
+  scheduleEmbed(`https://player.twitch.tv/?video=${vodId}${pp}&autoplay=true&muted=true`);
   document.getElementById("vod-badge").style.display = "inline";
   document.getElementById("back-live-btn").style.display = "block";
   document.getElementById("live-badge").textContent = "● VOD";

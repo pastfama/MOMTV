@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.4.2 — Twitch embed: autoplay-safe mount + listener cleanup
+- Stream embed no longer sets `src` eagerly: it is mounted only once the tab is visible and the iframe has a real layout box (>= 280x160), fixing the "Autoplay … not met: size, viewport visibility" rejection
+- Adds a CSS size floor for the embed iframe
+- Bounded post-mount play-pump uses the documented Twitch JS player API (`getCurrentPlayer` / `play`) and stops + `close()`s the player reference the moment status is "Playing" — releases the API listeners behind the `MaxListenersExceededWarning: 11 Playing listeners` pile-up
+- Drops the deprecated `encrypted-media` entry from the iframe `allow` attribute (was logging Feature Policy warnings)
+
+## v0.4.1 — Weazel News banner, demo fill, cache fix
+
 ## v0.4.0 — Weazel News + momtv.fameshire.com
 
 ### Added
