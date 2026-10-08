@@ -164,6 +164,7 @@
     }
 
     .left-panel{
+  min-width:400px;
       display:flex;flex-direction:column;
       overflow:hidden;
       border-right:1px solid var(--border-subtle);
@@ -171,6 +172,7 @@
     }
 
     /* ═══ STREAM AREA ═══ */
+  min-height:300px;
     .stream-area{
       position:relative;flex:1;min-height:300px;
       background:#000;
@@ -1101,7 +1103,7 @@ function embedIframeReady() {
   const f = document.getElementById("stream-embed");
   if (!f || document.visibilityState !== "visible") return false;
   const r = f.getBoundingClientRect();
-  return r.width >= 280 && r.height >= 160;
+  return r.width >= 400 && r.height >= 300 && r.bottom > 0 && r.top < window.innerHeight;
 }
 
 function scheduleEmbed(url) {
