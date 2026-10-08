@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.4.12 — Layout fix: Weazel banner gets its own grid row
+- **Root cause of the broken layout:** the Weazel News banner is a direct child of `.app`, but `.app`'s grid only defined 3 rows (`56px 1fr 32px`). CSS auto-placement therefore put the **banner into the 1fr middle row** (stretching it across the whole viewport) and **squashed `.main` — the stream, chat, and VODs — into the 32px footer row**, which is why nothing appeared.
+- Fixed by changing `.app` to `grid-template-rows:56px auto 1fr 32px;`: header 56px, banner its natural ~44px height, **`.main` gets the full 1fr middle**, ticker 32px.
+- Cleaned up stray/duplicate CSS declarations from earlier inserts (floating `min-height:300px;`, duplicate `min-width:400px;` in `.left-panel`).
+
+
 ## v0.4.10 — Stream area size guarantees
 - Added min-width:400px to .left-panel to ensure the stream container never shrinks below 400px.
 - Added min-height:300px to .stream-area to guarantee sufficient vertical space for the Twitch iframe.
