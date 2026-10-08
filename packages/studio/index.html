@@ -167,17 +167,18 @@
       display:flex;flex-direction:column;
       overflow:hidden;
       border-right:1px solid var(--border-subtle);
+      min-width:400px;
     }
 
     /* ═══ STREAM AREA ═══ */
     .stream-area{
-      position:relative;flex:1;min-height:0;
+      position:relative;flex:1;min-height:300px;
       background:#000;
       overflow:hidden;
     }
     /* Floor the embed size so the player is initialised at a non-zero size —
    below this, Twitch's autoplay policy ("size, viewport visibility") fails. */
-.stream-area iframe{width:100%;height:100%;min-width:280px;min-height:160px;border:none}
+.stream-area iframe{width:100%;height:100%;min-width:400px;min-height:300px;border:none}
 
     .stream-overlay{
       position:absolute;top:12px;left:12px;
