@@ -1,5 +1,11 @@
 # Changelog
 
+# Changelog
+
+## v0.4.7 — Stream area min-height fix
+- Added min-height:300px to .stream-area to guarantee the Twitch iframe has sufficient vertical space for autoplay, preventing clipping when the analytics panel consumes excess vertical space on narrow viewports.
+
+## v0.4.5 — Twitch embed: increased size threshold for autoplay safety
 ## v0.4.5 — Twitch embed: increased size threshold for autoplay safety
 - Increased the size threshold in the embed scheduler from 280x160 to 400x300 to match the CSS-enforced minimum iframe size, ensuring the player only mounts when the iframe is large enough to satisfy Twitch's autoplay size requirement.
 - Updated comments to reflect the new threshold.
