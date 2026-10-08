@@ -61,7 +61,8 @@ is required** to see the news.
 
 | Piece | What it does |
 |-------|--------------|
-| **Feed** | `GET https://momtv.fameshire.com/la_npc_ai/weazel:getfeed` → `{ feed: [{ headline, lead, image, time, studio }], count }` |
+| **Publish** | The city's Weazel News desk POSTs each broadcast to `POST https://momtv.fameshire.com/api/reports` — `momtv-server.js` stores it in memory (capped at 200 items, CORS-open) |
+| **Feed** | The site polls `GET https://momtv.fameshire.com/api/reports` → `{ feed: [{ headline, lead, image, time, studio }], count }` |
 | **Panel** | Up to 5 cards, newest first: headline, lead sentence, anchor snapshot, studio + "Xm ago" stamp. The newest card is marked red while it is fresh. |
 | **Ticker** | The bottom bar scrolls the 8 most recent Weazel News headlines. |
 | **Polling** | Every 15 s. A failed fetch (city offline, CORS) leaves the last good render in place rather than blanking the panel. |

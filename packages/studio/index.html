@@ -1131,7 +1131,7 @@ async function fetchStreamStateFromWorkers() {
 // We poll that JSON and render it as the Weazel News panel + the bottom ticker.
 // No game client is required to read it — the site only ever reads JSON.
 const WEAZEL_FEED_URL = localStorage.getItem("momtv_weazel_feed") ||
-  "https://momtv.fameshire.com/la_npc_ai/weazel:getfeed";
+  (window.location.origin + "/api/reports");
 let weazelLastTicker = "";
 
 function weazelTimeAgo(ts) {

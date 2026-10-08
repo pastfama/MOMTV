@@ -5,8 +5,9 @@
 ### Added
 - **Weazel News panel** (`packages/studio/index.html`) — a live 🛰 WEAZEL NEWS section in
   the sidebar, fed by the Fameshire FiveM city's news desk
-  (`la_npc_ai/server/newsdesk.lua`). Polls
-  `GET https://momtv.fameshire.com/la_npc_ai/weazel:getfeed` every 15 s and renders up to
+  (`la_npc_ai/server/newsdesk.lua`). The city POSTs each broadcast to
+  `https://momtv.fameshire.com/api/reports`; the site polls the same endpoint back every
+  15 s and renders up to
   5 cards (headline, lead sentence, anchor snapshot, studio, "Xm ago"); the newest card is
   marked red while it is fresh. **No game client is required** — the page only reads JSON.
 - **News ticker** now scrolls the 8 most recent Weazel News headlines.
