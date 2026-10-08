@@ -1090,6 +1090,85 @@ function renderChatEmbed(channel) {
 // 5 s; on the first "Playing" the pump stops and the player reference is
 // closed, which releases the API listeners (fixes the
 // MaxListenersExceededWarning "Playing listeners" pile-up).
+/* Fallback button for autoplay failures */
+(function() {
+  // Ensure button exists
+  if (!document.getElementById('play-back-btn')) {
+    const overlay = document.querySelector('.stream-overlay');
+    if (overlay) {
+      const btn = document.createElement('button');
+      btn.id = 'play-back-btn';
+      btn.className = 'play-back-btn';
+      btn.title = 'Click to play';
+      btn.innerHTML = '▶︎';
+      btn.style.display = 'none';
+      overlay.appendChild(btn);
+    }
+  }
+  // Ensure button style
+  if (!document.getElementById('play-back-btn-style')) {
+    const style = document.createElement('style');
+    style.id = 'play-back-btn-style';
+    style.textContent = `
+      .play-back-btn{
+        background:linear-gradient(135deg,var(--red-bright),var(--red));
+        border:none;border-radius:50%;
+        width:36px;height:36px;
+        font-size:20px;color:#fff;display:flex;align-items:center;justify-content:center;
+        box-shadow:0 4px 12px rgba(239,68,68,0.4);
+        cursor:pointer;transition:transform .2s;
+      }
+      .play-back-btn:hover{transform:scale(1.1)};
+    `;
+    document.head.appendChild(style);
+  }
+  // Show button after delay if not already shown via other means
+  let fallbackTimeout = null;
+  function scheduleFallback() {
+    if (fallbackTimeout) clearTimeout(fallbackTimeout);
+    fallbackTimeout = setTimeout(() => {
+      const btn = document.getElementById('play-back-btn');
+      if (btn && btn.style.display === 'none') {
+        btn.style.display = 'flex';
+      }
+    }, 15000);
+  }
+  // Hide button and play video when clicked
+  document.addEventListener('click', function(e) {
+    if (e.target && e.target.id === 'play-back-btn') {
+      const iframe = document.getElementById('stream-embed');
+      if (iframe) {
+        try {
+          const w = iframe.contentWindow;
+          if (w && w.Twitch) {
+            const player = w.Twitch.getCurrentPlayer();
+            if (player) {
+              player.play();
+            }
+          }
+        } catch (e) {}
+      }
+      e.target.style.display = 'none';
+      if (fallbackTimeout) clearTimeout(fallbackTimeout);
+    }
+  });
+  // Expose function to call from mountEmbed
+  window.scheduleAutoplayFallback = scheduleFallback;
+  // Observe iframe src changes to reschedule fallback
+  const targetNode = document.getElementById('stream-embed');
+  if (targetNode) {
+    const config = { attributes: true, attributeFilter: ['src'] };
+    const callback = function(mutationsList, observer) {
+      for (const mutation of mutationsList) {
+        if (mutation.type === 'attributes' && mutation.attrName === 'src') {
+          window.scheduleAutoplayFallback();
+        }
+      }
+    };
+    const observer = new MutationObserver(callback);
+    observer.observe(targetNode, config);
+  }
+})();
 
 function getParents() {
   const h = window.location.hostname;
