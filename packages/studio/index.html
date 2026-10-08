@@ -1085,7 +1085,7 @@ function renderChatEmbed(channel) {
 // "minimum requirements … size, viewport visibility"). We therefore never set
 // `src` eagerly: embedStream()/embedVod() only *request* a URL, and the
 // scheduler below mounts it as soon as the page is visible AND the iframe has
-// a real box (>= 280x160, matching the CSS floor). After the mount, a time-
+// a real box (>= 400x300, matching the CSS floor). After the mount, a time-
 // boxed play-pump drives the documented Twitch JS player API: if the player
 // does not confirm status "Playing" within ~45 s it is nudged once every
 // 5 s; on the first "Playing" the pump stops and the player reference is
@@ -1186,7 +1186,7 @@ function embedIframeReady() {
   const f = document.getElementById("stream-embed");
   if (!f || document.visibilityState !== "visible") return false;
   const r = f.getBoundingClientRect();
-  return r.width >= 280 && r.height >= 160;
+  return r.width >= 400 && r.height >= 300;
 }
 
 function scheduleEmbed(url) {
@@ -1686,3 +1686,4 @@ function initDragHandle() {
 </script>
 </body>
 </html>
+<!-- dummy -->

@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.4.5 — Twitch embed: increased size threshold for autoplay safety
+- Increased the size threshold in the embed scheduler from 280x160 to 400x300 to match the CSS-enforced minimum iframe size, ensuring the player only mounts when the iframe is large enough to satisfy Twitch's autoplay size requirement.
+- Updated comments to reflect the new threshold.
+
 ## v0.4.4 — Stream area min-width fix
 - Added min-width:400px to .left-panel to ensure the Twitch iframe never shrinks below the 400px minimum required for autoplay, eliminating residual “size, viewport visibility” errors on narrow windows.
 
