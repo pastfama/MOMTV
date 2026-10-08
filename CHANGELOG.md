@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.4.10 — Stream area size guarantees
+- Added min-width:400px to .left-panel to ensure the stream container never shrinks below 400px.
+- Added min-height:300px to .stream-area to guarantee sufficient vertical space for the Twitch iframe.
+- Increased iframe minimum size to 400×300px to match Twitch's autoplay requirement.
 ## v0.4.2 — Twitch embed: autoplay-safe mount + listener cleanup
 - Stream embed no longer sets `src` eagerly: it is mounted only once the tab is visible and the iframe has a real layout box (>= 280x160), fixing the "Autoplay … not met: size, viewport visibility" rejection
 - Adds a CSS size floor for the embed iframe
