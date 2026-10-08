@@ -1264,6 +1264,7 @@ function embedStream(channel) {
   document.getElementById("live-badge").textContent = "● LIVE";
   document.getElementById("live-badge").style.background = "linear-gradient(135deg,#ef4444,#ff5757)";
   isLive = true; currentVodId = null;
+  offlinePolls = 0;   // fresh live intent — the auto-VOD switch gets a new window
   streamStartTime = Date.now();
   renderChatEmbed(channel);
   document.getElementById("overlay-cast").textContent = channel;
@@ -1537,11 +1538,11 @@ function escapeHtml(t) { const d = document.createElement("div"); d.textContent 
 
 // Consecutive offline polls — one GQL hiccup (or a stream restarting) reads
 // as "offline" for a single poll and must not kick the viewer into VODs.
+// TWO consecutive offline polls (~60s) are required before the auto-switch
+// fires, so the first poll after a page load or channel switch can never
+// flip a stream the viewer just started watching. embedStream() resets the
+// count on every fresh live intent.
 let offlinePolls = 0;
-// A poll has confirmed the stream was actually live. Until then (e.g. the
-// page just loaded on an offline channel) an offline report drops to VODs
-// immediately rather than leaving the viewer on an empty offline screen.
-let wasLiveConfirmed = false;
 
 async function checkStream() {
   // Snapshot the channel and live-intent at request time. The response can
@@ -1569,20 +1570,20 @@ async function checkStream() {
   }
 
   if (live && !isLive) {
-    offlinePolls = 0; wasLiveConfirmed = false;
+    offlinePolls = 0;
     embedStream(currentChannel);
     updateViewerCount(user.stream?.viewersCount || 0);
     document.getElementById("stream-now").innerHTML = `<strong>${currentChannel}</strong> — ${user.stream.game?.displayName||""} — ${(user.stream.viewersCount||0).toLocaleString()} viewers`;
   } else if (!live && isLive) {
-    // A single offline report must not kill a stream the viewer is actively
-    // watching. If the stream was never confirmed live (page loaded on an
-    // offline channel) drop to VODs straight away; otherwise require two
-    // consecutive offline polls (~60s) before auto-switching.
-    if (wasLiveConfirmed) {
-      offlinePolls++;
-      if (offlinePolls < 2) return;
-    }
-    offlinePolls = 0; wasLiveConfirmed = false;
+    // A single offline report must NEVER kill a stream the viewer is
+    // watching — one GQL hiccup, a stream restarting, or a poll that raced
+    // a channel switch all read as "offline" once. Two consecutive offline
+    // polls (~60s) are required before the auto-switch fires.
+    console.warn("[checkStream] poll reports offline for", currentChannel,
+      "(stream:", user.stream, ") — offline poll", offlinePolls + 1, "of 2");
+    offlinePolls++;
+    if (offlinePolls < 2) return;
+    offlinePolls = 0;
     await loadVods(currentChannel);
     if (allVods.length > 0) {
       const unwatched = getUnwatchedVods(allVods);
@@ -1590,7 +1591,7 @@ async function checkStream() {
       if (next) embedVod(next.id, next.title, currentChannel);
     }
   } else if (live) {
-    offlinePolls = 0; wasLiveConfirmed = true;
+    offlinePolls = 0;
     updateViewerCount(user.stream?.viewersCount || 0);
     document.getElementById("stream-now").innerHTML = `<strong>${currentChannel}</strong> — ${user.stream.game?.displayName||""} — ${(user.stream.viewersCount||0).toLocaleString()} viewers`;
   } else {

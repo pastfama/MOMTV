@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.5.2 — Fix: auto-VOD switch can no longer fire on the first poll
+- v0.5.1 kept an exception: if a poll had never confirmed the stream live, ONE offline
+  report dropped to VODs immediately — which fired on the first poll after every page load
+  or channel switch (~5s), flipping a stream the viewer had just started watching.
+- The two-consecutive-offline-polls debounce (~60s) is now **unconditional**: the first
+  poll after any load or channel switch can never trigger the auto-VOD switch, and
+  `embedStream()` resets the debounce on every fresh live intent (channel switch,
+  Back to LIVE).
+- Removed the `wasLiveConfirmed` state; added a `console.warn` diagnostic logging every
+  offline report (channel + raw stream value + poll count) so any remaining misfire can be
+  diagnosed straight from the browser console.
+
 ## v0.5.1 — Fix: live stream no longer flips to VODs within seconds
 - **Stale-poll race:** `checkStream()` fires at page load and its GQL response was not
   guarded against the viewer switching channels meanwhile. A stale response for the old
