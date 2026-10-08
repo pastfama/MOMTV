@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.4.8 — Weazel banner width fix
+- Changed .weazel-banner .wb-head and .weazel-banner .wb-lead from `flex:1 1 auto` to `flex:0 0 auto` so the banner only takes up space needed for its content, preventing it from stretching to full width on wide screens.
+
+
 # Changelog
 
 ## v0.4.7 — Stream area min-height fix
