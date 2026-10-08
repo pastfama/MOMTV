@@ -107,7 +107,14 @@ const server = http.createServer((req, res) => {
       res.end('Not Found');
       return;
     }
-    res.writeHead(200, { 'Content-Type': contentType });
+    // Cache policy: HTML revalidates quickly so UI deploys land fast.
+    const cacheControl = ext === '.html'
+      ? 'no-cache'
+      : 'public, max-age=3600';
+    res.writeHead(200, {
+      'Content-Type': contentType + (ext === '.html' ? '; charset=utf-8' : ''),
+      'Cache-Control': cacheControl,
+    });
     res.end(data);
   });
 });
