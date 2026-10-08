@@ -76,7 +76,7 @@
 
     .app{
       display:grid;
-      grid-template-rows:56px 1fr 32px;
+      grid-template-rows:56px auto 1fr 32px;
       height:100vh;
       position:relative;
       z-index:1;
@@ -164,7 +164,6 @@
     }
 
     .left-panel{
-  min-width:400px;
       display:flex;flex-direction:column;
       overflow:hidden;
       border-right:1px solid var(--border-subtle);
@@ -172,7 +171,6 @@
     }
 
     /* ═══ STREAM AREA ═══ */
-  min-height:300px;
     .stream-area{
       position:relative;flex:1;min-height:300px;
       background:#000;
