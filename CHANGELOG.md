@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.5.0 — Retro CRT redesign
+- Full visual redesign of the viewer (`packages/studio/index.html`): analog-TV aesthetic —
+  phosphor-green palette, `VT323` display font (replaces Space Grotesk), chromatic-aberration
+  logo, ON AIR lamp, CRT OSD-style stream badges and metrics strip, amber news marquee.
+- **Chunky TV cabinet bezel** wraps the whole app (`.app` border + bezel ring + inset shadow),
+  with a power-on flash, scanline/flicker overlay and curvature vignette.
+- **Responsive layout added** — previously there were no media queries at all: the grid now
+  narrows at 1100px and stacks (stream above sidebar) at 860px. The stacked mobile layout
+  wins over the inline grid template that `applySettings()` writes via `!important`, and the
+  chat section height is likewise pinned at 45vh on phones.
+- Embed mount floor is adaptive: `embedIframeReady()` now accepts a 300×220 iframe on
+  viewports < 860px (phones), keeping the 400×300 floor on desktop so Twitch's autoplay
+  policy is still satisfied.
+- **No behaviour changes** — every feature (Twitch login, followed channels, VODs, chat,
+  Weazel News, metrics) and every JS hook (element IDs, toggled classes) is untouched.
+
 ## v0.4.12 — Layout fix: Weazel banner gets its own grid row
 - **Root cause of the broken layout:** the Weazel News banner is a direct child of `.app`, but `.app`'s grid only defined 3 rows (`56px 1fr 32px`). CSS auto-placement therefore put the **banner into the 1fr middle row** (stretching it across the whole viewport) and **squashed `.main` — the stream, chat, and VODs — into the 32px footer row**, which is why nothing appeared.
 - Fixed by changing `.app` to `grid-template-rows:56px auto 1fr 32px;`: header 56px, banner its natural ~44px height, **`.main` gets the full 1fr middle**, ticker 32px.

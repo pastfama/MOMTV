@@ -179,7 +179,12 @@ that `vite build` alone did not catch.
 
 ## History
 
-### v0.4 — Weazel News + momtv.fameshire.com *(current)*
+### v0.5 — Retro CRT redesign *(current)*
+- Full visual redesign: analog-TV aesthetic with phosphor glow, chunky cabinet bezel,
+  power-on flash, scanlines and CRT OSD styling — plus the site's first responsive layout.
+- No feature or behaviour changes.
+
+### v0.4 — Weazel News + momtv.fameshire.com
 - **Weazel News panel**: live headlines, lead sentences and anchor snapshots from the Fameshire FiveM city, polled every 15 s from `/la_npc_ai/weazel:getfeed`
 - **Ticker** now scrolls the Weazel News headlines
 - **Gagarin is gone**: every reference to the deleted `gagarin.fameshire.com` app removed — the site is `momtv.fameshire.com`, and the deploy secret is `AZURE_STATIC_WEB_APPS_API_TOKEN_MOMTV`

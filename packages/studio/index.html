@@ -4,46 +4,55 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MOM TV — Live Stream Viewer</title>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
     /* ═══════════════════════════════════════════════════════
-       MOM TV — Simplified Stream Viewer
+       MOM TV — Retro CRT Edition
+       Analog TV: phosphor glow, chunky bezels, broadcast OSD.
        ═══════════════════════════════════════════════════════ */
 
     :root {
-      --bg-base: #08080d;
-      --bg-surface: #0e0e16;
-      --bg-elevated: #14141f;
-      --bg-glass: rgba(20, 20, 31, 0.6);
-      --bg-glass-hover: rgba(30, 30, 45, 0.7);
-      --border-subtle: rgba(255, 255, 255, 0.06);
-      --border-default: rgba(255, 255, 255, 0.1);
-      --border-accent: rgba(232, 121, 75, 0.25);
-      --accent: #e8794b;
-      --accent-bright: #f59e6b;
-      --accent-glow: rgba(232, 121, 75, 0.15);
+      /* Cabinet + screen */
+      --bg-base: #070a06;
+      --bg-surface: #0c100a;
+      --bg-elevated: #11150c;
+      --bg-glass: rgba(17, 21, 12, 0.72);
+      --bg-glass-hover: rgba(26, 32, 18, 0.8);
+      --bezel: #16190f;
+      --bezel-deep: #0e1007;
+      /* Phosphor palette */
+      --accent: #4dff9d;
+      --accent-bright: #7dffb8;
+      --accent-glow: rgba(77, 255, 157, 0.18);
+      --amber: #ffb454;
+      --amber-bright: #ffcf85;
       --purple: #9146ff;
       --purple-light: #b380ff;
-      --red: #ef4444;
-      --red-bright: #ff5757;
+      --red: #ff3b30;
+      --red-bright: #ff6259;
       --green: #22c55e;
       --green-light: #4ade80;
       --yellow: #eab308;
       --yellow-light: #facc15;
-      --text-primary: #f5ede0;
-      --text-secondary: #b8b0a4;
-      --text-muted: #6b6558;
-      --text-dim: #4a4640;
-      --font-display: 'Space Grotesk', sans-serif;
+      /* Borders */
+      --border-subtle: rgba(125, 255, 184, 0.08);
+      --border-default: rgba(125, 255, 184, 0.16);
+      --border-accent: rgba(77, 255, 157, 0.35);
+      /* Text */
+      --text-primary: #dcffe9;
+      --text-secondary: #96c5a6;
+      --text-muted: #5e8468;
+      --text-dim: #415c49;
+      --font-display: 'VT323', monospace;
       --font-body: 'Inter', sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
-      --radius-sm: 6px;
-      --radius-md: 10px;
-      --radius-lg: 14px;
-      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-      --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
-      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
-      --shadow-glow: 0 0 24px rgba(232, 121, 75, 0.12);
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 16px;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+      --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.5);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+      --shadow-glow: 0 0 24px rgba(77, 255, 157, 0.12);
       --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
@@ -51,44 +60,67 @@
 
     html,body{
       width:100%;height:100%;overflow:hidden;
-      background:var(--bg-base);
+      background:#040503;
       font-family:var(--font-body);
       color:var(--text-primary);
       -webkit-font-smoothing:antialiased;
       -moz-osx-font-smoothing:grayscale;
     }
 
-    /* Scanline texture overlay */
-    body::after{
-      content:'';position:fixed;inset:0;
-      background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.015) 2px,rgba(0,0,0,.015) 3px);
-      pointer-events:none;z-index:9999
-    }
-
-    /* Ambient glow background */
-    body::before{
-      content:'';position:fixed;inset:0;
-      background:
-        radial-gradient(ellipse 80% 50% at 20% 0%, rgba(232,121,75,0.06), transparent),
-        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(145,70,255,0.04), transparent);
-      pointer-events:none;z-index:0;
-    }
-
+    /* The whole app sits inside a chunky TV cabinet */
     .app{
       display:grid;
-      grid-template-rows:56px auto 1fr 32px;
-      height:100vh;
+      grid-template-rows:54px auto 1fr 34px;
+      height:calc(100vh - 28px);
+      margin:14px;
       position:relative;
       z-index:1;
+      background:var(--bg-base);
+      border:1px solid rgba(255,255,255,0.06);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow:
+        0 0 0 7px var(--bezel),
+        0 0 0 8px rgba(255,255,255,0.04),
+        0 18px 50px rgba(0,0,0,0.7),
+        inset 0 0 60px rgba(0,0,0,0.45);
+      animation:crt-on .7s ease-out;
     }
 
-    /* ═══ HEADER ═══ */
+    /* Power-on flash: the picture collapses in like a tube warming up */
+    @keyframes crt-on{
+      0%{transform:scaleY(.004);filter:brightness(8)}
+      55%{transform:scaleY(1);filter:brightness(2)}
+      100%{transform:none;filter:none}
+    }
+
+    /* Scanlines + a subtle flicker, laid over the whole picture */
+    .app::after{
+      content:'';position:absolute;inset:0;
+      background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.05) 2px,rgba(0,0,0,.05) 3px);
+      pointer-events:none;z-index:9999;
+      animation:flicker 7s infinite;
+    }
+    @keyframes flicker{
+      0%,100%{opacity:1}91%{opacity:1}92%{opacity:.85}
+      93%{opacity:1}96%{opacity:.93}
+    }
+    /* Curvature vignette + phosphor ambience */
+    .app::before{
+      content:'';position:absolute;inset:0;
+      background:
+        radial-gradient(ellipse 120% 90% at 50% 50%, transparent 62%, rgba(0,0,0,0.5) 100%),
+        radial-gradient(ellipse 80% 50% at 20% 0%, rgba(77,255,157,0.05), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(145,70,255,0.04), transparent);
+      pointer-events:none;z-index:9998;
+    }
+
+    /* ═══ HEADER — the control panel ═══ */
     .header{
       display:flex;align-items:center;justify-content:space-between;
       padding:0 20px;
-      background:var(--bg-surface);
+      background:linear-gradient(180deg,var(--bg-elevated),var(--bg-surface));
       border-bottom:1px solid var(--border-subtle);
-      backdrop-filter:blur(20px);
       position:relative;
     }
     .header::after{
@@ -100,43 +132,50 @@
 
     .logo{
       font-family:var(--font-display);
-      font-size:20px;font-weight:700;
+      font-size:34px;font-weight:400;
       color:var(--accent);
-      letter-spacing:1px;
-      text-shadow:0 0 20px var(--accent-glow);
+      letter-spacing:2px;
+      text-shadow:
+        2px 0 rgba(255,59,48,0.45),
+        -2px 0 rgba(80,160,255,0.35),
+        0 0 18px var(--accent-glow);
     }
-    .logo span{color:var(--text-primary);font-weight:400}
+    .logo span{color:var(--amber-bright);font-weight:400}
 
+    /* ON AIR lamp — JS recolours this (purple) while a VOD plays */
     .live-badge{
       background:linear-gradient(135deg,var(--red),var(--red-bright));
-      color:#fff;font-size:10px;font-weight:700;
-      padding:3px 10px;border-radius:var(--radius-sm);
-      animation:pulse 2s infinite;letter-spacing:1px;
-      box-shadow:0 0 12px rgba(239,68,68,0.3);
+      color:#fff;font-family:var(--font-mono);font-size:10px;font-weight:700;
+      padding:4px 10px;border-radius:3px;
+      animation:pulse 2s infinite;letter-spacing:1.5px;
+      border:1px solid rgba(255,255,255,0.25);
+      box-shadow:0 0 12px rgba(255,59,48,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
     }
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
 
     .header-right{display:flex;align-items:center;gap:16px}
     .clock{
-      font-family:var(--font-mono);
-      font-size:14px;font-weight:500;
-      color:var(--accent);
-      letter-spacing:1px;
+      font-family:var(--font-display);
+      font-size:22px;font-weight:400;
+      color:var(--amber);
+      letter-spacing:2px;
+      text-shadow:0 0 12px rgba(255,180,84,0.35);
     }
 
     .login-btn{
-      background:linear-gradient(135deg,rgba(145,70,255,0.15),rgba(145,70,255,0.08));
+      background:linear-gradient(180deg,rgba(145,70,255,0.18),rgba(145,70,255,0.08));
       color:var(--purple-light);
-      border:1px solid rgba(145,70,255,0.25);
+      border:1px solid rgba(145,70,255,0.35);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,0.08), 0 2px 8px rgba(0,0,0,0.4);
       padding:6px 16px;border-radius:var(--radius-sm);
       font-size:12px;font-weight:600;cursor:pointer;
       font-family:var(--font-body);
       transition:var(--transition);
     }
     .login-btn:hover{
-      background:linear-gradient(135deg,rgba(145,70,255,0.25),rgba(145,70,255,0.12));
-      border-color:rgba(145,70,255,0.4);
-      box-shadow:0 0 16px rgba(145,70,255,0.15);
+      background:linear-gradient(180deg,rgba(145,70,255,0.3),rgba(145,70,255,0.14));
+      border-color:rgba(145,70,255,0.5);
+      box-shadow:0 0 16px rgba(145,70,255,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
     }
 
     .user-info{display:flex;align-items:center;gap:10px}
@@ -154,7 +193,7 @@
       transition:var(--transition);
       padding:2px 6px;border-radius:4px;
     }
-    .logout-btn:hover{color:var(--accent);background:rgba(232,121,75,0.08)}
+    .logout-btn:hover{color:var(--amber);background:rgba(255,180,84,0.08)}
 
     /* ═══ MAIN LAYOUT ═══ */
     .main{
@@ -170,11 +209,12 @@
       min-width:400px;
     }
 
-    /* ═══ STREAM AREA ═══ */
+    /* ═══ STREAM AREA — the tube ═══ */
     .stream-area{
       position:relative;flex:1;min-height:300px;
       background:#000;
       overflow:hidden;
+      box-shadow:inset 0 0 70px rgba(0,0,0,0.55);
     }
     /* Floor the embed size so the player is initialised at a non-zero size —
    below this, Twitch's autoplay policy ("size, viewport visibility") fails. */
@@ -185,53 +225,59 @@
       display:flex;gap:8px;z-index:10;pointer-events:none;
     }
     .overlay-badge{
-      background:rgba(8,8,13,0.75);
-      backdrop-filter:blur(12px);
-      padding:5px 12px;border-radius:var(--radius-sm);
-      font-size:11px;font-weight:600;
-      border:1px solid var(--border-default);
+      background:rgba(4,7,3,0.75);
+      backdrop-filter:blur(8px);
+      padding:4px 10px;border-radius:3px;
+      font-family:var(--font-mono);
+      font-size:12px;font-weight:600;
+      border:1px solid var(--border-accent);
     }
     .overlay-studio{
-      color:var(--accent);
-      border-color:rgba(232,121,75,0.3);
+      color:var(--accent-bright);
+      border-color:rgba(77,255,157,0.4);
       text-shadow:0 0 8px var(--accent-glow);
     }
-    .overlay-cast{color:var(--text-secondary)}
+    .overlay-cast{color:var(--amber-bright);border-color:rgba(255,180,84,0.3)}
 
     .vod-badge{
-      background:linear-gradient(135deg,rgba(139,92,246,0.85),rgba(124,58,237,0.85));
-      color:#fff;font-size:10px;font-weight:700;
-      padding:3px 10px;border-radius:var(--radius-sm);
-      box-shadow:0 0 12px rgba(139,92,246,0.2);
+      background:linear-gradient(135deg,rgba(145,70,255,0.85),rgba(124,58,237,0.85));
+      color:#fff;font-family:var(--font-mono);font-size:10px;font-weight:700;
+      padding:3px 10px;border-radius:3px;letter-spacing:1px;
+      box-shadow:0 0 12px rgba(145,70,255,0.3);
     }
 
     .back-live-btn{
       position:absolute;top:12px;right:12px;
-      background:linear-gradient(135deg,rgba(239,68,68,0.9),rgba(220,38,38,0.9));
-      color:#fff;border:none;
+      background:linear-gradient(180deg,rgba(255,59,48,0.92),rgba(220,38,38,0.92));
+      color:#fff;border:1px solid rgba(255,255,255,0.25);
       padding:6px 14px;border-radius:var(--radius-sm);
       font-size:11px;font-weight:700;cursor:pointer;
-      z-index:10;font-family:var(--font-body);
+      font-family:var(--font-mono);letter-spacing:1px;
+      z-index:10;
       display:none;
       transition:var(--transition);
-      box-shadow:0 2px 12px rgba(239,68,68,0.2);
+      box-shadow:0 0 14px rgba(255,59,48,0.35), inset 0 1px 0 rgba(255,255,255,0.2);
     }
     .back-live-btn:hover{
-      background:linear-gradient(135deg,var(--red),var(--red-bright));
-      box-shadow:0 4px 16px rgba(239,68,68,0.3);
+      background:linear-gradient(180deg,var(--red),var(--red-bright));
+      box-shadow:0 0 20px rgba(255,59,48,0.5), inset 0 1px 0 rgba(255,255,255,0.25);
     }
 
     .stream-bottom{
       position:absolute;bottom:0;left:0;right:0;
-      background:linear-gradient(transparent,rgba(0,0,0,0.85));
+      background:linear-gradient(transparent,rgba(2,4,1,0.88));
       padding:16px 20px 10px;
       display:flex;justify-content:space-between;align-items:flex-end;
       pointer-events:none;z-index:10;
     }
-    .stream-now{font-size:12px;color:var(--text-muted)}
-    .stream-now strong{color:var(--accent);font-weight:600}
+    .stream-now{
+      font-family:var(--font-mono);
+      font-size:12px;color:var(--text-secondary);
+      text-shadow:0 0 8px rgba(0,0,0,0.8);
+    }
+    .stream-now strong{color:var(--accent-bright);font-weight:600}
 
-    /* ═══ ANALYTICS PANEL ═══ */
+    /* ═══ ANALYTICS PANEL — the OSD strip ═══ */
     .analytics-panel{
       background:var(--bg-surface);
       border-top:1px solid var(--border-subtle);
@@ -255,25 +301,27 @@
       text-transform:uppercase;
     }
     .stat-value{
-      font-family:var(--font-mono);
-      font-size:16px;font-weight:700;
-      color:var(--accent);
+      font-family:var(--font-display);
+      font-size:22px;font-weight:400;
+      color:var(--accent-bright);
+      text-shadow:0 0 12px var(--accent-glow);
+      line-height:1;
     }
-    .stat-value.green{color:var(--green-light)}
-    .stat-value.purple{color:var(--purple-light)}
-    .stat-value.red{color:var(--red-bright)}
+    .stat-value.green{color:var(--green-light);text-shadow:0 0 12px rgba(74,222,128,0.25)}
+    .stat-value.purple{color:var(--purple-light);text-shadow:0 0 12px rgba(179,128,255,0.25)}
+    .stat-value.red{color:var(--red-bright);text-shadow:0 0 12px rgba(255,98,89,0.25)}
     /* Small caption under a value (e.g. "peak 412", "3.2k avg") */
     .stat-sub{font-family:var(--font-mono);font-size:9px;color:var(--text-dim)}
     /* Up/down delta arrow */
     .delta.up{color:var(--green-light)}
     .delta.down{color:var(--red-bright)}
     .delta.flat{color:var(--text-dim)}
-    .stat-value.dim{color:var(--text-dim)}
+    .stat-value.dim{color:var(--text-muted);text-shadow:none}
 
     .ocr-status{display:flex;align-items:center;gap:6px;font-size:11px}
     .ocr-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
-    .ocr-dot.active{background:var(--green);animation:pulse 2s infinite}
-    .ocr-dot.inactive{background:#555}
+    .ocr-dot.active{background:var(--green);animation:pulse 2s infinite;box-shadow:0 0 6px var(--green)}
+    .ocr-dot.inactive{background:#3a453a}
     .ocr-count{color:var(--text-dim);font-size:10px}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
@@ -287,11 +335,12 @@
       border-radius:2px 2px 0 0;
       min-height:2px;
       transition:height 0.3s ease;
+      box-shadow:0 0 4px var(--accent-glow);
     }
     /* Newest sample, so the leading edge is easy to pick out */
     .spark-bar.latest{background:var(--green-light);box-shadow:0 0 6px var(--green)}
 
-    /* ═══ SIDEBAR ═══ */
+    /* ═══ SIDEBAR — the module rack ═══ */
     .sidebar{
       background:var(--bg-surface);
       overflow:hidden;
@@ -301,7 +350,7 @@
 
     .sidebar-section{
       padding:14px 16px;
-      border-bottom:1px solid var(--border-subtle);
+      border-bottom:1px dashed var(--border-default);
     }
     .sidebar-section h3{
       font-family:var(--font-mono);
@@ -320,12 +369,13 @@
       border:1px solid transparent;
     }
     .channel-item:hover{
-      background:rgba(145,70,255,0.06);
-      border-color:rgba(145,70,255,0.1);
+      background:rgba(77,255,157,0.06);
+      border-color:rgba(77,255,157,0.14);
     }
     .channel-item.active{
-      background:rgba(145,70,255,0.1);
-      border-color:rgba(145,70,255,0.2);
+      background:rgba(77,255,157,0.1);
+      border-color:rgba(77,255,157,0.3);
+      box-shadow:inset 0 0 12px rgba(77,255,157,0.06);
     }
     .channel-live-dot{
       width:9px;height:9px;border-radius:50%;
@@ -334,7 +384,7 @@
     .channel-live-dot.online{
       background:var(--red);
       animation:pulse 1.5s infinite;
-      box-shadow:0 0 6px rgba(239,68,68,0.4);
+      box-shadow:0 0 6px rgba(255,59,48,0.5);
     }
     .channel-live-dot.offline{background:var(--text-dim)}
     .channel-info{flex:1;min-width:0}
@@ -359,16 +409,16 @@
       border:1px solid transparent;
     }
     .vod-item:hover{
-      background:rgba(139,92,246,0.06);
-      border-color:rgba(139,92,246,0.1);
+      background:rgba(145,70,255,0.06);
+      border-color:rgba(145,70,255,0.16);
     }
     .vod-item.active{
-      background:rgba(139,92,246,0.1);
-      border-color:rgba(139,92,246,0.15);
+      background:rgba(145,70,255,0.1);
+      border-color:rgba(145,70,255,0.25);
     }
     .vod-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
     .vod-dot.watched{background:rgba(34,197,94,0.5)}
-    .vod-dot.current{background:var(--red);animation:pulse 1.5s infinite;box-shadow:0 0 6px rgba(239,68,68,0.4)}
+    .vod-dot.current{background:var(--red);animation:pulse 1.5s infinite;box-shadow:0 0 6px rgba(255,59,48,0.5)}
     .vod-dot.pending{background:var(--text-dim)}
     .vod-title{
       color:var(--text-secondary);flex:1;min-width:0;
@@ -380,7 +430,7 @@
     .chat-section{
       flex-shrink:0;height:50vh;
       display:flex;flex-direction:column;
-      border-top:2px solid rgba(232,121,75,0.2);
+      border-top:3px double rgba(77,255,157,0.25);
       background:var(--bg-elevated);
     }
     .chat-section h3{
@@ -396,41 +446,43 @@
       border-radius:var(--radius-md);
       overflow:hidden;
       border:1px solid var(--border-subtle);
+      box-shadow:inset 0 0 24px rgba(0,0,0,0.4);
     }
     .chat-embed iframe{width:100%;height:100%;border:none}
 
     /* Drag handle */
     .drag-handle{
       height:6px;cursor:row-resize;
-      background:rgba(232,121,75,0.1);
+      background:rgba(255,180,84,0.08);
       flex-shrink:0;position:relative;
       transition:var(--transition);
     }
     .drag-handle:hover,.drag-handle.active{
-      background:rgba(232,121,75,0.3);
+      background:rgba(255,180,84,0.28);
     }
     .drag-handle::after{
       content:'';position:absolute;top:50%;left:50%;
       transform:translate(-50%,-50%);
       width:36px;height:2px;
-      background:rgba(232,121,75,0.4);
+      background:rgba(255,180,84,0.45);
       border-radius:1px;
     }
 
     .hidden{display:none!important}
 
-    /* ═══ TICKER ═══ */
+    /* ═══ TICKER — the amber news marquee ═══ */
     .ticker{
       display:flex;align-items:center;
-      background:linear-gradient(90deg,var(--accent),var(--accent-bright));
-      color:var(--bg-base);
-      font-weight:700;font-size:11px;letter-spacing:.5px;
+      background:linear-gradient(90deg,var(--amber),var(--amber-bright));
+      color:#0a0d06;
+      font-family:var(--font-display);
+      font-weight:400;font-size:16px;letter-spacing:1px;
       overflow:hidden;
-      box-shadow:0 -2px 12px rgba(232,121,75,0.1);
+      box-shadow:0 -2px 14px rgba(255,180,84,0.12);
     }
     .ticker-label{
-      background:var(--bg-base);
-      color:var(--accent);
+      background:var(--bezel-deep);
+      color:var(--amber);
       padding:0 14px;
       font-family:var(--font-mono);
       font-size:10px;letter-spacing:2px;
@@ -474,9 +526,9 @@
       color:var(--text-secondary);flex:0 0 auto;
     }
     .weazel-banner .wb-head{
-      font-family:var(--font-display);font-weight:700;font-size:14px;line-height:1.3;
+      font-family:var(--font-display);font-weight:400;font-size:17px;line-height:1.2;
       color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-      flex:1 1 auto;
+      flex:1 1 auto;text-shadow:0 0 10px rgba(0,0,0,0.6);
     }
     .weazel-banner .wb-lead{
       font-size:11px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;
@@ -488,6 +540,7 @@
     .weazel-banner .wb-img{
       width:72px;height:40px;object-fit:cover;border-radius:4px;
       border:1px solid var(--border-default);flex:0 0 auto;background:var(--bg-base);
+      filter:sepia(0.2) saturate(0.85);
     }
     /* Sidebar cards */
     .weazel-card{
@@ -500,8 +553,8 @@
     }
     .weazel-card:hover{background:var(--bg-glass-hover);border-color:var(--border-accent)}
     .weazel-card .wc-head{
-      font-family:var(--font-display);font-weight:700;font-size:13px;
-      line-height:1.35;color:var(--text-primary);
+      font-family:var(--font-display);font-weight:400;font-size:16px;
+      line-height:1.2;color:var(--text-primary);
     }
     .weazel-card .wc-lead{font-size:11px;color:var(--text-secondary);margin-top:4px;line-height:1.45}
     .weazel-card .wc-meta{
@@ -509,8 +562,9 @@
       margin-top:6px;letter-spacing:.4px;display:flex;justify-content:space-between;
     }
     .weazel-card .wc-img{
-      width:100%;height:auto;border-radius:4px;margin-top:8px;
+      width:100%;height:auto;border-radius:3px;margin-top:8px;
       display:block;background:var(--bg-base);
+      filter:sepia(0.2) saturate(0.85);
     }
     .weazel-empty{font-size:10px;color:var(--text-dim);padding:6px 2px}
 
@@ -518,10 +572,35 @@
     ::-webkit-scrollbar{width:5px}
     ::-webkit-scrollbar-track{background:transparent}
     ::-webkit-scrollbar-thumb{
-      background:rgba(232,121,75,0.15);
+      background:rgba(77,255,157,0.18);
       border-radius:3px;
     }
-    ::-webkit-scrollbar-thumb:hover{background:rgba(232,121,75,0.3)}
+    ::-webkit-scrollbar-thumb:hover{background:rgba(77,255,157,0.35)}
+
+    /* ═══ RESPONSIVE — the set adapts to smaller rooms ═══ */
+    @media (max-width:1100px){
+      .main{grid-template-columns:1fr 340px}
+      .left-panel{min-width:0}
+    }
+    @media (max-width:860px){
+      body{padding:0}
+      .app{height:100vh;margin:0;border-radius:0;
+        box-shadow:none;animation:none}
+      /* applySettings() writes grid-template-columns inline — !important
+         wins over that so the layout stacks on phones. */
+      .main{grid-template-columns:1fr !important;display:flex;flex-direction:column;overflow-y:auto}
+      .left-panel{border-right:none;flex:none;min-width:0}
+      .stream-area{flex:none;height:56vw;max-height:70vh;min-height:300px}
+      .stream-area iframe{min-width:300px;min-height:220px}
+      .sidebar{flex:none}
+      .drag-handle{display:none}
+      .chat-section{height:45vh !important}
+      .chat-embed{min-height:260px}
+      .logo{font-size:26px}
+      .clock{font-size:18px}
+      .header{padding:0 12px}
+      .header-left,.header-right{gap:10px}
+    }
   </style>
 </head>
 <body>
@@ -1101,7 +1180,10 @@ function embedIframeReady() {
   const f = document.getElementById("stream-embed");
   if (!f || document.visibilityState !== "visible") return false;
   const r = f.getBoundingClientRect();
-  return r.width >= 400 && r.height >= 300 && r.bottom > 0 && r.top < window.innerHeight;
+  // Smaller floor on phones so the embed can mount inside the stacked
+  // 16:9-ish viewport box the mobile layout gives it.
+  const small = window.innerWidth < 860;
+  return r.width >= (small ? 300 : 400) && r.height >= (small ? 220 : 300) && r.bottom > 0 && r.top < window.innerHeight;
 }
 
 function scheduleEmbed(url) {
