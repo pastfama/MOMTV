@@ -1186,7 +1186,7 @@ function embedIframeReady() {
   const f = document.getElementById("stream-embed");
   if (!f || document.visibilityState !== "visible") return false;
   const r = f.getBoundingClientRect();
-  return r.width >= 400 && r.height >= 300;
+  return r.width >= 400 && r.height >= 300 && r.bottom > 0 && r.top < window.innerHeight;
 }
 
 function scheduleEmbed(url) {
