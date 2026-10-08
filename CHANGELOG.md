@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.4.4 — Stream area min-width fix
+- Added min-width:400px to .left-panel to ensure the Twitch iframe never shrinks below the 400px minimum required for autoplay, eliminating residual “size, viewport visibility” errors on narrow windows.
+
 ## v0.4.3 — Twitch embed: fallback button, size enforcement, listener safety
 - Added a CSS-enforced minimum iframe size of 400×300px (Twitch's published autoplay minimum)
 - Added a fallback “▶︎ Play” button that appears after a 15‑second delay if the Twitch player does not reach the “Playing” state, allowing the user to start the stream manually when autoplay is blocked
