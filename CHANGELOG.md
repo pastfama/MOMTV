@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.4.3 — Twitch embed: fallback button, size enforcement, listener safety
+- Added a CSS-enforced minimum iframe size of 400×300px (Twitch's published autoplay minimum)
+- Added a fallback “▶︎ Play” button that appears after a 15‑second delay if the Twitch player does not reach the “Playing” state, allowing the user to start the stream manually when autoplay is blocked
+- Added a MutationObserver that watches for iframe `src` changes (e.g., channel/VOD switches) and reschedules the fallback timer
+- Retained the existing autoplay‑safe mount scheduler (visible + sufficient size) and the bounded play‑pump that closes the player reference on “Playing” state, preventing the `MaxListenersExceededWarning: 11 Playing listeners` pile-up
+
 ## v0.4.2 — Twitch embed: autoplay-safe mount + listener cleanup
 - Stream embed no longer sets `src` eagerly: it is mounted only once the tab is visible and the iframe has a real layout box (>= 280x160), fixing the "Autoplay … not met: size, viewport visibility" rejection
 - Adds a CSS size floor for the embed iframe
