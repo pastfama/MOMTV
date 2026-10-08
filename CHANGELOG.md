@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.5.1 — Fix: live stream no longer flips to VODs within seconds
+- **Stale-poll race:** `checkStream()` fires at page load and its GQL response was not
+  guarded against the viewer switching channels meanwhile. A stale response for the old
+  (offline) channel — often the reason the viewer just switched to a live one — hit the
+  `!live && isLive` branch and flipped the new stream into VODs within seconds. Poll
+  responses are now snapshotted (channel + live intent at request time) and dropped if
+  either changed.
+- **Reruns read as offline:** GQL reports rerun streams with `type:"rerun"`, which the
+  `type === "live"` check treated as offline — flipping a playing rerun into VODs on every
+  poll. Reruns now count as live.
+- **Single-poll auto-switch debounce:** one offline report no longer auto-plays a VOD while
+  the viewer is actively watching. If a poll has confirmed the stream live, two consecutive
+  offline polls (~60s) are required; if the stream was never confirmed live (page loaded on
+  an offline channel), the drop to VODs stays immediate.
+
 ## v0.5.0 — Retro CRT redesign
 - Full visual redesign of the viewer (`packages/studio/index.html`): analog-TV aesthetic —
   phosphor-green palette, `VT323` display font (replaces Space Grotesk), chromatic-aberration

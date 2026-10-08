@@ -1535,10 +1535,27 @@ function escapeHtml(t) { const d = document.createElement("div"); d.textContent 
 
 // ═══ STREAM STATUS LOOP ═══
 
+// Consecutive offline polls — one GQL hiccup (or a stream restarting) reads
+// as "offline" for a single poll and must not kick the viewer into VODs.
+let offlinePolls = 0;
+// A poll has confirmed the stream was actually live. Until then (e.g. the
+// page just loaded on an offline channel) an offline report drops to VODs
+// immediately rather than leaving the viewer on an empty offline screen.
+let wasLiveConfirmed = false;
+
 async function checkStream() {
+  // Snapshot the channel and live-intent at request time. The response can
+  // arrive after the viewer has switched channels or hit "Back to LIVE" — a
+  // stale poll for the OLD channel (likely offline, which is why they
+  // switched) must not flip the stream they are now watching into VODs.
+  const channelAtRequest = currentChannel;
+  const isLiveAtRequest = isLive;
   const user = await fetchStreamStatus(currentChannel);
+  if (channelAtRequest !== currentChannel || isLiveAtRequest !== isLive) return;
   if (!user) return;
-  const live = user.stream?.type === "live";
+  // Reruns play in the player just like live — GQL reports them with
+  // type "rerun", which must not read as "offline".
+  const live = user.stream?.type === "live" || user.stream?.type === "rerun";
 
   // Follower count is channel-level, so update it whether live or not.
   updateFollowers(user.followers?.totalCount, currentChannel);
@@ -1552,10 +1569,20 @@ async function checkStream() {
   }
 
   if (live && !isLive) {
+    offlinePolls = 0; wasLiveConfirmed = false;
     embedStream(currentChannel);
     updateViewerCount(user.stream?.viewersCount || 0);
     document.getElementById("stream-now").innerHTML = `<strong>${currentChannel}</strong> — ${user.stream.game?.displayName||""} — ${(user.stream.viewersCount||0).toLocaleString()} viewers`;
   } else if (!live && isLive) {
+    // A single offline report must not kill a stream the viewer is actively
+    // watching. If the stream was never confirmed live (page loaded on an
+    // offline channel) drop to VODs straight away; otherwise require two
+    // consecutive offline polls (~60s) before auto-switching.
+    if (wasLiveConfirmed) {
+      offlinePolls++;
+      if (offlinePolls < 2) return;
+    }
+    offlinePolls = 0; wasLiveConfirmed = false;
     await loadVods(currentChannel);
     if (allVods.length > 0) {
       const unwatched = getUnwatchedVods(allVods);
@@ -1563,6 +1590,7 @@ async function checkStream() {
       if (next) embedVod(next.id, next.title, currentChannel);
     }
   } else if (live) {
+    offlinePolls = 0; wasLiveConfirmed = true;
     updateViewerCount(user.stream?.viewersCount || 0);
     document.getElementById("stream-now").innerHTML = `<strong>${currentChannel}</strong> — ${user.stream.game?.displayName||""} — ${(user.stream.viewersCount||0).toLocaleString()} viewers`;
   } else {
