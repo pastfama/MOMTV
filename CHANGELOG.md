@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.5.3 — Fix: the live-detection bug itself + VCR OSD stats strip
+- **Root cause of the live→VOD flip:** `fetchStreamStatus()` never requested `type` in
+  the stream sub-selection, so `user.stream?.type === "live"` was **always false** — every
+  playing stream read as "offline" on every poll and eventually flipped to VODs (console
+  showed a full stream object, 79 viewers, logged as "offline"). Live detection is now
+  **presence-based** (`!!user.stream` — GQL nulls the field when a channel is offline),
+  which covers live AND rerun and can never regress on a missing field; `type` is also
+  requested for the record.
+- **Stats bar redesigned** as a VCR/OSD strip: one continuous inset tape-deck display with
+  thin vertical rules between stats, oversized glowing VT323 numbers (VIEWERS is the
+  headline cell at 34px), a faint scanline sheen, and tighter cells on mobile. Pure CSS —
+  the markup and every JS hook are untouched.
+
 ## v0.5.2 — Fix: auto-VOD switch can no longer fire on the first poll
 - v0.5.1 kept an exception: if a poll had never confirmed the stream live, ONE offline
   report dropped to VODs immediately — which fired on the first poll after every page load
