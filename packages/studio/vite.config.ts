@@ -27,5 +27,13 @@ export default defineConfig({
   },
   build: {
     outDir: "dist",
+    // Multi-page: the landing page (index.html) and the TV viewer (tv.html)
+    // are both independent entries, so both end up in dist/.
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, "index.html"),
+        tv: resolve(__dirname, "tv.html"),
+      },
+    },
   },
 });

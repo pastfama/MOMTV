@@ -5,7 +5,8 @@
 ## Features
 
 - **Stream Embed** — Embedded Twitch player with auto live/VOD switching
-- **Twitch Login** — OAuth login to access your followed channels
+- **Twitch Login** — Sign in with the MOM TV Twitch app via a server-side authorization-code flow (legacy client-ID prompt only as fallback)
+- **Google Login** — Sign in with Google via Azure Static Web Apps built-in auth (Easy Auth)
 - **Live Followed Panel** — See which followed channels are live, click to switch
 - **VOD Queue** — Browse and watch VODs with watched tracking
 - **Twitch Chat** — Full chat embed in sidebar
@@ -52,6 +53,73 @@ backend, no persistence.
 Note: chat metrics only populate when signed in to Twitch, since IRC counting
 requires an OAuth token. The other metrics are public and work signed-out.
 
+### Twitch Login (server-side OAuth)
+
+Twitch sign-in is now a proper **authorization-code flow** handled by the
+`/api/twitch` Azure Function. The client secret lives only in SWA app settings,
+users no longer paste a Client ID, and tokens are revoked on logout.
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /api/twitch/oauth-status` | `{ configured, clientId }` — lets the page pick the right flow |
+| `GET /api/twitch/oauth-start` | 302 to Twitch `authorize` (code flow, `state` in an HttpOnly cookie), carries a same-origin-validated `redirect` |
+| `GET /api/twitch/oauth-callback` | Validates state, exchanges the code using the secret, 302 back to the site with the token in the URL **fragment** (needed client-side for IRC chat + Helix; fragments never reach servers or history) |
+| `GET /api/twitch/oauth-logout` | Best-effort revoke of the token at Twitch |
+
+Scopes requested: `user:read:follows chat:read chat:edit`. If the app settings
+aren't configured yet, `oauth-status` reports `configured: false` and the page
+falls back to the old implicit-flow prompt — no breakage either way.
+
+**One-time setup:**
+
+1. At [dev.twitch.tv/console/apps](https://dev.twitch.tv/console/apps), create an
+   application named **MOM TV** with OAuth Redirect URL:
+   `https://<your-swa-host>.azurestaticapps.net/api/twitch/oauth-callback`
+2. Set the app settings:
+   ```bash
+   az staticwebapp appsettings set \
+     --name momtv \
+     --setting-names \
+       TWITCH_OAUTH_CLIENT_ID="<Client ID>" \
+       TWITCH_OAUTH_CLIENT_SECRET="<Client Secret>"
+   ```
+3. Verify: **Login with Twitch** should redirect straight to Twitch (no prompt),
+   and logging out revokes the token.
+
+### Google Login (Easy Auth)
+
+The header offers **Login with Google** alongside **Login with Twitch**. It uses
+Azure Static Web Apps' [built-in authentication](https://learn.microsoft.com/azure/static-web-apps/authentication-overview)
+(Easy Auth) — there are no new dependencies, and the Google client secret never
+touches the browser or the repo. The client just talks to:
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /.auth/me` | Restore the session → `{ clientPrincipal: { userId, userDetails, identityProvider } }` |
+| `GET /.auth/login/google` | Redirect to Google consent, then back to the site |
+| `GET /.auth/logout` | Clear the Easy Auth session cookie |
+
+**One-time setup** (the buttons render regardless, but login only works after
+this; until then they show an explanatory alert off-host):
+
+1. In [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials),
+   create an **OAuth 2.0 Client ID** (type: *Web application*).
+2. Add the authorized redirect URI:
+   `https://momtv.fameshire.com/.auth/login/google/callback`
+   (repeat for the `*.azurestaticapps.net` preview host if needed).
+3. Configure the SWA with the credentials:
+   ```bash
+   az staticwebapp auth google update \
+     --name momtv \
+     --google-client-id "<CLIENT_ID>" \
+     --google-client-secret "<CLIENT_SECRET>"
+   ```
+4. Verify: open the site → **Login with Google** → you should return signed in
+   (avatar initial + display name in the header).
+
+Twitch and Google sessions are independent: a Google session is shown only when
+no Twitch user is signed in, and Twitch login continues to work exactly as before.
+
 ### Weazel News (live from the Fameshire FiveM city)
 
 The sidebar carries a **🛰 WEAZEL NEWS** panel fed by the city's news desk
@@ -74,8 +142,16 @@ is required** to see the news.
 
 ## Current State (read this before assuming features exist)
 
-The deployed site is **only** `packages/studio/index.html` — a self-contained
-vanilla HTML/CSS/JS Twitch viewer. That is what `momtv.fameshire.com` serves.
+The deployed site has two self-contained vanilla HTML pages:
+
+- `packages/studio/index.html` — the **front page** (landing) served at
+  `momtv.fameshire.com`: hero, program-guide cards, sign-in strip, live status
+  pill and the Weazel News ticker.
+- `packages/studio/tv.html` — the **viewer** (the original self-contained
+  Twitch TV). Linked from the front page's "Watch Live" buttons.
+
+Both are emitted to `dist/` by `vite build` (multi-page `rollupOptions.input`)
+and served by the `momtv` App Service via `momtv-server.js`.
 
 The repository also contains a TypeScript "AI-Powered Cartoon TV Studio" in
 `packages/studio/src/` and `packages/shared/src/` (~300 KB). **None of it is
@@ -104,7 +180,7 @@ simply not reachable from the deployed entry point. See "Roadmap" below.
 
 | Layer | Technology |
 |-------|-----------|
-| **Deployed viewer** | Vanilla HTML/CSS/JS, self-contained in `index.html` |
+| **Deployed site** | Vanilla HTML/CSS/JS — `index.html` (front page) + `tv.html` (viewer) |
 | **Studio (not deployed)** | TypeScript, Vite, React 18 (components only) |
 | **Shared types** | TypeScript (`@momtv/shared`) |
 | **Hosting** | Azure Static Web Apps (Standard tier) |
@@ -122,7 +198,8 @@ MOMTV/
 │   ├── shared/              # Shared TypeScript types (@momtv/shared)
 │   │   └── src/             # models, events, characters, world-state, sim engine
 │   └── studio/              # The site
-│       ├── index.html       # Self-contained viewer — THIS is what deploys
+│       ├── index.html       # Front page / landing — served at /
+│       ├── tv.html          # Self-contained Twitch viewer — at /tv.html
 │       ├── vite.config.ts   # Vite build config
 │       ├── api/             # Azure Functions (agents, twitch, vision, …)
 │       └── src/             # Studio TypeScript — currently NOT built
@@ -135,8 +212,10 @@ MOMTV/
 
 ## Quick Start
 
-**Just view the deployed site** — open https://momtv.fameshire.com, or open
-`packages/studio/index.html` directly in a browser. No build step needed.
+**Just view the deployed site** — open https://momtv.fameshire.com (front page)
+or https://momtv.fameshire.com/tv.html (viewer), or open
+`packages/studio/index.html` / `packages/studio/tv.html` directly in a browser.
+No build step needed.
 
 **Work on the TypeScript:**
 
@@ -147,8 +226,8 @@ pnpm build            # shared (tsc) + studio (vite)
 pnpm studio           # vite dev server on :3000
 ```
 
-Note that `pnpm studio` serves `index.html`, so you will still see the vanilla
-viewer — the TypeScript has no entry point in the HTML yet.
+Note that `pnpm studio` serves the landing page at `/` and the viewer at
+`/tv.html` — the TypeScript has no entry point in either page yet.
 
 ## Deployment
 
