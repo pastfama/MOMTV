@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MOM TV — Always-On Live Stream Viewer</title>
-<meta name="description" content="MOM TV is an always-on Twitch viewer with followed channels, VOD queue, live chat, viewer analytics and Weazel News from the Fameshire FiveM city.">
+<meta name="description" content="MOM TV is an always-on Twitch viewer with followed channels, VOD queue, live chat and viewer analytics.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230b0a10'/><text x='50' y='68' font-size='56' text-anchor='middle' fill='%23ffb454' font-family='monospace'>M</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -269,8 +269,7 @@
   <h1>MOM <span>TV</span></h1>
   <p class="tagline">
     An <b>always-on retro TV station</b> for Twitch. Your followed channels,
-    VOD queue, live chat and viewer analytics — tuned into one CRT-sized screen,
-    with <b>Weazel News</b> bulletins wired in from the Fameshire FiveM city.
+    VOD queue, live chat and viewer analytics — tuned into one CRT-sized screen.
   </p>
   <div class="hero-ctas">
     <a class="cta-main" href="/tv.html">▶ Watch Live</a>
@@ -307,9 +306,9 @@
       <p>Twitch chat embedded in the sidebar, plus a messages-per-minute meter computed over a rolling 60-second window.</p>
     </div>
     <div class="card">
-      <div class="card-icon">🛰️</div>
-      <h3>Weazel News</h3>
-      <p>Live headlines and anchor snapshots beamed in from the news desk of the Fameshire FiveM city, streamed straight to the ticker.</p>
+      <div class="card-icon">🎛️</div>
+      <h3>Auto channel sync</h3>
+      <p>Picks up right where the capture workers left off, and auto-switches to the VOD queue the moment a live stream ends.</p>
     </div>
   </div>
 </section>
@@ -338,7 +337,7 @@
 
 <footer>
   <div class="foot-logo">MOM TV</div>
-  <div><a href="/tv.html">Watch live</a> · <a href="/api/reports">News API</a> · momtv.fameshire.com</div>
+  <div><a href="/tv.html">Watch live</a> · momtv.fameshire.com</div>
   <div class="foot-note">© 2026 MOM TV — MIT licensed · Powered by Twitch, Azure Static Web Apps and the Fameshire city</div>
 </footer>
 
@@ -374,41 +373,21 @@ const API_BASE = (location.hostname.includes("azurestaticapps.net") || location.
   text.textContent = "STANDBY — TUNE IN ANY TIME";
 })();
 
-// ═══ Weazel News ticker (same feed the studio polls) ═══
-const WEAZEL_FEED_URL = window.location.origin + "/api/reports";
-const DEMO_NEWS = [
-  { headline: "MOM TV IS ALWAYS ON", time: 0 },
-  { headline: "WEAZEL NEWS DESK ONLINE — bulletins appear here when the city publishes", time: 0 },
-  { headline: "SIGN IN FOR FOLLOWED CHANNELS — Twitch or Google, one click", time: 0 },
+// ═══ Ticker — MOM TV branding, rotated periodically ═══
+const TICKER_MESSAGES = [
+  "MOM TV — Always-On Live Stream Viewer — momtv.fameshire.com",
+  "FOLLOWED CHANNELS — see who's live, switch with one click",
+  "VOD QUEUE — watched tracking and auto-switch when a stream ends",
+  "CHAT METRICS FOR EVERYONE — signed in or not",
 ];
-
-function tickerLine(items) {
-  const now = Date.now();
-  return items.slice(0, 8).map((it) => {
-    const age = it.time ? Math.max(0, Math.round((now - Number(it.time)) / 60000)) : null;
-    const ageTxt = age !== null ? (age < 60 ? `${age}m ago` : `${Math.round(age / 60)}h ago`) : "";
-    return `<b>${it.headline}</b>${ageTxt ? ` — ${ageTxt}` : ""}<span class="sep">◆</span>`;
-  }).join(" ") + `<b>MOM TV</b> — momtv.fameshire.com`;
-}
-
-(async function pollNews() {
+let tickerIndex = 0;
+function rotateTicker() {
   const el = document.getElementById("ticker-text");
-  let items = [];
-  try {
-    const res = await fetch(WEAZEL_FEED_URL, { cache: "no-store" });
-    if (res.ok) {
-      const data = await res.json();
-      const raw = Array.isArray(data) ? data : (data.feed || []);
-      if (Array.isArray(raw) && raw.length > 0) {
-        items = raw.map(it => ({
-          headline: it.headline || it.title || "",
-          time: it.time || it.timestamp || 0,
-        })).sort((a, b) => Number(b.time) - Number(a.time));
-      }
-    }
-  } catch { /* offline — demo stories below */ }
-  el.innerHTML = tickerLine(items.length ? items : DEMO_NEWS);
-})();
+  if (!el) return;
+  tickerIndex = (tickerIndex + 1) % TICKER_MESSAGES.length;
+  el.textContent = TICKER_MESSAGES[tickerIndex];
+}
+setInterval(rotateTicker, 30000);
 </script>
 </body>
 </html>

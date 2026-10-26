@@ -358,11 +358,7 @@
     .delta.flat{color:var(--text-dim)}
     .stat-value.dim{color:var(--text-muted);text-shadow:none}
 
-    .ocr-status{display:flex;align-items:center;gap:8px;font-size:22px}
-    .ocr-dot{width:9px;height:9px;border-radius:50%;display:inline-block}
-    .ocr-dot.active{background:var(--green);animation:pulse 2s infinite;box-shadow:0 0 8px var(--green)}
-    .ocr-dot.inactive{background:#3a453a}
-    .ocr-count{color:var(--text-dim);font-size:12px;font-family:var(--font-mono)}
+
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
     .sparkline{
@@ -535,78 +531,6 @@
     }
     @keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
 
-    /* ═══ WEAZEL NEWS (live feed from the Fameshire FiveM city) ═══ */
-    .weazel-section h3{display:flex;align-items:center;gap:6px;font-size:12px}
-    .weazel-live-dot{
-      display:inline-block;width:7px;height:7px;border-radius:50%;
-      background:var(--red);box-shadow:0 0 8px var(--red);
-      animation:weazelPulse 1.6s ease-in-out infinite;
-    }
-    @keyframes weazelPulse{0%,100%{opacity:1}50%{opacity:.35}}
-    /* Breaking-news banner: sits under the header, shows the newest story */
-    .weazel-banner{
-      display:flex;align-items:center;gap:12px;
-      background:linear-gradient(90deg,rgba(255,45,45,.16),rgba(255,45,45,.05) 55%,transparent);
-      border-bottom:1px solid rgba(255,45,45,.35);
-      padding:8px 16px;min-height:44px;
-    }
-    .weazel-banner .wb-chip{
-      font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:1.5px;
-      color:#fff;background:var(--red);padding:3px 8px;border-radius:3px;
-      display:flex;align-items:center;gap:6px;flex:0 0 auto;
-      box-shadow:0 0 10px rgba(255,45,45,.6);
-    }
-    .wb-dot{
-      display:inline-block;width:6px;height:6px;border-radius:50%;background:#fff;
-      animation:weazelPulse 1.2s ease-in-out infinite;
-    }
-    .weazel-banner .wb-label{
-      font-family:var(--font-mono);font-size:10px;letter-spacing:1.2px;
-      color:var(--text-secondary);flex:0 0 auto;
-    }
-    .weazel-banner .wb-head{
-      font-family:var(--font-display);font-weight:400;font-size:17px;line-height:1.2;
-      color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-      flex:1 1 auto;text-shadow:0 0 10px rgba(0,0,0,0.6);
-    }
-    .weazel-banner .wb-lead{
-      font-size:11px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;
-      text-overflow:ellipsis;flex:1 1 auto;min-width:0;
-    }
-    .weazel-banner .wb-time{
-      font-family:var(--font-mono);font-size:10px;color:var(--text-muted);flex:0 0 auto;
-    }
-    .weazel-banner .wb-img{
-      width:72px;height:40px;object-fit:cover;border-radius:4px;
-      border:1px solid var(--border-default);flex:0 0 auto;background:var(--bg-base);
-      filter:sepia(0.2) saturate(0.85);
-    }
-    /* Sidebar cards */
-    .weazel-card{
-      background:var(--bg-elevated);
-      border:1px solid var(--border-default);
-      border-left:3px solid var(--accent);
-      border-radius:var(--radius-sm);
-      padding:10px;margin-bottom:10px;cursor:pointer;
-      transition:var(--transition);
-    }
-    .weazel-card:hover{background:var(--bg-glass-hover);border-color:var(--border-accent)}
-    .weazel-card .wc-head{
-      font-family:var(--font-display);font-weight:400;font-size:16px;
-      line-height:1.2;color:var(--text-primary);
-    }
-    .weazel-card .wc-lead{font-size:11px;color:var(--text-secondary);margin-top:4px;line-height:1.45}
-    .weazel-card .wc-meta{
-      font-family:var(--font-mono);font-size:9px;color:var(--text-muted);
-      margin-top:6px;letter-spacing:.4px;display:flex;justify-content:space-between;
-    }
-    .weazel-card .wc-img{
-      width:100%;height:auto;border-radius:3px;margin-top:8px;
-      display:block;background:var(--bg-base);
-      filter:sepia(0.2) saturate(0.85);
-    }
-    .weazel-empty{font-size:10px;color:var(--text-dim);padding:6px 2px}
-
     /* Scrollbar */
     ::-webkit-scrollbar{width:5px}
     ::-webkit-scrollbar-track{background:transparent}
@@ -662,14 +586,6 @@
     </div>
   </div>
 
-  <!-- WEAZEL NEWS breaking banner (newest story from the Fameshire desk) -->
-  <div class="weazel-banner" id="weazel-banner">
-    <span class="wb-chip"><span class="wb-dot"></span> WEAZEL NEWS</span>
-    <span class="wb-label" id="wb-label">LIVE FROM FAMESHIRE</span>
-    <span class="wb-head" id="wb-head">Waiting for the desk to go on air…</span>
-    <span class="wb-lead" id="wb-lead"></span>
-    <span class="wb-time" id="wb-time"></span>
-    <img class="wb-img" id="wb-img" src="" alt="" style="display:none">
   </div>
 
   <div class="main">
@@ -718,12 +634,29 @@
           <div class="stat-sub" id="channel-name">—</div>
         </div>
         <div class="stat-box">
-          <div class="stat-label">OCR</div>
-          <div class="stat-value ocr-status" id="ocr-status">
-            <span class="ocr-dot inactive" id="ocr-dot"></span>
-            <span id="ocr-label">Idle</span>
-            <span class="ocr-count" id="ocr-count"></span>
-          </div>
+          <div class="stat-label">GAME</div>
+          <div class="stat-value dim" id="stat-game" style="font-size:14px" title="">—</div>
+          <div class="stat-sub">category</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">CHATTERS</div>
+          <div class="stat-value dim" id="chatters-count">0</div>
+          <div class="stat-sub">this session</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">PEAK CHAT</div>
+          <div class="stat-value purple" id="peak-chat">—</div>
+          <div class="stat-sub">msgs/min peak</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">WATCH TIME</div>
+          <div class="stat-value green" id="watch-time">0s</div>
+          <div class="stat-sub">this session</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">VODS WATCHED</div>
+          <div class="stat-value dim" id="vods-watched">—</div>
+          <div class="stat-sub" id="vods-total">of — archived</div>
         </div>
       </div>
     </div>
@@ -736,14 +669,6 @@
           <div id="live-followed"></div>
           <h3 style="margin-top:12px">📺 FOLLOWED CHANNELS</h3>
           <div id="all-followed"></div>
-        </div>
-
-        <!-- WEAZEL NEWS (live feed from the Fameshire FiveM city) -->
-        <div class="sidebar-section weazel-section" id="weazel-section">
-          <h3><span class="weazel-live-dot"></span> 🛰 WEAZEL NEWS</h3>
-          <div id="weazel-feed">
-            <div class="weazel-empty">Waiting for the desk to go on air…</div>
-          </div>
         </div>
 
         <!-- VOD QUEUE -->
@@ -805,6 +730,10 @@ let peakViewers = 0;          // highest concurrent viewers this session
 let peakViewersAt = null;     // when that peak happened
 let previousViewerCount = null;
 let chatTimestamps = [];      // rolling window for msgs/min
+let uniqueChatters = new Set(); // distinct chatters seen this session
+let peakChatRate = 0;         // highest msgs/min observed this session
+let watchElapsedMs = 0;       // watch time carried over from before a reload
+let watchStartedAt = null;    // when the current watch stretch began
 const chatRateWindowMs = 60_000; // compute rate over the last 60s
 const MAX_CHAT_SAMPLES = 500; // bound the array so it can't grow forever
 
@@ -925,14 +854,21 @@ function updateUptime() {
     new Date(start).toLocaleTimeString("en-US", { hour12: false });
 }
 
-function incrementChatCount() {
+function incrementChatCount(user) {
   chatMessageCount++;
   document.getElementById("chat-count").textContent = chatMessageCount.toLocaleString();
   chatTimestamps.push(Date.now());
+  // Unique chatters this session (also powers the CHATTERS metric).
+  if (user) {
+    uniqueChatters.add(user.toLowerCase());
+    const chatterEl = document.getElementById("chatters-count");
+    if (chatterEl) chatterEl.textContent = uniqueChatters.size.toLocaleString();
+  }
   if (chatMessageCount % 5 === 0) saveSessionState(); // don't hammer storage
 }
 
-// Messages per minute over a rolling 60s window.
+// Messages per minute over a rolling 60s window. Also tracks the session's
+// peak rate for the PEAK CHAT metric.
 function renderChatRate() {
   const el = document.getElementById("chat-rate");
   if (chatMessageCount === 0) { el.textContent = "0 /min"; return; }
@@ -941,7 +877,53 @@ function renderChatRate() {
   if (chatTimestamps.length > MAX_CHAT_SAMPLES) {
     chatTimestamps = chatTimestamps.slice(-MAX_CHAT_SAMPLES);
   }
-  el.textContent = chatTimestamps.length + " /min";
+  const rate = chatTimestamps.length;
+  el.textContent = rate + " /min";
+  if (rate > peakChatRate) {
+    peakChatRate = rate;
+    const pk = document.getElementById("peak-chat");
+    if (pk) pk.textContent = rate + " /min";
+  }
+}
+
+// Watch time for the current channel this session (reloads preserved).
+function updateWatchTime() {
+  const el = document.getElementById("watch-time");
+  if (!el) return;
+  if (!watchStartedAt) { el.textContent = "—"; return; }
+  const total = Math.floor((watchElapsedMs + (Date.now() - watchStartedAt)) / 1000);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  el.textContent = h > 0 ? `${h}h ${m}m` : (m > 0 ? `${m}m ${s}s` : `${s}s`);
+}
+
+// Stream category from the GQL poll (no extra request).
+function updateGameMetric(game) {
+  const el = document.getElementById("stat-game");
+  if (!el) return;
+  if (game) {
+    el.textContent = game.length > 18 ? game.slice(0, 17) + "…" : game;
+    el.title = game;
+  } else {
+    el.textContent = "—";
+    el.title = "";
+  }
+}
+
+// Watched-VOD progress for the current channel, from the existing watched set.
+function updateVodsWatched() {
+  const el = document.getElementById("vods-watched");
+  const totalEl = document.getElementById("vods-total");
+  if (!el) return;
+  if (allVods.length === 0) {
+    el.textContent = "—";
+    totalEl.textContent = "of — archived";
+  } else {
+    const watched = allVods.filter(v => watchedVods.has(v.id)).length;
+    el.textContent = String(watched);
+    totalEl.textContent = `of ${allVods.length} archived`;
+  }
 }
 
 // Follower count rides along on the existing GQL status poll, so it costs no
@@ -977,6 +959,9 @@ function saveSessionState() {
       peakViewers,
       peakViewersAt,
       chatMessageCount,
+      peakChatRate,
+      chatters: [...uniqueChatters].slice(0, 2000),
+      watchElapsedMs: watchStartedAt ? watchElapsedMs + (Date.now() - watchStartedAt) : watchElapsedMs,
       viewerSamples: viewerHistory.length,
     };
     // Keep only the 10 most recent channels.
@@ -988,10 +973,14 @@ function saveSessionState() {
 
 function restoreSessionState() {
   const s = loadSessionState();
+  watchStartedAt = Date.now(); // watch-time clock starts (elapsed restored below)
   if (!s) return;
   peakViewers = s.peakViewers || 0;
   peakViewersAt = s.peakViewersAt || null;
   chatMessageCount = s.chatMessageCount || 0;
+  peakChatRate = s.peakChatRate || 0;
+  uniqueChatters = new Set(Array.isArray(s.chatters) ? s.chatters : []);
+  watchElapsedMs = s.watchElapsedMs || 0;
   if (peakViewers > 0) {
     document.getElementById("peak-viewers").textContent = peakViewers.toLocaleString();
     document.getElementById("peak-time").textContent = peakViewersAt
@@ -1000,6 +989,14 @@ function restoreSessionState() {
   }
   if (chatMessageCount > 0) {
     document.getElementById("chat-count").textContent = chatMessageCount.toLocaleString();
+  }
+  if (peakChatRate > 0) {
+    const pk = document.getElementById("peak-chat");
+    if (pk) pk.textContent = peakChatRate + " /min";
+  }
+  if (uniqueChatters.size > 0) {
+    const chatterEl = document.getElementById("chatters-count");
+    if (chatterEl) chatterEl.textContent = uniqueChatters.size.toLocaleString();
   }
 }
 
@@ -1011,6 +1008,10 @@ function resetSessionMetrics() {
   viewerHistory = [];
   chatMessageCount = 0;
   chatTimestamps = [];
+  uniqueChatters = new Set();
+  peakChatRate = 0;
+  watchElapsedMs = 0;
+  watchStartedAt = Date.now();
   // Must clear this too, or the previous channel's stream start leaks through
   // and uptime shows the old channel's age until the next successful poll.
   realStreamStartedAt = null;
@@ -1019,6 +1020,13 @@ function resetSessionMetrics() {
   document.getElementById("peak-time").textContent = "this session";
   document.getElementById("chat-count").textContent = "0";
   document.getElementById("chat-rate").textContent = "0 /min";
+  document.getElementById("chatters-count").textContent = "0";
+  document.getElementById("peak-chat").textContent = "—";
+  document.getElementById("watch-time").textContent = "0s";
+  document.getElementById("stat-game").textContent = "—";
+  document.getElementById("stat-game").title = "";
+  document.getElementById("vods-watched").textContent = "—";
+  document.getElementById("vods-total").textContent = "of — archived";
   document.getElementById("viewer-avg").textContent = "—";
   document.getElementById("viewer-delta").textContent = "—";
   document.getElementById("viewer-count").textContent = "—";
@@ -1255,12 +1263,14 @@ async function fetchStreamStatus(channel) {
 
 function connectIRC(channel) {
   disconnectIRC();
-  if (!twitchToken) return;
   try {
     ircWs = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
     ircWs.onopen = () => {
-      ircWs.send(`PASS oauth:${twitchToken}`);
-      ircWs.send(`NICK ${twitchUser?.login || "justinfan12345"}`);
+      // Signed in: use the real account. Signed out: connect anonymously —
+      // "justinfan" connections still receive PRIVMSG lines, so chat metrics
+      // now count for everyone (read-only; no chat:edit without a token).
+      if (twitchToken) ircWs.send(`PASS oauth:${twitchToken}`);
+      ircWs.send(`NICK ${twitchUser?.login || "justinfan" + Math.floor(10000 + Math.random() * 90000)}`);
       ircWs.send(`JOIN #${channel}`);
     };
     ircWs.onmessage = (e) => {
@@ -1268,7 +1278,7 @@ function connectIRC(channel) {
       for (const line of lines) {
         if (line.includes("PRIVMSG")) {
           const match = line.match(/:(\w+)!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :(.+)/);
-          if (match) { incrementChatCount(); }
+          if (match) { incrementChatCount(match[1]); }
         }
         if (line.startsWith("PING")) ircWs.send("PONG :tmi.twitch.tv");
       }
@@ -1457,17 +1467,6 @@ async function notifyWorkers(channel, isLive, vodId) {
   }
 }
 
-async function pollOcrStatus() {
-  // OCR status is not available via the Function relay
-  // Workers will poll Cosmos DB directly
-  const dot = document.getElementById('ocr-dot');
-  const label = document.getElementById('ocr-label');
-  const count = document.getElementById('ocr-count');
-  if (dot) dot.className = 'ocr-dot active';
-  if (label) label.textContent = 'Watching';
-  if (count) count.textContent = '';
-}
-
 async function fetchStreamStateFromWorkers() {
   try {
     const res = await fetch(OCR_API_URL);
@@ -1488,115 +1487,20 @@ async function fetchStreamStateFromWorkers() {
 
 // ═══ VOD TRACKING ═══
 
-// ═══ WEAZEL NEWS FEED (live from the Fameshire FiveM city) ═══
-// The city's Weazel News desk (la_npc_ai/server/newsdesk.lua) writes a headline,
-// a lead sentence and a snapshot, and exposes the rolling feed at
-//   GET /la_npc_ai/weazel:getfeed   ->   { feed: [{headline, lead, image, time}], count }
-// We poll that JSON and render it as the Weazel News panel + the bottom ticker.
-// No game client is required to read it — the site only ever reads JSON.
-const WEAZEL_FEED_URL = localStorage.getItem("momtv_weazel_feed") ||
-  (window.location.origin + "/api/reports");
-let weazelLastTicker = "";
-
-// Demo stories shown only while the real table has no items yet (the city's
-// desk will overwrite them the moment it goes on air).
-function weazelSeedItems(n) {
-  const now = Math.floor(Date.now() / 1000);
-  return [
-    { headline: "MOM TV Is Now Live — Welcome, Fameshire",
-      lead: "The city's first independent broadcast channel has signed on. Follow us for live news, coverage and city analysis.",
-      image: "https://picsum.photos/seed/momtv1/400/225",
-      studio: "MOM TV Studio", time: now - n * 3600 },
-    { headline: "Weazel News Desk Opens at the Fameshire Media Centre",
-      lead: "City anchors will be reporting live from the studio desk. Every broadcast lands on this page — no game client required.",
-      image: "https://picsum.photos/seed/momtv2/400/225",
-      studio: "Weazel News", time: now - (n + 1) * 3600 },
-  ];
-}
-
-function weazelTimeAgo(ts) {
-  const secs = Math.floor(Date.now() / 1000) - Number(ts || 0);
-  if (!isFinite(secs) || secs < 0) return "just now";
-  if (secs < 60) return "just now";
-  if (secs < 3600) return Math.floor(secs / 60) + "m ago";
-  if (secs < 86400) return Math.floor(secs / 3600) + "h ago";
-  return Math.floor(secs / 86400) + "d ago";
-}
-
-function renderWeazelFeed(items) {
-  const el = document.getElementById("weazel-feed");
-  if (!el) return;
-  if (!items || items.length === 0) items = weazelSeedItems(new Date().getUTCHours());
-  const view = items.slice(0, 8);   // newest first, capped so the panel stays short
-  el.innerHTML = view.map((it, i) => {
-    const img = it.image
-      ? `<img class="wc-img" src="${escapeHtml(it.image)}" alt="Weazel News snapshot"
-             onerror="this.style.display='none'">`
-      : "";
-    const studio = escapeHtml(it.studio || "Weazel News");
-    const lead = it.lead ? `<div class="wc-lead">${escapeHtml(it.lead)}</div>` : "";
-    const top = i === 0 ? ' style="border-left-color:var(--red)"' : "";
-    return `<div class="weazel-card"${top}>
-      <div class="wc-head">${escapeHtml(it.headline || "Weazel News")}</div>
-      ${lead}
-      ${img}
-      <div class="wc-meta"><span>${studio}</span><span>${weazelTimeAgo(it.time)}</span></div>
-    </div>`;
-  }).join("");
-}
-
-function renderWeazelBanner(items) {
-  const head = document.getElementById("wb-head");
-  if (!head) return;
-  const it = (items && items[0]) || weazelSeedItems(new Date().getUTCHours())[0];
-  head.textContent = it.headline || "Weazel News on air";
-  const lead = document.getElementById("wb-lead");
-  if (lead) lead.textContent = it.lead || "";
-  const time = document.getElementById("wb-time");
-  if (time) time.textContent = weazelTimeAgo(it.time);
-  const label = document.getElementById("wb-label");
-  if (label) label.textContent = (it.studio || "LIVE FROM FAMESHIRE").toUpperCase();
-  const img = document.getElementById("wb-img");
-  if (img) {
-    if (it.image) { img.src = it.image; img.style.display = "block"; }
-    else img.style.display = "none";
-  }
-}
-
-function updateWeazelTicker(items) {
+// ═══ TICKER ═══
+// Static MOM TV branding, rotated periodically so the marquee stays fresh.
+const TICKER_MESSAGES = [
+  "MOMENTUM TV — Always-On Live Stream Viewer — momtv.fameshire.com",
+  "SIGN IN WITH TWITCH OR GOOGLE — your followed channels, one click away",
+  "CHAT METRICS COUNT FOR EVERYONE — signed in or not",
+  "VOD QUEUE — watched tracking, auto-switch when a stream ends",
+];
+let tickerIndex = 0;
+function rotateTicker() {
   const ticker = document.getElementById("ticker-text");
-  if (!ticker || !items || items.length === 0) items = weazelSeedItems(new Date().getUTCHours());
-  const line = items.slice(0, 8).map(it => it.headline || "Weazel News").join("   •   ");
-  const text = "WEAZEL NEWS  |  " + line;
-  if (text === weazelLastTicker) return;   // avoid restarting the scroll animation
-  weazelLastTicker = text;
-  ticker.textContent = text;
-}
-
-async function pollWeazelNews() {
-  try {
-    const res = await fetch(WEAZEL_FEED_URL, { cache: "no-store" });
-    if (!res.ok) return;
-    const data = await res.json();
-    const raw = Array.isArray(data) ? data : (data.feed || []);
-    if (!Array.isArray(raw)) return;
-    // Normalise {time} vs {timestamp} and sort newest first.
-    const items = raw.map(it => ({
-      headline: it.headline || it.title || "",
-      lead: it.lead || it.body || "",
-      image: it.image || it.image_url || "",
-      studio: it.studio || "",
-      time: it.time || it.timestamp || 0,
-    })).sort((a, b) => Number(b.time) - Number(a.time));
-    renderWeazelBanner(items);
-    renderWeazelFeed(items);
-    updateWeazelTicker(items);
-  } catch (e) {
-    // Feed offline (city not running, or CORS) — keep the demo stories visible.
-    renderWeazelBanner(null);
-    renderWeazelFeed([]);
-    updateWeazelTicker([]);
-  }
+  if (!ticker) return;
+  tickerIndex = (tickerIndex + 1) % TICKER_MESSAGES.length;
+  ticker.textContent = TICKER_MESSAGES[tickerIndex];
 }
 
 function markWatched(vodId) {
@@ -1614,6 +1518,7 @@ async function loadVods(channel) {
 }
 
 function renderVodQueue() {
+  updateVodsWatched();
   const el = document.getElementById("vod-queue");
   if (allVods.length === 0) { el.innerHTML = '<div style="font-size:10px;color:var(--text-dim);padding:4px">No VODs found</div>'; return; }
   el.innerHTML = allVods.slice(0, 10).map(v => {
@@ -1700,6 +1605,8 @@ async function checkStream() {
 
   // Follower count is channel-level, so update it whether live or not.
   updateFollowers(user.followers?.totalCount, currentChannel);
+  // Stream category rides along on the same poll.
+  updateGameMetric(user.stream?.game?.displayName || null);
 
   // Real stream start time — makes uptime correct after a page reload.
   if (live && user.stream?.createdAt) {
@@ -1846,12 +1753,9 @@ function initDragHandle() {
   setInterval(checkStream, 30000);       // Stream status every 30s
   setInterval(() => { if (twitchUser) loadFollowedChannels(); }, 120000);
   setInterval(updateUptime, 1000);       // Uptime every second
+  setInterval(updateWatchTime, 1000);    // Watch time every second
   setInterval(renderChatRate, 5000);     // Chat msgs/min over a rolling 60s window
-  setInterval(pollOcrStatus, 3000);      // OCR status every 3s
-
-  // Weazel News desk feed (headline + snapshot from the Fameshire FiveM city)
-  pollWeazelNews();
-  setInterval(pollWeazelNews, 15000);    // refresh the desk feed every 15s
+  setInterval(rotateTicker, 30000);      // Rotate the bottom ticker every 30s
 })();
 </script>
 </body>

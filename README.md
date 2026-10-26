@@ -10,8 +10,7 @@
 - **Live Followed Panel** — See which followed channels are live, click to switch
 - **VOD Queue** — Browse and watch VODs with watched tracking
 - **Twitch Chat** — Full chat embed in sidebar
-- **Weazel News** — Live headlines + anchor snapshots from the Fameshire FiveM city
-- **News Ticker** — Scrolling ticker bar (carries the Weazel News headlines)
+- **Branded Ticker** — Scrolling ticker bar with rotating MOM TV messages
 
 ### Metrics panel
 
@@ -26,11 +25,15 @@ backend, no persistence.
 | **Sparkline** | Last 12 viewer samples, scaled zero→peak, newest bar highlighted |
 | **Average + trend** | Mean of the window, plus `▲12%` / `▼8%` / `steady` comparing recent vs. earlier half |
 | **Uptime** | True stream age from Twitch's `stream.createdAt` (`started HH:MM:SS`) |
-| **Chat msgs** | Total `PRIVMSG` lines seen on IRC |
+| **Chat msgs** | Total `PRIVMSG` lines seen on IRC (works signed-out via anonymous IRC) |
 | **Msgs/min** | Chat messages in a rolling 60s window, refreshed every 5s |
 | **Peak** | Highest concurrent viewers this session, and when |
 | **Followers** | `user.followers.totalCount` — rides along on the existing poll |
-| **OCR** | Capture-worker status |
+| **Game** | Stream category from `stream.game.displayName` on the same poll |
+| **Chatters** | Unique chatter names seen on IRC this session |
+| **Peak chat** | Highest msgs/min observed this session |
+| **Watch time** | Time spent on the current channel this session (survives reloads) |
+| **VODs watched** | Watched VODs for this channel out of the loaded archive |
 
 ### How the metrics behave
 
@@ -50,8 +53,8 @@ backend, no persistence.
 - **When the channel is offline** the viewer metric shows `—` / `offline` rather
   than leaving a stale count on screen looking current.
 
-Note: chat metrics only populate when signed in to Twitch, since IRC counting
-requires an OAuth token. The other metrics are public and work signed-out.
+Note: chat metrics work for everyone — signed-out viewers connect to Twitch IRC
+anonymously (read-only `justinfan`), so counting never requires a login.
 
 ### Twitch Login (server-side OAuth)
 
@@ -120,22 +123,6 @@ this; until then they show an explanatory alert off-host):
 Twitch and Google sessions are independent: a Google session is shown only when
 no Twitch user is signed in, and Twitch login continues to work exactly as before.
 
-### Weazel News (live from the Fameshire FiveM city)
-
-The sidebar carries a **🛰 WEAZEL NEWS** panel fed by the city's news desk
-(`la_npc_ai/server/newsdesk.lua` on the FiveM server), and the bottom ticker
-scrolls the same headlines. The page only ever reads JSON — **no game client
-is required** to see the news.
-
-| Piece | What it does |
-|-------|--------------|
-| **Publish** | The city's Weazel News desk POSTs each broadcast to `POST https://momtv.fameshire.com/api/reports` — `momtv-server.js` stores it in memory (capped at 200 items, CORS-open) |
-| **Feed** | The site polls `GET https://momtv.fameshire.com/api/reports` → `{ feed: [{ headline, lead, image, time, studio }], count }` |
-| **Panel** | Up to 5 cards, newest first: headline, lead sentence, anchor snapshot, studio + "Xm ago" stamp. The newest card is marked red while it is fresh. |
-| **Ticker** | The bottom bar scrolls the 8 most recent Weazel News headlines. |
-| **Polling** | Every 15 s. A failed fetch (city offline, CORS) leaves the last good render in place rather than blanking the panel. |
-| **Override** | `localStorage.setItem('momtv_weazel_feed', '<url>')` points the panel at a different feed while developing. |
-
 ## Live
 
 - **Custom Domain:** https://momtv.fameshire.com
@@ -146,7 +133,7 @@ The deployed site has two self-contained vanilla HTML pages:
 
 - `packages/studio/index.html` — the **front page** (landing) served at
   `momtv.fameshire.com`: hero, program-guide cards, sign-in strip, live status
-  pill and the Weazel News ticker.
+  pill and the rotating MOM TV ticker.
 - `packages/studio/tv.html` — the **viewer** (the original self-contained
   Twitch TV). Linked from the front page's "Watch Live" buttons.
 
@@ -258,7 +245,19 @@ that `vite build` alone did not catch.
 
 ## History
 
-### v0.5 — Retro CRT redesign *(current)*
+### v0.7 — Front page + auth metrics overhaul *(current)*
+- **Front page** at `/` (CRT landing with live status + ticker); the viewer moved to `/tv.html`
+- **Twitch sign-in** is a server-side authorization-code flow (MOM TV app; secret server-side; tokens revoked on logout)
+- **Google login** via Azure SWA built-in auth
+- **Weazel News removed** everywhere (panel, banner, ticker, feed polling); ticker now rotates MOM TV branding
+- **Chat metrics fixed**: IRC now connects anonymously when signed out, so chat msgs / msgs/min count for everyone
+- **Metrics bar**: OCR removed; added Game, Chatters, Peak chat, Watch time, VODs watched
+
+### v0.6 — Server-side Twitch OAuth + Google Login
+- Server-side authorization-code flow via `/api/twitch/oauth-*` (secret stays in app settings, revoke on logout)
+- Google login via SWA Easy Auth (`.auth/me`, `.auth/login/google`, `.auth/logout`)
+
+### v0.5 — Retro CRT redesign
 - Full visual redesign: analog-TV aesthetic with phosphor glow, chunky cabinet bezel,
   power-on flash, scanlines and CRT OSD styling — plus the site's first responsive layout.
 - No feature or behaviour changes.
