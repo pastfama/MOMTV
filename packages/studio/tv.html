@@ -1033,13 +1033,12 @@ function resetSessionMetrics() {
 
 // ═══ TWITCH AUTH ═══
 
-// The Twitch OAuth functions run on the SWA backend; on hosts that don't host
-// them (e.g. the App Service serving this page), point at the SWA explicitly —
-// same logic as src/api-config.ts.
+// The Twitch OAuth API is served by the same origin: momtv-server.js on the
+// App Service implements /api/twitch/oauth-* (previously it lived on a Static
+// Web App that has since been deleted — which is why login once bounced
+// through the old gagarin-era Twitch app registration).
 function apiBase() {
-  const h = window.location.hostname;
-  if (h.includes("azurestaticapps.net") || h === "localhost") return "";
-  return "https://kind-water-05b3b120f.7.azurestaticapps.net";
+  return "";
 }
 
 async function twitchLogin() {

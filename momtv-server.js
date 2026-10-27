@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const PORT = process.env.PORT || 80;
 const STATIC_DIR = path.join(__dirname, 'dist');
@@ -40,6 +41,174 @@ function readBody(req, cb) {
   let data = '';
   req.on('data', (chunk) => { data += chunk; });
   req.on('end', () => cb(data));
+}
+
+// ── Twitch OAuth implementation ───────────────────────────────────────────────
+const TWITCH_AUTHORIZE_URL = 'https://id.twitch.tv/oauth2/authorize';
+const TWITCH_TOKEN_URL = 'https://id.twitch.tv/oauth2/token';
+const TWITCH_REVOKE_URL = 'https://id.twitch.tv/oauth2/revoke';
+const TWITCH_HELIX_USERS_URL = 'https://api.twitch.tv/helix/users';
+const OAUTH_SCOPES = 'user:read:follows chat:read chat:edit';
+const OAUTH_STATE_COOKIE = 'momtv_oauth_state';
+
+function getOauthConfig() {
+  const clientId = process.env.TWITCH_OAUTH_CLIENT_ID;
+  const clientSecret = process.env.TWITCH_OAUTH_CLIENT_SECRET;
+  if (!clientId || !clientSecret) return null;
+  return { clientId, clientSecret };
+}
+
+// App Service sits behind an HTTPS front end; the Host header is the public
+// host. TWITCH_OAUTH_REDIRECT_URI overrides for non-standard setups.
+function getOauthRedirectUri(req) {
+  if (process.env.TWITCH_OAUTH_REDIRECT_URI) return process.env.TWITCH_OAUTH_REDIRECT_URI;
+  const host = (req.headers && req.headers.host) || 'momtv.fameshire.com';
+  return `https://${host}/api/twitch/oauth-callback`;
+}
+
+// Where the browser may be sent back to after the token exchange (open-redirect guard).
+function isAllowedSiteRedirect(raw) {
+  try {
+    const u = new URL(raw);
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') return false;
+    const host = u.hostname;
+    return (
+      host.endsWith('.azurestaticapps.net') ||
+      host.endsWith('.fameshire.com') ||
+      host === 'fameshire.com' ||
+      host === 'localhost'
+    );
+  } catch {
+    return false;
+  }
+}
+
+function getCookie(header, name) {
+  const match = (header || '').match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+function handleTwitchOAuth(req, res, action) {
+  const cfg = getOauthConfig();
+
+  if (action === 'oauth-status') {
+    sendJson(res, 200, { configured: !!cfg, clientId: cfg ? cfg.clientId : null });
+    return;
+  }
+
+  if (action === 'oauth-logout') {
+    const token = new URL(req.url, 'http://x').searchParams.get('token');
+    // Best-effort revoke so the token stops working on Twitch's side too.
+    if (cfg && token) {
+      fetch(TWITCH_REVOKE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ client_id: cfg.clientId, token }),
+      }).catch(() => {});
+    }
+    res.writeHead(204, { 'Cache-Control': 'no-store' });
+    res.end();
+    return;
+  }
+
+  if (!cfg) {
+    sendJson(res, 501, { error: 'Twitch OAuth is not configured on the server' });
+    return;
+  }
+
+  const sp = new URL(req.url, 'http://x').searchParams;
+  const siteRedirect =
+    sp.get('redirect') && isAllowedSiteRedirect(sp.get('redirect'))
+      ? sp.get('redirect')
+      : `https://${(req.headers && req.headers.host) || 'momtv.fameshire.com'}/`;
+
+  if (action === 'oauth-start') {
+    const state = crypto.randomBytes(16).toString('hex');
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: cfg.clientId,
+      redirect_uri: getOauthRedirectUri(req),
+      scope: OAUTH_SCOPES,
+      state,
+    });
+    res.writeHead(302, {
+      Location: `${TWITCH_AUTHORIZE_URL}?${params.toString()}`,
+      'Set-Cookie': `${OAUTH_STATE_COOKIE}=${state}; Path=/api/twitch; Max-Age=600; HttpOnly; Secure; SameSite=Lax`,
+    });
+    res.end();
+    return;
+  }
+
+  // oauth-callback
+  const code = sp.get('code');
+  const backWith = (frag) => {
+    res.writeHead(302, {
+      Location: `${siteRedirect}#${frag.toString()}`,
+      'Set-Cookie': `${OAUTH_STATE_COOKIE}=; Path=/api/twitch; Max-Age=0; HttpOnly; Secure; SameSite=Lax`,
+    });
+    res.end();
+  };
+
+  if (!code) {
+    backWith(new URLSearchParams({ oauth_error: 'missing_code' }));
+    return;
+  }
+  const expectedState = getCookie(req.headers.cookie, OAUTH_STATE_COOKIE);
+  if (!sp.get('state') || !expectedState || sp.get('state') !== expectedState) {
+    backWith(new URLSearchParams({ oauth_error: 'state_mismatch' }));
+    return;
+  }
+
+  // Exchange the authorization code for a token (the client secret stays here).
+  (async () => {
+    try {
+      const tokenRes = await fetch(TWITCH_TOKEN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id: cfg.clientId,
+          client_secret: cfg.clientSecret,
+          code,
+          grant_type: 'authorization_code',
+          redirect_uri: getOauthRedirectUri(req),
+        }),
+      });
+      if (!tokenRes.ok) {
+        console.error(`[TwitchOAuth] Token exchange failed: ${tokenRes.status}`);
+        backWith(new URLSearchParams({ oauth_error: 'token_exchange' }));
+        return;
+      }
+      const tokenData = await tokenRes.json();
+      const accessToken = tokenData.access_token;
+      if (!accessToken) {
+        backWith(new URLSearchParams({ oauth_error: 'no_token' }));
+        return;
+      }
+
+      // Identify the user so the page can pick up where it left off (best-effort).
+      let login = '';
+      try {
+        const userRes = await fetch(TWITCH_HELIX_USERS_URL, {
+          headers: { Authorization: `Bearer ${accessToken}`, 'Client-Id': cfg.clientId },
+        });
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          if (userData.data && userData.data.length > 0) login = userData.data[0].login || '';
+        }
+      } catch { /* user lookup is best-effort */ }
+
+      // Hand the token to the page via the URL fragment.
+      const frag = new URLSearchParams({
+        access_token: accessToken,
+        client_id: cfg.clientId,
+        server_flow: '1',
+      });
+      if (login) frag.set('login', login);
+      backWith(frag);
+    } catch (err) {
+      console.error(`[TwitchOAuth] Callback error: ${err.message}`);
+      backWith(new URLSearchParams({ oauth_error: 'callback_failed' }));
+    }
+  })();
 }
 
 const MIME_TYPES = {
@@ -87,6 +256,17 @@ const server = http.createServer((req, res) => {
   // GET /api/reports — the site polls this for the WEAZEL NEWS panel + ticker
   if (req.method === 'GET' && (url === '/api/reports' || url === '/api/weazel')) {
     sendJson(res, 200, { feed, count: feed.length });
+    return;
+  }
+
+  // ── Twitch OAuth (authorization-code flow, server-side MOM TV app) ─────────
+  // Mirrors packages/studio/api/twitch: the client secret lives only in this
+  // process's env (TWITCH_OAUTH_CLIENT_ID / TWITCH_OAUTH_CLIENT_SECRET), and
+  // the token is handed to the page via the URL fragment (needed client-side
+  // for IRC chat + Helix; fragments never reach servers or logs).
+  const TWITCH_API_MATCH = url.match(/^\/api\/twitch\/(oauth-status|oauth-start|oauth-callback|oauth-logout)$/);
+  if (TWITCH_API_MATCH) {
+    handleTwitchOAuth(req, res, TWITCH_API_MATCH[1]);
     return;
   }
 
