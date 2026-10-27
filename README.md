@@ -58,9 +58,10 @@ anonymously (read-only `justinfan`), so counting never requires a login.
 
 ### Twitch Login (server-side OAuth)
 
-Twitch sign-in is now a proper **authorization-code flow** handled by the
-`/api/twitch` Azure Function. The client secret lives only in SWA app settings,
-users no longer paste a Client ID, and tokens are revoked on logout.
+Twitch sign-in is a proper **authorization-code flow** served **same-origin by
+`momtv-server.js`** on the App Service (`/api/twitch/oauth-*`). The client
+secret lives only in App Service app settings, users no longer paste a Client
+ID, and tokens are revoked on logout.
 
 | Endpoint | Purpose |
 |----------|---------|
@@ -75,14 +76,17 @@ falls back to the old implicit-flow prompt — no breakage either way.
 
 **One-time setup:**
 
-1. At [dev.twitch.tv/console/apps](https://dev.twitch.tv/console/apps), create an
-   application named **MOM TV** with OAuth Redirect URL:
-   `https://<your-swa-host>.azurestaticapps.net/api/twitch/oauth-callback`
+1. At [dev.twitch.tv/console/apps](https://dev.twitch.tv/console/apps), open the
+   **MOM TV** application (or create one) and set its OAuth Redirect URL to:
+   `https://momtv.fameshire.com/api/twitch/oauth-callback`
+   ⚠️ Remove any old `gagarin.fameshire.com` redirect — that domain is retired
+   and login will bounce through it otherwise.
 2. Set the app settings:
    ```bash
-   az staticwebapp appsettings set \
+   az webapp config appsettings set \
+     --resource-group Fameshire-SWA \
      --name momtv \
-     --setting-names \
+     --settings \
        TWITCH_OAUTH_CLIENT_ID="<Client ID>" \
        TWITCH_OAUTH_CLIENT_SECRET="<Client Secret>"
    ```
