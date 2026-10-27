@@ -1292,8 +1292,10 @@ function disconnectIRC() {
 function renderChatEmbed(channel) {
   const el = document.getElementById("chat-container");
   const parents = getParents();
-  const pp = parents.map(p => `&parent=${p}`).join("");
-  el.innerHTML = `<div class="chat-embed"><iframe src="https://www.twitch.tv/embed/${channel}/chat?parent=${parents[0]}${pp}" frameborder="0"></iframe></div>`;
+  // parents[0] is added directly below; only *additional* parents are appended,
+  // otherwise the same parent is duplicated in the URL (harmless but noisy).
+  const pp = parents.slice(1).map(p => `&parent=${p}`).join("");
+  el.innerHTML = `<div class="chat-embed"><iframe src="https://www.twitch.tv/embed/${channel}/chat?parent=${parents[0]}${pp}&darkpopout" frameborder="0"></iframe></div>`;
 }
 
 // ═══ STREAM EMBED ═══

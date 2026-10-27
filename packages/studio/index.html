@@ -350,19 +350,17 @@
 
 <script>
 // ═══ Signal check: is the station live? ═══
-// The capture function runs on the SWA backend; on hosts without it, point
-// there directly (same logic as the viewer's apiBase()). Unknown paths on the
-// App Service return HTML with 200, so the JSON parse below guards against it.
-const API_BASE = (location.hostname.includes("azurestaticapps.net") || location.hostname === "localhost")
-  ? "" : "https://kind-water-05b3b120f.7.azurestaticapps.net";
-
+// The capture API runs same-origin on the App Service (momtv-server.js). It
+// currently only serves JSON when capture workers are actually deployed; the
+// SPA fallback returns HTML, which fails the JSON parse below and lands on
+// STANDBY — the honest state when no workers are running.
 (async function checkSignal() {
   const pill = document.getElementById("status-pill");
   const text = document.getElementById("status-text");
   try {
-    const res = await fetch(`${API_BASE}/api/capture/state`, { cache: "no-store" });
+    const res = await fetch("/api/capture/state", { cache: "no-store" });
     if (res.ok) {
-      const data = await res.json(); // throws (→ standby) if the SPA fallback returned HTML
+      const data = await res.json();
       if (data && typeof data === "object") {
         pill.classList.add("live");
         text.textContent = "● ON AIR — STREAM IS LIVE";
