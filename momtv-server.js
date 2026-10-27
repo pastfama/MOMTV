@@ -88,6 +88,19 @@ function getCookie(header, name) {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
+// The post-login destination rides on a cookie set at oauth-start: the OAuth
+// provider's authorize round-trip only passes back code/state, not our query
+// params. Re-validated against the allow-list on read (defense in depth).
+function readSiteRedirectCookie(req, name) {
+  const raw = getCookie(req.headers.cookie, name);
+  if (!raw) return null;
+  try {
+    const decoded = decodeURIComponent(raw);
+    if (isAllowedSiteRedirect(decoded)) return decoded;
+  } catch { /* malformed — ignore */ }
+  return null;
+}
+
 // ── Google OAuth implementation ──────────────────────────────────────────────
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
@@ -145,7 +158,10 @@ function handleGoogleOAuth(req, res, action) {
     });
     res.writeHead(302, {
       Location: `${GOOGLE_AUTH_URL}?${params.toString()}`,
-      'Set-Cookie': `${GOOGLE_STATE_COOKIE}=${state}; Path=/api/google; Max-Age=600; HttpOnly; Secure; SameSite=Lax`,
+      'Set-Cookie': [
+        `${GOOGLE_STATE_COOKIE}=${state}; Path=/api/google; Max-Age=600; HttpOnly; Secure; SameSite=Lax`,
+        `momtv_google_redirect=${encodeURIComponent(siteRedirect)}; Path=/api/google; Max-Age=600; HttpOnly; Secure; SameSite=Lax`,
+      ],
     });
     res.end();
     return;
@@ -153,9 +169,14 @@ function handleGoogleOAuth(req, res, action) {
 
   // oauth-callback
   const backWith = (frag) => {
+    const siteRedirectCb =
+      readSiteRedirectCookie(req, 'momtv_google_redirect') || siteRedirect;
     res.writeHead(302, {
-      Location: `${siteRedirect}#${frag.toString()}`,
-      'Set-Cookie': `${GOOGLE_STATE_COOKIE}=; Path=/api/google; Max-Age=0; HttpOnly; Secure; SameSite=Lax`,
+      Location: `${siteRedirectCb}#${frag.toString()}`,
+      'Set-Cookie': [
+        `${GOOGLE_STATE_COOKIE}=; Path=/api/google; Max-Age=0; HttpOnly; Secure; SameSite=Lax`,
+        'momtv_google_redirect=; Path=/api/google; Max-Age=0; HttpOnly; Secure; SameSite=Lax',
+      ],
     });
     res.end();
   };
@@ -261,7 +282,10 @@ function handleTwitchOAuth(req, res, action) {
     });
     res.writeHead(302, {
       Location: `${TWITCH_AUTHORIZE_URL}?${params.toString()}`,
-      'Set-Cookie': `${OAUTH_STATE_COOKIE}=${state}; Path=/api/twitch; Max-Age=600; HttpOnly; Secure; SameSite=Lax`,
+      'Set-Cookie': [
+        `${OAUTH_STATE_COOKIE}=${state}; Path=/api/twitch; Max-Age=600; HttpOnly; Secure; SameSite=Lax`,
+        `momtv_oauth_redirect=${encodeURIComponent(siteRedirect)}; Path=/api/twitch; Max-Age=600; HttpOnly; Secure; SameSite=Lax`,
+      ],
     });
     res.end();
     return;
@@ -269,10 +293,15 @@ function handleTwitchOAuth(req, res, action) {
 
   // oauth-callback
   const code = sp.get('code');
+  const siteRedirectCb =
+    readSiteRedirectCookie(req, 'momtv_oauth_redirect') || siteRedirect;
   const backWith = (frag) => {
     res.writeHead(302, {
-      Location: `${siteRedirect}#${frag.toString()}`,
-      'Set-Cookie': `${OAUTH_STATE_COOKIE}=; Path=/api/twitch; Max-Age=0; HttpOnly; Secure; SameSite=Lax`,
+      Location: `${siteRedirectCb}#${frag.toString()}`,
+      'Set-Cookie': [
+        `${OAUTH_STATE_COOKIE}=; Path=/api/twitch; Max-Age=0; HttpOnly; Secure; SameSite=Lax`,
+        'momtv_oauth_redirect=; Path=/api/twitch; Max-Age=0; HttpOnly; Secure; SameSite=Lax',
+      ],
     });
     res.end();
   };
