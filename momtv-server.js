@@ -87,6 +87,135 @@ function getCookie(header, name) {
   const match = (header || '').match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
   return match ? decodeURIComponent(match[1]) : null;
 }
+
+// ── Google OAuth implementation ──────────────────────────────────────────────
+const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
+const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
+const GOOGLE_STATE_COOKIE = 'momtv_google_state';
+const GOOGLE_SCOPES = 'openid email profile';
+
+function getGoogleConfig() {
+  const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+  if (!clientId || !clientSecret) return null;
+  return { clientId, clientSecret };
+}
+
+function getGoogleRedirectUri(req) {
+  if (process.env.GOOGLE_OAUTH_REDIRECT_URI) return process.env.GOOGLE_OAUTH_REDIRECT_URI;
+  const host = (req.headers && req.headers.host) || 'momtv.fameshire.com';
+  return `https://${host}/api/google/oauth-callback`;
+}
+
+function handleGoogleOAuth(req, res, action) {
+  const cfg = getGoogleConfig();
+
+  if (action === 'oauth-status') {
+    sendJson(res, 200, { configured: !!cfg, clientId: cfg ? cfg.clientId : null });
+    return;
+  }
+
+  if (action === 'oauth-logout') {
+    // Stateless: the page drops its saved profile; nothing to revoke server-side.
+    res.writeHead(204, { 'Cache-Control': 'no-store' });
+    res.end();
+    return;
+  }
+
+  if (!cfg) {
+    sendJson(res, 501, { error: 'Google OAuth is not configured on the server' });
+    return;
+  }
+
+  const sp = new URL(req.url, 'http://x').searchParams;
+  const siteRedirect =
+    sp.get('redirect') && isAllowedSiteRedirect(sp.get('redirect'))
+      ? sp.get('redirect')
+      : `https://${(req.headers && req.headers.host) || 'momtv.fameshire.com'}/`;
+
+  if (action === 'oauth-start') {
+    const state = crypto.randomBytes(16).toString('hex');
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: cfg.clientId,
+      redirect_uri: getGoogleRedirectUri(req),
+      scope: GOOGLE_SCOPES,
+      state,
+      prompt: 'select_account',
+    });
+    res.writeHead(302, {
+      Location: `${GOOGLE_AUTH_URL}?${params.toString()}`,
+      'Set-Cookie': `${GOOGLE_STATE_COOKIE}=${state}; Path=/api/google; Max-Age=600; HttpOnly; Secure; SameSite=Lax`,
+    });
+    res.end();
+    return;
+  }
+
+  // oauth-callback
+  const backWith = (frag) => {
+    res.writeHead(302, {
+      Location: `${siteRedirect}#${frag.toString()}`,
+      'Set-Cookie': `${GOOGLE_STATE_COOKIE}=; Path=/api/google; Max-Age=0; HttpOnly; Secure; SameSite=Lax`,
+    });
+    res.end();
+  };
+
+  const code = sp.get('code');
+  const err = sp.get('error');
+  if (err) {
+    backWith(new URLSearchParams({ google_error: 'denied' }));
+    return;
+  }
+  if (!code) {
+    backWith(new URLSearchParams({ google_error: 'missing_code' }));
+    return;
+  }
+  const expectedState = getCookie(req.headers.cookie, GOOGLE_STATE_COOKIE);
+  if (!sp.get('state') || !expectedState || sp.get('state') !== expectedState) {
+    backWith(new URLSearchParams({ google_error: 'state_mismatch' }));
+    return;
+  }
+
+  // Exchange the code for tokens; the profile comes from the id_token claims.
+  (async () => {
+    try {
+      const tokenRes = await fetch(GOOGLE_TOKEN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id: cfg.clientId,
+          client_secret: cfg.clientSecret,
+          code,
+          grant_type: 'authorization_code',
+          redirect_uri: getGoogleRedirectUri(req),
+        }),
+      });
+      if (!tokenRes.ok) {
+        console.error(`[GoogleOAuth] Token exchange failed: ${tokenRes.status}`);
+        backWith(new URLSearchParams({ google_error: 'token_exchange' }));
+        return;
+      }
+      const tokenData = await tokenRes.json();
+      if (!tokenData.id_token) {
+        backWith(new URLSearchParams({ google_error: 'no_id_token' }));
+        return;
+      }
+      // id_token is a JWT: payload is the middle base64url segment.
+      const payloadB64 = tokenData.id_token.split('.')[1];
+      const claims = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8'));
+      const frag = new URLSearchParams({
+        google_user: '1',
+        name: claims.name || claims.email || 'Google user',
+        email: claims.email || '',
+        picture: claims.picture || '',
+      });
+      backWith(frag);
+    } catch (err) {
+      console.error(`[GoogleOAuth] Callback error: ${err.message}`);
+      backWith(new URLSearchParams({ google_error: 'callback_failed' }));
+    }
+  })();
+}
 function handleTwitchOAuth(req, res, action) {
   const cfg = getOauthConfig();
 
@@ -256,6 +385,16 @@ const server = http.createServer((req, res) => {
   // GET /api/reports — the site polls this for the WEAZEL NEWS panel + ticker
   if (req.method === 'GET' && (url === '/api/reports' || url === '/api/weazel')) {
     sendJson(res, 200, { feed, count: feed.length });
+    return;
+  }
+
+  // ── Google OAuth (same-origin authorization-code flow) ─────────────────────
+  // Mirrors the Twitch flow: the client secret lives only in this process's
+  // env (GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET), and the profile
+  // is handed to the page via the URL fragment.
+  const GOOGLE_API_MATCH = url.match(/^\/api\/google\/(oauth-status|oauth-start|oauth-callback|oauth-logout)$/);
+  if (GOOGLE_API_MATCH) {
+    handleGoogleOAuth(req, res, GOOGLE_API_MATCH[1]);
     return;
   }
 

@@ -712,9 +712,8 @@ let isLive = false;
 let ircWs = null;
 let watchedVods = new Set(JSON.parse(localStorage.getItem(WATCHED_KEY) || "[]"));
 
-// Google session (Azure SWA built-in auth / Easy Auth)
-let googleUser = null; // { id, name, provider } — populated from /.auth/me
-const EASY_AUTH_HOST = "azurestaticapps.net"; // Easy Auth endpoints exist on the SWA (and its custom domain)
+// Google session (own OAuth flow, served same-origin by momtv-server.js)
+let googleUser = null; // { id, name, email, picture }
 
 // ═══ ANALYTICS ═══
 
@@ -1089,45 +1088,68 @@ function twitchLogout() {
   }
 }
 
-// ═══ GOOGLE AUTH (Azure SWA built-in Easy Auth) ═══
+// ═══ GOOGLE AUTH (same-origin OAuth via /api/google/oauth-*) ═══
 
-function easyAuthAvailable() {
-  return window.location.hostname.includes(EASY_AUTH_HOST) ||
-         window.location.hostname === "localhost"; // works with the SWA CLI emulator too
-}
+const GOOGLE_KEY = "momtv_google_user";
 
-function googleLogin() {
-  if (!easyAuthAvailable()) {
-    alert(
-      "Google login uses the Azure Static Web Apps built-in authentication.\n\n" +
-      "It is only available on the deployed site (momtv.fameshire.com) after the " +
-      "Google provider has been enabled.\n\nSee README → 'Google Login (Easy Auth)' for setup."
-    );
+async function googleLogin() {
+  if (location.protocol !== "http:" && location.protocol !== "https:") {
+    alert("Google login is only available on the deployed site.");
     return;
   }
-  window.location.href = `/.auth/login/google?post_login_redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
+  try {
+    const res = await fetch("/api/google/oauth-status");
+    if (res.ok) {
+      const status = await res.json();
+      if (status && status.configured) {
+        window.location.href = `/api/google/oauth-start?redirect=${encodeURIComponent(REDIRECT_URI)}`;
+        return;
+      }
+    }
+  } catch { /* fall through */ }
+  alert(
+    "Google login isn't configured on the server yet.\n\n" +
+    "A Google OAuth client must be created with redirect URI\n" +
+    "https://momtv.fameshire.com/api/google/oauth-callback\n" +
+    "and its credentials set as GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET\n" +
+    "on the App Service. See README → 'Google Login'."
+  );
 }
 
-async function checkGoogleSession() {
-  if (!easyAuthAvailable()) return false;
-  try {
-    const res = await fetch("/.auth/me");
-    if (!res.ok) return false;
-    const data = await res.json();
-    const principal = data && data.clientPrincipal;
-    if (!principal) return false;
-    if (!String(principal.identityProvider || "").toLowerCase().startsWith("google")) return false;
+// The server hands the profile back via the URL fragment (never touches logs).
+function checkGoogleRedirect() {
+  const hash = window.location.hash;
+  if (!hash.includes("google_user=")) return false;
+  const params = new URLSearchParams(hash.substring(1));
+  window.history.replaceState(null, "", window.location.pathname);
+  if (params.get("google_user") === "1") {
     googleUser = {
-      id: principal.userId,
-      name: principal.userDetails || "Google user",
-      provider: principal.identityProvider,
+      id: params.get("email") || params.get("name") || "google",
+      name: params.get("name") || "Google user",
+      email: params.get("email") || "",
+      picture: params.get("picture") || "",
     };
+    localStorage.setItem(GOOGLE_KEY, JSON.stringify(googleUser));
     return true;
-  } catch { return false; }
+  }
+  if (params.get("google_error")) {
+    console.warn("[GoogleAuth] OAuth error:", params.get("google_error"));
+  }
+  return false;
+}
+
+function restoreGoogleUser() {
+  try {
+    const s = JSON.parse(localStorage.getItem(GOOGLE_KEY) || "null");
+    if (s && s.name) { googleUser = s; return true; }
+  } catch { /* corrupted entry — ignore */ }
+  return false;
 }
 
 function googleLogout() {
-  window.location.href = `/.auth/logout?post_logout_redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
+  googleUser = null;
+  localStorage.removeItem(GOOGLE_KEY);
+  updateAuthUI();
 }
 
 function checkOAuthRedirect() {
@@ -1185,10 +1207,13 @@ function updateAuthUI() {
       <button class="logout-btn" onclick="twitchLogout()">✕</button>
     </div>`;
   } else if (googleUser) {
-    const initial = (googleUser.name || "G").charAt(0).toUpperCase();
+    const safeName = escapeHtml(googleUser.name || "Google user");
+    const avatar = googleUser.picture
+      ? `<img class="user-avatar" src="${escapeHtml(googleUser.picture)}" onerror="this.outerHTML='<span class=\\'user-avatar user-avatar-google\\'>${safeName.charAt(0).toUpperCase()}</span>'" alt="">`
+      : `<span class="user-avatar user-avatar-google">${safeName.charAt(0).toUpperCase()}</span>`;
     section.innerHTML = `<div class="user-info">
-      <span class="user-avatar user-avatar-google">${initial}</span>
-      <span class="user-name">${googleUser.name}</span>
+      ${avatar}
+      <span class="user-name" title="${escapeHtml(googleUser.email || "")}">${safeName}</span>
       <button class="logout-btn" onclick="googleLogout()">✕</button>
     </div>`;
   } else {
@@ -1725,8 +1750,8 @@ function initDragHandle() {
   checkOAuthRedirect();
   if (!twitchToken) twitchToken = localStorage.getItem(TOKEN_KEY);
 
-  // Restore the Google (Easy Auth) session, then render the auth UI
-  await checkGoogleSession();
+  // Restore the Google session (fragment callback or saved profile), then render the auth UI
+  checkGoogleRedirect() || restoreGoogleUser();
   updateAuthUI();
 
   if (twitchToken) {

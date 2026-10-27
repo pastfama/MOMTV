@@ -93,36 +93,40 @@ falls back to the old implicit-flow prompt — no breakage either way.
 3. Verify: **Login with Twitch** should redirect straight to Twitch (no prompt),
    and logging out revokes the token.
 
-### Google Login (Easy Auth)
+### Google Login (same-origin OAuth)
 
-The header offers **Login with Google** alongside **Login with Twitch**. It uses
-Azure Static Web Apps' [built-in authentication](https://learn.microsoft.com/azure/static-web-apps/authentication-overview)
-(Easy Auth) — there are no new dependencies, and the Google client secret never
-touches the browser or the repo. The client just talks to:
+Google sign-in mirrors the Twitch flow and is served **same-origin by
+`momtv-server.js`** on the App Service (`/api/google/oauth-*`). The client
+secret lives only in App Service app settings; the profile (name, email,
+picture) is handed to the page via the URL fragment and kept in
+`localStorage` (`momtv_google_user`).
 
 | Endpoint | Purpose |
 |----------|---------|
-| `GET /.auth/me` | Restore the session → `{ clientPrincipal: { userId, userDetails, identityProvider } }` |
-| `GET /.auth/login/google` | Redirect to Google consent, then back to the site |
-| `GET /.auth/logout` | Clear the Easy Auth session cookie |
+| `GET /api/google/oauth-status` | `{ configured, clientId }` — lets the page pick the right flow |
+| `GET /api/google/oauth-start` | 302 to Google consent (`openid email profile`, `state` in an HttpOnly cookie) |
+| `GET /api/google/oauth-callback` | Validates state, exchanges the code, decodes the `id_token` claims, 302 back with the profile in the URL fragment |
+| `GET /api/google/oauth-logout` | 204 — the page drops its saved profile (stateless server-side) |
 
-**One-time setup** (the buttons render regardless, but login only works after
-this; until then they show an explanatory alert off-host):
+**One-time setup:**
 
 1. In [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials),
-   create an **OAuth 2.0 Client ID** (type: *Web application*).
-2. Add the authorized redirect URI:
-   `https://momtv.fameshire.com/.auth/login/google/callback`
-   (repeat for the `*.azurestaticapps.net` preview host if needed).
-3. Configure the SWA with the credentials:
+   create an **OAuth 2.0 Client ID** (type: *Web application*) with the
+   authorized redirect URI:
+   `https://momtv.fameshire.com/api/google/oauth-callback`
+2. Set the credentials as App Service settings:
    ```bash
-   az staticwebapp auth google update \
+   az webapp config appsettings set \
+     --resource-group Fameshire-SWA \
      --name momtv \
-     --google-client-id "<CLIENT_ID>" \
-     --google-client-secret "<CLIENT_SECRET>"
+     --settings \
+       GOOGLE_OAUTH_CLIENT_ID="<Client ID>" \
+       GOOGLE_OAUTH_CLIENT_SECRET="<Client Secret>"
    ```
-4. Verify: open the site → **Login with Google** → you should return signed in
-   (avatar initial + display name in the header).
+3. If the OAuth consent screen is in *Testing* mode, add your Google account as
+   a test user.
+4. Verify: **Login with Google** → consent → back on the TV page with your
+   Google avatar + name in the header.
 
 Twitch and Google sessions are independent: a Google session is shown only when
 no Twitch user is signed in, and Twitch login continues to work exactly as before.
