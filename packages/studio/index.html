@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MOM TV — Always-On Live Stream Viewer</title>
+<title>MOM TV - Always-On Live Stream Viewer</title>
 <meta name="description" content="MOM TV is an always-on Twitch viewer with followed channels, VOD queue, live chat and viewer analytics.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230b0a10'/><text x='50' y='68' font-size='56' text-anchor='middle' fill='%23ffb454' font-family='monospace'>M</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Russo+One&family=Changa:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#0b0a10;--bg-soft:#121019;--panel:#17141f;--panel-2:#1d1928;
@@ -14,15 +14,20 @@
     --amber:#ffb454;--amber-dim:rgba(255,180,84,0.14);
     --purple:#9146ff;--purple-light:#b98bff;--phosphor:#7cfc98;
     --radius:14px;--radius-sm:8px;
-    --font-display:'VT323',monospace;
-    --font-body:'Inter',system-ui,sans-serif;
-    --font-mono:'JetBrains Mono',monospace;
+    --font-display:VT323,monospace;
+    --font-body:Inter,system-ui,sans-serif;
+    --font-mono:JetBrains Mono,monospace;
     --transition:all .2s ease;
   }
+  html[lang="ru"]{--font-display:"Russo One",Inter,sans-serif}
+  html[lang="ar"]{
+    --font-display:Changa,Inter,sans-serif;
+    --font-body:Changa,Inter,system-ui,sans-serif;
+  }
+  html[lang="ar"] .logo,html[lang="ar"] h1,html[lang="ar"] .ticker-label{letter-spacing:0}
   *{margin:0;padding:0;box-sizing:border-box}
   html{scroll-behavior:smooth}
-  body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden}
-  /* ═══ CRT atmosphere ═══ */
+  body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden}  /* CRT atmosphere */
   .scanlines{
     position:fixed;inset:0;pointer-events:none;z-index:60;
     background:repeating-linear-gradient(0deg,rgba(0,0,0,0.22) 0px,rgba(0,0,0,0.22) 1px,transparent 1px,transparent 3px);
@@ -32,10 +37,9 @@
     position:fixed;inset:0;pointer-events:none;z-index:59;
     background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,0.55) 100%);
   }
-  /* ═══ Header ═══ */
   header{
-    display:flex;align-items:center;justify-content:space-between;
-    padding:18px clamp(20px,5vw,56px);
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding:16px clamp(20px,5vw,56px);
     border-bottom:1px solid rgba(255,255,255,0.06);
     background:rgba(11,10,16,0.8);
     backdrop-filter:blur(10px);
@@ -43,28 +47,74 @@
   }
   .logo{
     font-family:var(--font-display);
-    font-size:clamp(26px,3vw,34px);letter-spacing:3px;
+    font-size:clamp(24px,3vw,32px);letter-spacing:3px;
     color:var(--amber);text-shadow:0 0 14px rgba(255,180,84,0.45);
+    white-space:nowrap;
   }
   .logo span{color:var(--purple-light);text-shadow:0 0 14px rgba(145,70,255,0.5)}
+  .header-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:flex-end}
+  .lang-pills{
+    display:flex;gap:4px;
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:999px;padding:3px;
+    background:var(--bg-soft);
+  }
+  .lang-pill{
+    font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.5px;
+    color:var(--text-muted);background:transparent;
+    border:none;border-radius:999px;padding:5px 12px;cursor:pointer;
+    transition:var(--transition);
+  }
+  .lang-pill:hover{color:var(--text)}
+  .lang-pill.active{
+    color:var(--amber);
+    background:var(--amber-dim);
+    box-shadow:inset 0 0 0 1px rgba(255,180,84,0.4);
+  }
   .watch-btn{
     display:inline-flex;align-items:center;gap:8px;
     background:linear-gradient(180deg,rgba(145,70,255,0.32),rgba(145,70,255,0.16));
     color:var(--purple-light);
     border:1px solid rgba(145,70,255,0.5);
-    padding:9px 22px;border-radius:var(--radius-sm);
+    padding:9px 20px;border-radius:var(--radius-sm);
     font-family:var(--font-body);font-size:14px;font-weight:700;
     cursor:pointer;text-decoration:none;letter-spacing:.3px;
     box-shadow:inset 0 1px 0 rgba(255,255,255,0.1),0 2px 10px rgba(0,0,0,0.4);
-    transition:var(--transition);
+    transition:var(--transition);white-space:nowrap;
   }
   .watch-btn:hover{
     background:linear-gradient(180deg,rgba(145,70,255,0.45),rgba(145,70,255,0.24));
     box-shadow:0 0 20px rgba(145,70,255,0.35),inset 0 1px 0 rgba(255,255,255,0.12);
     transform:translateY(-1px);
   }
-  /* ═══ Hero ═══ */
-  .hero{text-align:center;padding:clamp(64px,10vh,110px) 20px 48px;position:relative}
+  .lang-suggest{
+    display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;
+    padding:10px clamp(20px,5vw,56px);
+    background:linear-gradient(90deg,rgba(255,180,84,0.1),rgba(145,70,255,0.08));
+    border-bottom:1px solid rgba(255,180,84,0.25);
+    font-size:13.5px;color:var(--text);
+  }
+  .lang-suggest.hidden{display:none}
+  .lang-suggest button{
+    font-family:var(--font-body);font-size:12.5px;font-weight:700;
+    padding:6px 14px;border-radius:var(--radius-sm);cursor:pointer;
+    transition:var(--transition);
+  }
+  .suggest-yes{
+    background:linear-gradient(180deg,#a55eff,#7e2ff2);color:#fff;
+    border:1px solid rgba(255,255,255,0.2);
+  }
+  .suggest-yes:hover{box-shadow:0 0 16px rgba(145,70,255,0.5)}
+  .suggest-no{
+    background:transparent;color:var(--text-muted);
+    border:1px solid rgba(255,255,255,0.15);
+  }
+  .suggest-no:hover{color:var(--text)}  /* Hero */
+  .hero{text-align:center;padding:clamp(56px,9vh,100px) 20px 44px;position:relative}
+  .hero::before{
+    content:"";position:absolute;inset:auto 0 0 0;height:280px;pointer-events:none;
+    background:radial-gradient(600px 200px at 50% 100%,rgba(145,70,255,0.12),transparent);
+  }
   .status-pill{
     display:inline-flex;align-items:center;gap:8px;
     font-family:var(--font-mono);font-size:12px;letter-spacing:1px;
@@ -74,21 +124,13 @@
     padding:6px 14px;border-radius:999px;
     margin-bottom:26px;
   }
-  .status-dot{
-    width:8px;height:8px;border-radius:50%;
-    background:var(--text-muted);
-    box-shadow:0 0 8px rgba(143,138,158,0.4);
-  }
+  .status-dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted);box-shadow:0 0 8px rgba(143,138,158,0.4)}
   .status-pill.live{color:var(--phosphor);border-color:rgba(124,252,152,0.4)}
-  .status-pill.live .status-dot{
-    background:var(--phosphor);
-    box-shadow:0 0 10px rgba(124,252,152,0.8);
-    animation:pulse 1.6s infinite;
-  }
+  .status-pill.live .status-dot{background:var(--phosphor);box-shadow:0 0 10px rgba(124,252,152,0.8);animation:pulse 1.6s infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
   h1{
     font-family:var(--font-display);
-    font-size:clamp(64px,11vw,150px);
+    font-size:clamp(60px,10vw,140px);
     line-height:.95;letter-spacing:6px;
     color:var(--amber);
     text-shadow:0 0 30px rgba(255,180,84,0.4),0 0 80px rgba(255,180,84,0.15);
@@ -101,11 +143,7 @@
     60%{transform:scale(1.005)}
     100%{opacity:1;transform:scale(1);filter:none}
   }
-  .tagline{
-    max-width:640px;margin:22px auto 0;
-    font-size:clamp(15px,1.6vw,18px);
-    color:var(--text-muted);line-height:1.65;
-  }
+  .tagline{max-width:640px;margin:22px auto 0;font-size:clamp(15px,1.6vw,18px);color:var(--text-muted);line-height:1.65}
   .tagline b{color:var(--text);font-weight:600}
   .hero-ctas{display:flex;gap:14px;justify-content:center;margin-top:36px;flex-wrap:wrap}
   .cta-main{
@@ -127,8 +165,7 @@
     font-weight:600;font-size:15px;text-decoration:none;
     transition:var(--transition);
   }
-  .cta-ghost:hover{color:var(--amber);border-color:rgba(255,180,84,0.5);background:var(--amber-dim)}
-  /* ═══ Features ═══ */
+  .cta-ghost:hover{color:var(--amber);border-color:rgba(255,180,84,0.5);background:var(--amber-dim)}  /* Features */
   .features{padding:56px clamp(20px,5vw,56px) 24px;max-width:1180px;margin:0 auto}
   .section-label{
     font-family:var(--font-mono);font-size:12px;letter-spacing:3px;
@@ -155,17 +192,18 @@
     border-color:rgba(145,70,255,0.4);
     box-shadow:0 12px 32px rgba(0,0,0,0.45),0 0 24px rgba(145,70,255,0.12);
   }
-  .card-icon{
-    font-size:26px;margin-bottom:14px;
-    display:inline-flex;width:52px;height:52px;
-    align-items:center;justify-content:center;
-    background:rgba(145,70,255,0.12);
-    border:1px solid rgba(145,70,255,0.28);
-    border-radius:12px;
+  .card-ch{
+    font-family:var(--font-mono);font-size:10px;letter-spacing:2px;
+    color:var(--text-muted);
+    display:flex;align-items:center;gap:10px;margin-bottom:14px;
+  }
+  .card-ch::before{
+    content:"";width:7px;height:7px;border-radius:2px;
+    background:var(--purple);box-shadow:0 0 8px rgba(145,70,255,0.6);
   }
   .card h3{font-size:16px;font-weight:700;margin-bottom:8px;letter-spacing:.2px}
   .card p{font-size:13.5px;color:var(--text-muted);line-height:1.6}
-  /* ═══ Sign-in strip ═══ */
+  /* Sign-in strip */
   .signin{max-width:1180px;margin:26px auto 0;padding:0 clamp(20px,5vw,56px)}
   .signin-box{
     display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
@@ -195,8 +233,7 @@
     background:rgba(66,133,244,0.14);
     border-color:rgba(66,133,244,0.4);
   }
-  .prov-google:hover{background:rgba(66,133,244,0.28);box-shadow:0 0 16px rgba(66,133,244,0.25)}
-  /* ═══ Metrics chips ═══ */
+  .prov-google:hover{background:rgba(66,133,244,0.28);box-shadow:0 0 16px rgba(66,133,244,0.25)}  /* Metrics chips */
   .metrics{
     max-width:1180px;margin:44px auto 0;
     padding:0 clamp(20px,5vw,56px);
@@ -211,7 +248,7 @@
     white-space:nowrap;
   }
   .chip b{color:var(--amber);font-weight:500}
-  /* ═══ Ticker ═══ */
+  /* Ticker */
   .ticker{
     position:fixed;bottom:0;left:0;right:0;z-index:55;
     display:flex;align-items:stretch;
@@ -228,16 +265,17 @@
     white-space:nowrap;display:flex;align-items:center;
     text-shadow:0 0 10px rgba(255,180,84,0.4);
   }
+  html[dir="rtl"] .ticker-label{border-right:none;border-left:1px solid rgba(255,180,84,0.25)}
   .ticker-viewport{overflow:hidden;flex:1;display:flex;align-items:center}
   .ticker-content{
     font-family:var(--font-mono);font-size:12.5px;color:var(--text-muted);
     white-space:nowrap;display:inline-block;padding-left:100%;
     animation:ticker-scroll 40s linear infinite;
   }
+  html[dir="rtl"] .ticker-content{padding-left:0;padding-right:100%;direction:rtl}
   .ticker-content b{color:var(--text);font-weight:500}
-  .ticker-content .sep{color:var(--amber);margin:0 14px}
   @keyframes ticker-scroll{from{transform:translateX(0)}to{transform:translateX(-100%)}}
-  /* ═══ Footer ═══ */
+  /* Footer */
   footer{
     text-align:center;padding:64px 20px 90px;
     color:var(--text-muted);font-size:13px;
@@ -249,6 +287,7 @@
   @media (max-width:640px){
     .ticker-label{padding:8px 12px;font-size:15px}
     .signin-box{flex-direction:column;align-items:flex-start}
+    header{flex-wrap:wrap}
   }
 </style>
 </head>
@@ -258,57 +297,66 @@
 
 <header>
   <div class="logo">MOM <span>TV</span></div>
-  <a class="watch-btn" href="/tv.html">▶ Watch Live</a>
+  <div class="header-actions">
+    <div class="lang-pills" role="group" aria-label="Language">
+      <button class="lang-pill active" data-lang="en" onclick="setLang('en')">EN</button>
+      <button class="lang-pill" data-lang="ru" onclick="setLang('ru')">RUS</button>
+      <button class="lang-pill" data-lang="ar" onclick="setLang('ar')" id="pill-ar">AR</button>
+    </div>
+    <a class="watch-btn" href="/tv.html" data-i18n="navWatch">Watch Live</a>
+  </div>
 </header>
 
+<div class="lang-suggest hidden" id="lang-suggest">
+  <span id="suggest-msg"></span>
+  <button class="suggest-yes" id="suggest-yes"></button>
+  <button class="suggest-no" id="suggest-no" data-i18n="suggestNo">Keep English</button>
+</div>
 <section class="hero">
   <div class="status-pill" id="status-pill">
     <span class="status-dot"></span>
-    <span id="status-text">CHECKING SIGNAL…</span>
+    <span id="status-text" data-i18n="statusChecking">CHECKING SIGNAL</span>
   </div>
   <h1>MOM <span>TV</span></h1>
-  <p class="tagline">
-    An <b>always-on retro TV station</b> for Twitch. Your followed channels,
-    VOD queue, live chat and viewer analytics — tuned into one CRT-sized screen.
-  </p>
+  <p class="tagline" data-i18n-html="tagline"></p>
   <div class="hero-ctas">
-    <a class="cta-main" href="/tv.html">▶ Watch Live</a>
-    <a class="cta-ghost" href="#features">What's on ▾</a>
+    <a class="cta-main" href="/tv.html" data-i18n="ctaWatch">Watch Live</a>
+    <a class="cta-ghost" href="#features" data-i18n="ctaWhats">What is on</a>
   </div>
 </section>
 
 <section class="features" id="features">
-  <div class="section-label">// Program guide</div>
+  <div class="section-label" data-i18n="guide">PROGRAM GUIDE</div>
   <div class="grid">
     <div class="card">
-      <div class="card-icon">📡</div>
-      <h3>Always-on player</h3>
-      <p>An embedded Twitch player that switches between live and VOD automatically, with true uptime tracking straight from Twitch.</p>
+      <div class="card-ch" data-i18n="ch1">CH 01</div>
+      <h3 data-i18n="c1t">Always-on player</h3>
+      <p data-i18n="c1p"></p>
     </div>
     <div class="card">
-      <div class="card-icon">🗝️</div>
-      <h3>One-click sign-in</h3>
-      <p>Sign in with Twitch through a secure server-side OAuth flow — or with Google. No client IDs to paste, no setup.</p>
+      <div class="card-ch" data-i18n="ch2">CH 02</div>
+      <h3 data-i18n="c2t">One-click sign-in</h3>
+      <p data-i18n="c2p"></p>
     </div>
     <div class="card">
-      <div class="card-icon">📺</div>
-      <h3>Followed channels</h3>
-      <p>See which of your followed channels are live right now, and hop between them with a single click.</p>
+      <div class="card-ch" data-i18n="ch3">CH 03</div>
+      <h3 data-i18n="c3t">Followed channels</h3>
+      <p data-i18n="c3p"></p>
     </div>
     <div class="card">
-      <div class="card-icon">🎞️</div>
-      <h3>VOD queue</h3>
-      <p>Browse past broadcasts for the current channel, with watched tracking so you always know where you left off.</p>
+      <div class="card-ch" data-i18n="ch4">CH 04</div>
+      <h3 data-i18n="c4t">VOD queue</h3>
+      <p data-i18n="c4p"></p>
     </div>
     <div class="card">
-      <div class="card-icon">💬</div>
-      <h3>Live chat</h3>
-      <p>Twitch chat embedded in the sidebar, plus a messages-per-minute meter computed over a rolling 60-second window.</p>
+      <div class="card-ch" data-i18n="ch5">CH 05</div>
+      <h3 data-i18n="c5t">Live chat</h3>
+      <p data-i18n="c5p"></p>
     </div>
     <div class="card">
-      <div class="card-icon">🎛️</div>
-      <h3>Auto channel sync</h3>
-      <p>Picks up right where the capture workers left off, and auto-switches to the VOD queue the moment a live stream ends.</p>
+      <div class="card-ch" data-i18n="ch6">CH 06</div>
+      <h3 data-i18n="c6t">Auto channel sync</h3>
+      <p data-i18n="c6p"></p>
     </div>
   </div>
 </section>
@@ -316,76 +364,276 @@
 <section class="signin">
   <div class="signin-box">
     <div class="txt">
-      <h3>Sign in to unlock your channel</h3>
-      <p>Twitch login powers followed channels, chat counting and VOD tracking. Google keeps your viewing profile.</p>
+      <h3 data-i18n="signinH"></h3>
+      <p data-i18n="signinP"></p>
     </div>
     <div class="providers">
-      <a class="prov prov-twitch" href="/tv.html">🔑 Sign in with Twitch</a>
-      <a class="prov prov-google" href="/tv.html">G Sign in with Google</a>
+      <a class="prov prov-twitch" href="/tv.html" data-i18n="signinTwitch"></a>
+      <a class="prov prov-google" href="/tv.html" data-i18n="signinGoogle"></a>
     </div>
   </div>
 </section>
 
 <div class="metrics">
-  <span class="chip"><b>Viewers</b> live + delta</span>
-  <span class="chip"><b>Sparkline</b> 12-sample trend</span>
-  <span class="chip"><b>Uptime</b> true stream age</span>
-  <span class="chip"><b>Msgs/min</b> rolling window</span>
-  <span class="chip"><b>Peak</b> concurrency this session</span>
-  <span class="chip"><b>OCR</b> capture-worker status</span>
+  <span class="chip" data-i18n-html="chip1"></span>
+  <span class="chip" data-i18n-html="chip2"></span>
+  <span class="chip" data-i18n-html="chip3"></span>
+  <span class="chip" data-i18n-html="chip4"></span>
+  <span class="chip" data-i18n-html="chip5"></span>
+  <span class="chip" data-i18n-html="chip6"></span>
 </div>
 
 <footer>
   <div class="foot-logo">MOM TV</div>
-  <div><a href="/tv.html">Watch live</a> · momtv.fameshire.com</div>
-  <div class="foot-note">© 2026 MOM TV — MIT licensed · Powered by Twitch, Azure Static Web Apps and the Fameshire city</div>
+  <div><a href="/tv.html" data-i18n="footWatch">Watch live</a> - momtv.fameshire.com</div>
+  <div class="foot-note" data-i18n="footNote"></div>
 </footer>
 
 <div class="ticker">
   <div class="ticker-label">MOM TV</div>
   <div class="ticker-viewport">
-    <div class="ticker-content" id="ticker-text">MOMENTUM TV — Always-On Live Stream Viewer — momtv.fameshire.com</div>
+    <div class="ticker-content" id="ticker-text">MOM TV</div>
   </div>
 </div>
 
-<script>
-// ═══ Signal check: is the station live? ═══
-// The capture API runs same-origin on the App Service (momtv-server.js). It
-// currently only serves JSON when capture workers are actually deployed; the
-// SPA fallback returns HTML, which fails the JSON parse below and lands on
-// STANDBY — the honest state when no workers are running.
+<script>// i18n
+const I18N = {
+  en: {
+    navWatch: "▶ Watch Live",
+    statusChecking: "CHECKING SIGNAL…",
+    statusOnair: "● ON AIR — STREAM IS LIVE",
+    statusStandby: "STANDBY — TUNE IN ANY TIME",
+    tagline: 'An <b>always-on retro TV station</b> for Twitch. Your followed channels, VOD queue, live chat and viewer analytics — tuned into one CRT-sized screen.',
+    ctaWatch: "▶ Watch Live",
+    ctaWhats: "What's on ▾",
+    guide: "// Program guide",
+    ch1: "CH 01 · PLAYER", c1t: "Always-on player",
+    c1p: "An embedded Twitch player that switches between live and VOD automatically, with true uptime tracking straight from Twitch.",
+    ch2: "CH 02 · AUTH", c2t: "One-click sign-in",
+    c2p: "Sign in with Twitch through a secure server-side OAuth flow — or with Google. No client IDs to paste, no setup.",
+    ch3: "CH 03 · FOLLOWED", c3t: "Followed channels",
+    c3p: "See which of your followed channels are live right now, and hop between them with a single click.",
+    ch4: "CH 04 · VODS", c4t: "VOD queue",
+    c4p: "Browse past broadcasts for the current channel, with watched tracking so you always know where you left off.",
+    ch5: "CH 05 · CHAT", c5t: "Live chat",
+    c5p: "Twitch chat embedded in the sidebar, plus a messages-per-minute meter computed over a rolling 60-second window.",
+    ch6: "CH 06 · SYNC", c6t: "Auto channel sync",
+    c6p: "Picks up right where the capture workers left off, and auto-switches to the VOD queue the moment a live stream ends.",
+    signinH: "Sign in to unlock your channel",
+    signinP: "Twitch login powers followed channels, chat counting and VOD tracking. Google keeps your viewing profile.",
+    signinTwitch: "🔑 Sign in with Twitch",
+    signinGoogle: "G Sign in with Google",
+    chip1: "<b>Viewers</b> live + delta",
+    chip2: "<b>Sparkline</b> 12-sample trend",
+    chip3: "<b>Uptime</b> true stream age",
+    chip4: "<b>Msgs/min</b> rolling window",
+    chip5: "<b>Peak</b> concurrency this session",
+    chip6: "<b>VODs watched</b> per channel",
+    footWatch: "Watch live",
+    footNote: "© 2026 MOM TV — MIT licensed · Powered by Twitch and Azure Static Web Apps",
+    suggestNo: "Keep English",
+    ticker: [
+      "MOM TV — Always-On Live Stream Viewer — momtv.fameshire.com",
+      "FOLLOWED CHANNELS — see who is live, switch with one click",
+      "VOD QUEUE — watched tracking and auto-switch when a stream ends",
+      "CHAT METRICS FOR EVERYONE — signed in or not"
+    ]
+  },
+  ru: {
+    navWatch: "▶ Смотреть эфир",
+    statusChecking: "ПРОВЕРКА СИГНАЛА…",
+    statusOnair: "● В ЭФИРЕ — ТРАНСЛЯЦИЯ ИДЁТ",
+    statusStandby: "ОЖИДАНИЕ — ВКЛЮЧАЙТЕСЬ В ЛЮБОЕ ВРЕМЯ",
+    tagline: 'Круглосуточная <b>ретро-телестанция</b> для Twitch. Ваши каналы, очередь VOD, живой чат и аналитика — всё на одном экране в стиле ЭЛТ.',
+    ctaWatch: "▶ Смотреть эфир",
+    ctaWhats: "Что идёт ▾",
+    guide: "// Программа передач",
+    ch1: "КАН 01 · ПЛЕЕР", c1t: "Вечный плеер",
+    c1p: "Встроенный плеер Twitch сам переключается между эфиром и записями и показывает реальное время начала трансляции.",
+    ch2: "КАН 02 · ВХОД", c2t: "Вход в один клик",
+    c2p: "Вход через Twitch по защищённому серверному OAuth — или через Google. Без вставки клиентских ID и настройки.",
+    ch3: "КАН 03 · ПОДПИСКИ", c3t: "Каналы подписок",
+    c3p: "Смотрите, какие каналы из ваших подписок сейчас в эфире, и переключайтесь одним кликом.",
+    ch4: "КАН 04 · VOD", c4t: "Очередь VOD",
+    c4p: "Записи прошедших эфиров текущего канала с отметками просмотренного — всегда видно, где вы остановились.",
+    ch5: "КАН 05 · ЧАТ", c5t: "Живой чат",
+    c5p: "Чат Twitch в боковой панели и счётчик сообщений в минуту за скользящее окно 60 секунд.",
+    ch6: "КАН 06 · СИНХРОН", c6t: "Автосинхронизация канала",
+    c6p: "Продолжает с того места, где остановились воркеры захвата, и сам переключается на записи, когда эфир заканчивается.",
+    signinH: "Войдите, чтобы открыть свои каналы",
+    signinP: "Вход через Twitch включает подписки, подсчёт чата и отслеживание VOD. Google сохраняет ваш профиль.",
+    signinTwitch: "🔑 Войти через Twitch",
+    signinGoogle: "G Войти через Google",
+    chip1: "<b>Зрители</b> live + дельта",
+    chip2: "<b>Спарклайн</b> 12 точек",
+    chip3: "<b>Аптайм</b> реального эфира",
+    chip4: "<b>Сообщ/мин</b> окно 60 с",
+    chip5: "<b>Пик</b> за сессию",
+    chip6: "<b>Просмотрено VOD</b> по каналу",
+    footWatch: "Смотреть эфир",
+    footNote: "© 2026 MOM TV — лицензия MIT · Работает на Twitch и Azure Static Web Apps",
+    suggestNo: "Оставить English",
+    ticker: [
+      "MOM TV — Круглосуточный просмотр трансляций — momtv.fameshire.com",
+      "ПОДПИСКИ — смотрите, кто в эфире, переключение одним кликом",
+      "ОЧЕРЕДЬ VOD — отметки просмотра и авто-переключение после эфира",
+      "МЕТРИКИ ЧАТА ДЛЯ ВСЕХ — со входом и без"
+    ]
+  },  ar: {
+    navWatch: "▶ شاهد الآن",
+    statusChecking: "جارٍ فحص الإشارة…",
+    statusOnair: "● على الهواء — البث مباشر",
+    statusStandby: "في وضع الاستعداد — اضبط في أي وقت",
+    tagline: 'محطة <b>تلفاز ريترو</b> تعمل دائماً على Twitch. قنواتك المتابَعة، قائمة التسجيلات، الدردشة الحية وإحصاءات المشاهدة — على شاشة واحدة بطابع CRT.',
+    ctaWatch: "▶ شاهد البث",
+    ctaWhats: "ما الذي يُعرض ▾",
+    guide: "// دليل البرامج",
+    ch1: "قناة 01 · المشغّل", c1t: "مشغّل دائم",
+    c1p: "مشغّل Twitch مدمج ينتقل تلقائياً بين البث المباشر والتسجيلات، مع مدة البث الحقيقية من Twitch.",
+    ch2: "قناة 02 · الدخول", c2t: "تسجيل الدخول بنقرة واحدة",
+    c2p: "سجّل عبر Twitch بتدفق OAuth آمن من جهة الخادم — أو عبر Google. دون لصق معرّفات أو أي إعداد.",
+    ch3: "قناة 03 · المتابَعة", c3t: "القنوات المتابَعة",
+    c3p: "شاهد أي القنوات المتابَعة تبثّ الآن، وانتقل بينها بنقرة واحدة.",
+    ch4: "قناة 04 · التسجيلات", c4t: "قائمة التسجيلات",
+    c4p: "تصفّح تسجيلات البث السابقة للقناة الحالية، مع تتبّع ما شاهدته لتعرف أين توقفت.",
+    ch5: "قناة 05 · الدردشة", c5t: "دردشة مباشرة",
+    c5p: "دردشة Twitch مدمجة في الشريط الجانبي، مع عدّاد للرسائل في الدقيقة خلال نافذة 60 ثانية.",
+    ch6: "قناة 06 · المزامنة", c6t: "مزامنة تلقائية للقناة",
+    c6p: "يستأنف من حيث توقفت عمال الالتقاط، وينتقل تلقائياً إلى التسجيلات عند انتهاء البث.",
+    signinH: "سجّل الدخول لفتح قناتك",
+    signinP: "دخول Twitch يُفعّل القنوات المتابَعة وعدّاد الدردشة وتتبّع التسجيلات. ويحفظ Google ملفك الشخصي.",
+    signinTwitch: "🔑 سجّل عبر Twitch",
+    signinGoogle: "G سجّل عبر Google",
+    chip1: "<b>المشاهدون</b> مباشر + التغير",
+    chip2: "<b>مخطط مصغّر</b> 12 نقطة",
+    chip3: "<b>مدة البث</b> الحقيقية",
+    chip4: "<b>رسالة/دقيقة</b> نافذة 60 ثانية",
+    chip5: "<b>الذروة</b> لهذه الجلسة",
+    chip6: "<b>التسجيلات المُشاهدة</b> لكل قناة",
+    footWatch: "شاهد البث",
+    footNote: "© 2026 MOM TV — رخصة MIT · مدعوم بـ Twitch و Azure Static Web Apps",
+    suggestNo: "الإبقاء على الإنجليزية",
+    ticker: [
+      "MOM TV — مشاهدة دائمة للبث المباشر — momtv.fameshire.com",
+      "القنوات المتابَعة — من يبث الآن، انتقل بنقرة",
+      "قائمة التسجيلات — تتبّع المشاهدة والانتقال التلقائي بعد البث",
+      "إحصاءات الدردشة للجميع — بتسجيل الدخول أو بدونه"
+    ]
+  }
+};
+// Suggestion bar copy, shown in the TARGET language
+const SUGGEST = {
+  ru: { msg: "Показать сайт по-русски?", yes: "Да, по-русски" },
+  ar: { msg: "عرض الموقع بالعربية؟", yes: "نعم، بالعربية" }
+};
+
+// Countries mapped to a non-English language
+const AR_COUNTRIES = new Set(["SA","AE","EG","QA","KW","BH","OM","JO","LB","IQ","SY","YE","LY","DZ","MA","TN","SD","PS"]);
+
+const LANG_KEY = "momtv_lang";
+const LANG_DISMISS_KEY = "momtv_lang_dismissed";
+let currentLang = "en";
+let currentStatus = "checking";
+let tickerIndex = 0;
+
+function applyLang(lang) {
+  currentLang = I18N[lang] ? lang : "en";
+  const t = I18N[currentLang];
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === "ar" ? "rtl" : "ltr";
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    const v = t[el.getAttribute("data-i18n")];
+    if (typeof v === "string") el.textContent = v;
+  });
+  document.querySelectorAll("[data-i18n-html]").forEach((el) => {
+    const v = t[el.getAttribute("data-i18n-html")];
+    if (typeof v === "string") el.innerHTML = v;
+  });
+  document.querySelectorAll(".lang-pill").forEach((b) =>
+    b.classList.toggle("active", b.getAttribute("data-lang") === currentLang));
+  renderStatus();
+  tickerIndex = 0;
+  renderTicker();
+}
+
+function setLang(lang, save) {
+  applyLang(lang);
+  if (save) {
+    localStorage.setItem(LANG_KEY, currentLang);
+    hideSuggest();
+  }
+}
+
+function renderStatus() {
+  const t = I18N[currentLang];
+  const el = document.getElementById("status-text");
+  if (!el) return;
+  el.textContent = currentStatus === "onair" ? t.statusOnair
+    : currentStatus === "standby" ? t.statusStandby : t.statusChecking;
+  document.getElementById("status-pill").classList.toggle("live", currentStatus === "onair");
+}
+
+function renderTicker() {
+  const t = I18N[currentLang];
+  const el = document.getElementById("ticker-text");
+  if (!el) return;
+  el.textContent = t.ticker[tickerIndex % t.ticker.length];
+}
+setInterval(() => { tickerIndex++; renderTicker(); }, 30000);
+
+// Signal check via the same-origin capture API (STANDBY when no workers run)
 (async function checkSignal() {
-  const pill = document.getElementById("status-pill");
-  const text = document.getElementById("status-text");
   try {
     const res = await fetch("/api/capture/state", { cache: "no-store" });
     if (res.ok) {
       const data = await res.json();
-      if (data && typeof data === "object") {
-        pill.classList.add("live");
-        text.textContent = "● ON AIR — STREAM IS LIVE";
-        return;
-      }
+      if (data && typeof data === "object") { currentStatus = "onair"; renderStatus(); return; }
     }
   } catch { /* fall through */ }
-  text.textContent = "STANDBY — TUNE IN ANY TIME";
+  currentStatus = "standby";
+  renderStatus();
 })();
 
-// ═══ Ticker — MOM TV branding, rotated periodically ═══
-const TICKER_MESSAGES = [
-  "MOM TV — Always-On Live Stream Viewer — momtv.fameshire.com",
-  "FOLLOWED CHANNELS — see who's live, switch with one click",
-  "VOD QUEUE — watched tracking and auto-switch when a stream ends",
-  "CHAT METRICS FOR EVERYONE — signed in or not",
-];
-let tickerIndex = 0;
-function rotateTicker() {
-  const el = document.getElementById("ticker-text");
-  if (!el) return;
-  tickerIndex = (tickerIndex + 1) % TICKER_MESSAGES.length;
-  el.textContent = TICKER_MESSAGES[tickerIndex];
+// Language detection: saved preference, then browser language, then an
+// offer based on no-permission IP geolocation (never forced).
+function detectBrowserLang() {
+  const nav = (navigator.language || "en").toLowerCase();
+  if (nav.startsWith("ru")) return "ru";
+  if (nav.startsWith("ar")) return "ar";
+  return "en";
 }
-setInterval(rotateTicker, 30000);
+
+function showSuggest(lang) {
+  const s = SUGGEST[lang];
+  if (!s) return;
+  document.getElementById("suggest-msg").textContent = s.msg;
+  document.getElementById("suggest-yes").textContent = s.yes;
+  document.getElementById("suggest-yes").onclick = () => setLang(lang, true);
+  document.getElementById("suggest-no").onclick = () => {
+    localStorage.setItem(LANG_DISMISS_KEY, "1");
+    hideSuggest();
+  };
+  document.getElementById("lang-suggest").classList.remove("hidden");
+}
+
+function hideSuggest() {
+  document.getElementById("lang-suggest").classList.add("hidden");
+}
+
+(async function initLang() {
+  const saved = localStorage.getItem(LANG_KEY);
+  if (saved && I18N[saved]) { applyLang(saved); return; }
+  applyLang(detectBrowserLang());
+  if (currentLang !== "en" || localStorage.getItem(LANG_DISMISS_KEY)) return;
+  try {
+    const res = await fetch("https://get.geojs.io/v1/ip/country.json", { cache: "no-store" });
+    if (!res.ok) return;
+    const geo = await res.json();
+    const cc = String(geo.country || "").toUpperCase();
+    const detected = (cc === "RU" || cc === "BY") ? "ru" : AR_COUNTRIES.has(cc) ? "ar" : "en";
+    if (detected !== "en" && detected !== currentLang) showSuggest(detected);
+  } catch { /* offline — stay with browser language */ }
+})();
 </script>
 </body>
 </html>
