@@ -1472,41 +1472,6 @@ function switchToChannel(channel) {
   restoreSessionState();
   embedStream(channel);
   loadVods(channel);
-  notifyWorkers(channel, true, null);
-}
-
-// ═══ OCR WORKER INTEGRATION ═══
-
-const OCR_API_URL = window.location.origin + '/api/capture/state';
-
-async function notifyWorkers(channel, isLive, vodId) {
-  try {
-    await fetch(OCR_API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ channel, isLive, vodId }),
-    });
-  } catch (e) {
-    console.warn('[OCR] Could not notify workers:', e);
-  }
-}
-
-async function fetchStreamStateFromWorkers() {
-  try {
-    const res = await fetch(OCR_API_URL);
-    const state = await res.json();
-    if (state && state.channel && state.channel !== currentChannel) {
-      currentChannel = state.channel;
-      if (state.isLive) {
-        embedStream(state.channel);
-      } else if (state.vodId) {
-        embedVod(state.vodId, state.vodTitle, state.channel);
-      }
-      loadVods(state.channel);
-    }
-  } catch {
-    // Function not reachable — use default
-  }
 }
 
 // ═══ VOD TRACKING ═══
@@ -1764,9 +1729,6 @@ function initDragHandle() {
 
   loadSettings();
   initDragHandle();
-
-  // Try to get current channel from workers first
-  await fetchStreamStateFromWorkers();
 
   embedStream(currentChannel);
   await loadVods(currentChannel);
