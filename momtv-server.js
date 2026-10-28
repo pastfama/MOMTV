@@ -417,6 +417,17 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // GET /api/citycam — the MOM TV CITY 24/7 city-cam channel (GPU VM running
+  // FiveM + OBS → Twitch). Channel name is an app setting so the broadcaster
+  // can be renamed without a code redeploy.
+  if (req.method === 'GET' && (url === '/api/citycam' || url === '/api/city-cam')) {
+    sendJson(res, 200, {
+      channel: (process.env.CITYCAM_CHANNEL || 'momtvcity').toLowerCase(),
+      label: process.env.CITYCAM_LABEL || 'MOM TV CITY',
+    });
+    return;
+  }
+
   // ── Google OAuth (same-origin authorization-code flow) ─────────────────────
   // Mirrors the Twitch flow: the client secret lives only in this process's
   // env (GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET), and the profile

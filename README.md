@@ -128,6 +128,32 @@ picture) is handed to the page via the URL fragment and kept in
 4. Verify: **Login with Google** → consent → back on the TV page with your
    Google avatar + name in the header.
 
+### MOM TV CITY — 24/7 GPU city-cam broadcaster
+
+A dedicated Twitch channel (**MOM TV CITY**) carries an always-on city camera:
+a Windows GPU VM runs the FiveM client on your city server, OBS captures it
+with NVENC and streams it to Twitch, and the **🎥 CITY CAM** button on
+`/tv.html` switches the viewer to that channel (and back).
+
+| Piece | Where |
+|-------|-------|
+| GPU VM | Vultr `momtv-cam` (NVIDIA A16 16 GB, Windows 2022, `ewr`) — one-time interactive login for Steam/GTA/FiveM, then unattended |
+| Bootstrap | [`citycam/setup-city-cam.ps1`](citycam/setup-city-cam.ps1) — installs OBS, writes the full OBS config (Twitch profile, NVENC 1080p60, MOM TV CITY scene with Game Capture + Display Capture fallback), creates FiveM auto-join tasks and a one-click `Start-CityCam.ps1` |
+| Channel config | App setting on the App Service, so the channel can be renamed without a redeploy: `az webapp config appsettings set -g Fameshire-SWA -n momtv --settings CITYCAM_CHANNEL=momtvcity` |
+| API | `GET /api/citycam` → `{ channel, label }` (served same-origin by `momtv-server.js`) |
+
+Frontend behaviour: the header button fetches `/api/citycam` at load and
+toggles between the city cam and the station's default channel; all per-channel
+metrics (viewers, chat, watch time, VODs) apply to the city cam too.
+
+Quick start on the VM (elevated PowerShell over RDP):
+
+```powershell
+.\setup-city-cam.ps1 -TwitchStreamKey "live_xxx" `
+  -CityServer "your-city-host:30120" `
+  -AutoLogonPassword "TheVmPassword" -InstallAudioCable
+```
+
 Twitch and Google sessions are independent: a Google session is shown only when
 no Twitch user is signed in, and Twitch login continues to work exactly as before.
 

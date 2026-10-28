@@ -153,6 +153,29 @@
     }
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
 
+    /* MOM TV CITY — 24/7 city-cam quick switch (JS toggles .active) */
+    .citycam-btn{
+      background:linear-gradient(180deg,rgba(77,255,157,0.14),rgba(77,255,157,0.06));
+      color:var(--accent-bright);
+      border:1px solid rgba(77,255,157,0.35);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,0.08), 0 2px 8px rgba(0,0,0,0.4);
+      padding:4px 12px;border-radius:var(--radius-sm);
+      font-size:11px;font-weight:700;cursor:pointer;
+      font-family:var(--font-mono);letter-spacing:1px;
+      transition:var(--transition);
+    }
+    .citycam-btn:hover{
+      background:linear-gradient(180deg,rgba(77,255,157,0.26),rgba(77,255,157,0.12));
+      border-color:rgba(77,255,157,0.55);
+      box-shadow:0 0 14px rgba(77,255,157,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    .citycam-btn.active{
+      background:linear-gradient(180deg,rgba(255,180,84,0.3),rgba(255,180,84,0.14));
+      color:var(--amber-bright);
+      border-color:rgba(255,180,84,0.55);
+      box-shadow:0 0 16px rgba(255,180,84,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+
     .header-right{display:flex;align-items:center;gap:16px}
     .clock{
       font-family:var(--font-display);
@@ -576,6 +599,8 @@
     <div class="header-left">
       <div class="logo"><a href="/" style="text-decoration:none;color:inherit">MOM <span>TV</span></a></div>
       <div class="live-badge" id="live-badge">● LIVE</div>
+      <button class="citycam-btn" id="citycam-btn" onclick="switchToCityCam()"
+        title="MOM TV CITY — 24/7 live city camera (GPU VM → OBS → Twitch)">🎥 CITY CAM</button>
     </div>
     <div class="header-right">
       <div id="auth-section">
@@ -1472,6 +1497,40 @@ function switchToChannel(channel) {
   restoreSessionState();
   embedStream(channel);
   loadVods(channel);
+  updateCityCamBtn();
+}
+
+// ── MOM TV CITY — 24/7 GPU city-cam quick switch ─────────────────────────────
+// The channel name comes from /api/citycam (app setting CITYCAM_CHANNEL on the
+// App Service) so the broadcaster can be renamed without a code redeploy.
+let cityCamChannel = "momtvcity";
+
+async function loadCityCamConfig() {
+  try {
+    const res = await fetch("/api/citycam", { cache: "no-store" });
+    if (res.ok) {
+      const cfg = await res.json();
+      if (cfg && cfg.channel) cityCamChannel = String(cfg.channel).toLowerCase();
+    }
+  } catch { /* keep the default */ }
+  updateCityCamBtn();
+}
+
+function updateCityCamBtn() {
+  const btn = document.getElementById("citycam-btn");
+  if (!btn) return;
+  const onCam = currentChannel === cityCamChannel;
+  btn.classList.toggle("active", onCam);
+  btn.textContent = onCam ? "📺 STATION" : "🎥 CITY CAM";
+  btn.title = onCam
+    ? "Back to the MOM TV station channel"
+    : "MOM TV CITY — 24/7 live city camera (GPU VM → OBS → Twitch)";
+}
+
+async function switchToCityCam() {
+  await loadCityCamConfig();
+  // Toggle: city cam ↔ the station's default channel.
+  switchToChannel(currentChannel === cityCamChannel ? DEFAULT_CHANNEL : cityCamChannel);
 }
 
 // ═══ VOD TRACKING ═══
@@ -1729,6 +1788,7 @@ function initDragHandle() {
 
   loadSettings();
   initDragHandle();
+  loadCityCamConfig();
 
   embedStream(currentChannel);
   await loadVods(currentChannel);
