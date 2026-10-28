@@ -35,11 +35,16 @@ param(
   [string]$CityServer = "",                # FiveM city server, e.g. "host:30120"
   [string]$AutoLogonPassword = "",         # optional: enable auto-login
   [switch]$InstallAudioCable,              # optional: VB-CABLE virtual audio
+  [switch]$NonInteractive,                 # GitHub-runner (SYSTEM) mode: stage interactive installers on the Desktop instead of launching them
   [int]$Bitrate = 6000                     # Twitch allows up to 6000 kbps
 )
 
 $ErrorActionPreference = 'Stop'
-$obsAppData = "$env:APPDATA\obs-studio"
+# The broadcast user is always Administrator - a GitHub runner (SYSTEM) has no
+# user profile of its own, so all user paths are pinned, never $env:*PROFILE.
+$UserProfile = 'C:\Users\Administrator'
+$UserDesktop = "$UserProfile\Desktop"
+$obsAppData = "$UserProfile\AppData\Roaming\obs-studio"
 function Step($m) { Write-Host "`n=== $m ===" -ForegroundColor Green }
 
 # -- 1. Windows: tuned for an always-on broadcast box -------------------------
@@ -53,35 +58,63 @@ if ($AutoLogonPassword) {
   Step 'Enabling Windows auto-login (broadcast survives reboots)'
   $wl = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon'
   Set-ItemProperty $wl -Name AutoAdminLogon -Value '1'
-  Set-ItemProperty $wl -Name DefaultUserName -Value $env:USERNAME
+  Set-ItemProperty $wl -Name DefaultUserName -Value 'Administrator'
   Set-ItemProperty $wl -Name DefaultPassword -Value $AutoLogonPassword
 }
 
 # -- 2. Software: OBS + FiveM -------------------------------------------------
-Step 'Installing OBS Studio via winget'
-winget install --id OBSProject.OBSStudio -e --accept-source-agreements --accept-package-agreements --silent 2>&1 | Out-Host
+Step 'Installing OBS Studio'
 $obsExe = "$env:ProgramFiles\obs-studio\bin\64bit\obs64.exe"
+if (-not (Test-Path $obsExe)) {
+  # winget first; it can be unavailable in service sessions, so fall back to
+  # the official silent installer (/S) from GitHub releases.
+  winget install --id OBSProject.OBSStudio -e --accept-source-agreements --accept-package-agreements --silent 2>&1 | Out-Host
+}
+if (-not (Test-Path $obsExe)) {
+  $obsInstaller = "$env:TEMP\obs-installer.exe"
+  $obsUrl = ''
+  try {
+    $obsUrl = (Invoke-RestMethod 'https://api.github.com/repos/obsproject/obs-studio/releases/latest').assets.browser_download_url |
+      Where-Object { $_ -match 'Full-Installer-x64\.exe$' } | Select-Object -First 1
+  } catch { }
+  if (-not $obsUrl) { throw 'Could not resolve the OBS installer URL - install OBS manually from https://obsproject.com and re-run.' }
+  Invoke-WebRequest -Uri $obsUrl -OutFile $obsInstaller -UseBasicParsing
+  Start-Process $obsInstaller -ArgumentList '/S' -Wait
+}
 if (-not (Test-Path $obsExe)) { throw "OBS not found at $obsExe - install manually from https://obsproject.com and re-run." }
 
-Step 'Downloading the FiveM installer (the few installer clicks are interactive)'
+Step 'Downloading the FiveM installer'
 try {
-  $fivemSetup = "$env:TEMP\FiveM-installer.exe"
+  $fivemSetup = "$UserDesktop\FiveM-installer.exe"
   Invoke-WebRequest -Uri 'https://download.fivem.net/downloads/FiveM.exe' -OutFile $fivemSetup -UseBasicParsing
-  Start-Process $fivemSetup
-  Write-Host 'FiveM installer launched - complete it, log into the dedicated' -ForegroundColor Yellow
-  Write-Host 'MOM TV Steam/Rockstar account, then come back. (Steam + GTA V must' -ForegroundColor Yellow
-  Write-Host 'be installed and launched once.)' -ForegroundColor Yellow
+  if ($NonInteractive) {
+    # SYSTEM session (GitHub runner): GUIs are invisible, so stage it instead.
+    Write-Host '  FiveM installer staged on the Desktop - run it from the RDP session,' -ForegroundColor Yellow
+    Write-Host '  then log into the dedicated MOM TV Steam/Rockstar account once.' -ForegroundColor Yellow
+  } else {
+    Start-Process $fivemSetup
+    Write-Host 'FiveM installer launched - complete it, log into the dedicated' -ForegroundColor Yellow
+    Write-Host 'MOM TV Steam/Rockstar account, then come back. (Steam + GTA V must' -ForegroundColor Yellow
+    Write-Host 'be installed and launched once.)' -ForegroundColor Yellow
+  }
 } catch {
   Write-Host "Could not auto-download FiveM - get it from https://fivem.net" -ForegroundColor Yellow
 }
 
 if ($InstallAudioCable) {
-  Step 'Installing VB-CABLE (click "Install Driver", then reboot once)'
+  Step 'Installing VB-CABLE'
+  $cableDir = "$UserDesktop\VB-CABLE"
   $zip = "$env:TEMP\VBCABLE.zip"
   Invoke-WebRequest -Uri 'https://download.vb-audio.com/Download_CABLE/VBCABLE_Driver_Pack43.zip' -OutFile $zip -UseBasicParsing
-  Expand-Archive $zip "$env:TEMP\VBCABLE" -Force
-  Start-Process "$env:TEMP\VBCABLE\VBCABLE_Setup_x64.exe" -Verb RunAs
-  Write-Host 'After the reboot set Windows default playback to "CABLE Input".' -ForegroundColor Yellow
+  Expand-Archive $zip $cableDir -Force
+  if ($NonInteractive) {
+    Write-Host "  VB-CABLE staged at $cableDir - run VBCABLE_Setup_x64.exe from the RDP" -ForegroundColor Yellow
+    Write-Host '  session (click "Install Driver"), then reboot once. After the reboot' -ForegroundColor Yellow
+    Write-Host '  set Windows default playback to "CABLE Input".' -ForegroundColor Yellow
+  } else {
+    Start-Process "$cableDir\VBCABLE_Setup_x64.exe" -Verb RunAs
+    Write-Host 'After the reboot set Windows default playback to "CABLE Input".' -ForegroundColor Yellow
+  }
 }
 # -- 3. OBS config: Twitch profile + NVENC + city-cam scene ------------------
 Step 'Writing the OBS configuration (Twitch, NVENC 1080p60, MOM TV CITY scene)'
@@ -196,7 +229,7 @@ try { $null = $sceneJson | ConvertFrom-Json } catch { throw "Scene JSON template
 [IO.File]::WriteAllText("$scenesDir\MOM TV CITY.json", $sceneJson)
 # -- 4. Auto-start: FiveM join + OBS stream on login -------------------------
 Step 'Creating auto-start tasks + shortcuts'
-$fivemExe = "$env:LOCALAPPDATA\FiveM\FiveM.app\FiveM.exe"
+$fivemExe = "$UserProfile\AppData\Local\FiveM\FiveM.app\FiveM.exe"
 $obsTr = '"' + $obsExe + '" --startstreaming --minimize-to-tray --disable-shutdown-check'
 schtasks /Create /TN 'MOMTV-CityCam-OBS' /TR $obsTr /SC ONLOGON /DELAY 0000:30 /RL HIGHEST /F | Out-Null
 Write-Host '  ONLOGON task: OBS starts streaming 30s after login.'
@@ -206,7 +239,7 @@ if ($CityServer) {
     $fivemTr = '"' + $fivemExe + '" fivem://connect/' + $CityServer
     schtasks /Create /TN 'MOMTV-CityCam-FiveM' /TR $fivemTr /SC ONLOGON /DELAY 0001:00 /RL HIGHEST /F | Out-Null
     $ws  = New-Object -ComObject WScript.Shell
-    $lnk = $ws.CreateShortcut("$env:USERPROFILE\Desktop\MOM TV CITY.lnk")
+    $lnk = $ws.CreateShortcut("$UserDesktop\MOM TV CITY.lnk")
     $lnk.TargetPath = $fivemExe
     $lnk.Arguments  = "fivem://connect/$CityServer"
     $lnk.Save()
@@ -222,7 +255,7 @@ if ($CityServer) {
 `$obs   = "$obsExe"
 if (Test-Path `$fivem) { Start-Process `$fivem -ArgumentList "fivem://connect/$CityServer" }
 Start-Process `$obs   -ArgumentList '--startstreaming','--minimize-to-tray'
-"@ | Set-Content "$env:USERPROFILE\Desktop\Start-CityCam.ps1" -Encoding UTF8
+"@ | Set-Content "$UserDesktop\Start-CityCam.ps1" -Encoding UTF8
 
 Step 'Done - next steps'
 Write-Host @'

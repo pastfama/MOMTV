@@ -1,0 +1,29 @@
+name: Provision MOM TV CITY broadcaster
+
+# Runs the city-cam bootstrap ON the GPU VM itself, via its self-hosted
+# runner (label: "citycam"). workflow_dispatch-only, so nobody but repo
+# admins can ever trigger it - important because this repo is public.
+on:
+  workflow_dispatch:
+
+jobs:
+  provision:
+    runs-on: [self-hosted, citycam]
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run the city-cam bootstrap
+        shell: powershell
+        env:
+          CITYCAM_TWITCH_KEY: ${{ secrets.CITYCAM_TWITCH_KEY }}
+          CITYCAM_SERVER: ${{ secrets.CITYCAM_SERVER }}
+          CITYCAM_VM_PASSWORD: ${{ secrets.CITYCAM_VM_PASSWORD }}
+        run: |
+          if (-not $env:CITYCAM_TWITCH_KEY) { throw 'Secret CITYCAM_TWITCH_KEY is not set - add it under Settings > Secrets and variables > Actions.' }
+          & .\citycam\setup-city-cam.ps1 `
+            -TwitchStreamKey $env:CITYCAM_TWITCH_KEY `
+            -CityServer $env:CITYCAM_SERVER `
+            -AutoLogonPassword $env:CITYCAM_VM_PASSWORD `
+            -InstallAudioCable -NonInteractive
